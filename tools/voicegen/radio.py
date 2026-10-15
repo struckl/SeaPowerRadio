@@ -44,17 +44,34 @@ def run_ffmpeg(args: list[str], what: str) -> None:
         sys.exit(f"ffmpeg failed on {what}:\n{result.stderr}")
 
 
-def voice_chain(src: Path, dest: Path) -> None:
-    """Bake the voice half into one TTS fragment."""
+def voice_chain(src: Path, dest: Path, start: float | None = None, end: float | None = None,
+                trim_start: bool = True, trim_end: bool = True) -> None:
+    """Bake the voice half into one clip cut from a take.
+
+    start/end: slice of the take in seconds (None = from the beginning / to the end). A side that was cut in the
+    middle of a pause keeps its half of the pause -- that is what makes stitched clips glue back together with the
+    voice's own timing -- so silence is only trimmed on the take's real outer edges.
+    """
     v = VOICE
-    chain = ",".join([
-        "aformat=sample_fmts=fltp:channel_layouts=mono",
-        f"aresample={SAMPLE_RATE}",
-        # Trim leading and trailing TTS silence; trailing via reverse (stop_* cuts at internal pauses).
-        "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.005",
-        "areverse",
-        "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.01",
-        "areverse",
+    pre = ["aformat=sample_fmts=fltp:channel_layouts=mono", f"aresample={SAMPLE_RATE}"]
+    if start is not None or end is not None:
+        rng = []
+        if start is not None:
+            rng.append(f"start={start:.4f}")
+        if end is not None:
+            rng.append(f"end={end:.4f}")
+        pre += [f"atrim={':'.join(rng)}", "asetpts=PTS-STARTPTS"]
+        # A few ms of fade where we cut, so a cut inside running speech never clicks.
+        if start is not None and start > 0:
+            pre.append("afade=t=in:st=0:d=0.006")
+        if end is not None:
+            pre += ["areverse", "afade=t=in:st=0:d=0.006", "areverse"]
+    if trim_start:
+        pre.append("silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.005")
+    if trim_end:
+        # Trailing via reverse: silenceremove's stop_* mode cuts at the first internal pause.
+        pre += ["areverse", "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.01", "areverse"]
+    chain = ",".join(pre + [
         f"highpass=f={v['hp']}",
         f"lowpass=f={v['lp']}",
         f"equalizer=f=2000:t=q:w=1.3:g={v['presence']}",

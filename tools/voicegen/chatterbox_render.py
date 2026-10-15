@@ -74,11 +74,12 @@ def cut_points(tk: Take, words: list[tuple[float, float]]) -> list[tuple[float |
     return bounds
 
 
-def render_take(model, aligner: ForcedAligner, persona_id: str, tk: Take, out_dir: Path, raw: Path) -> int:
+def render_take(model, aligner: ForcedAligner, persona_id: str, tk: Take, out_dir: Path, raw: Path,
+                seed_offset: int = 0) -> int:
     exaggeration, cfg = delivery(tk)
     max_seconds = SECONDS_PER_WORD_MAX * len(normalize_words(tk.text)) + 1.0
     for attempt in range(MAX_TRIES):
-        torch.manual_seed(zlib.crc32(f"{persona_id}|{tk.text}|{attempt}".encode()))
+        torch.manual_seed(zlib.crc32(f"{persona_id}|{tk.text}|{attempt + seed_offset * MAX_TRIES}".encode()))
         wav = model.generate(tk.text, exaggeration=exaggeration, cfg_weight=cfg).cpu()
         seconds = wav.shape[-1] / model.sr
         if seconds > max_seconds:
@@ -107,6 +108,8 @@ def main() -> None:
     parser.add_argument("--voices", required=True, help="comma-separated persona ids, or 'all'")
     parser.add_argument("--sample", action="store_true", help="only takes marked sample=True")
     parser.add_argument("--force", action="store_true", help="re-render existing clips")
+    parser.add_argument("--seed-offset", type=int, default=0,
+                        help="retry pass: new seeds for takes that gave up in an earlier run")
     args = parser.parse_args()
 
     from chatterbox.tts import ChatterboxTTS
@@ -134,7 +137,7 @@ def main() -> None:
         model.prepare_conditionals(str(REFS / f"{p.id}.wav"))
         started, done = time.time(), 0
         for i, tk in enumerate(todo, start=1):
-            done += render_take(model, aligner, p.id, tk, out_dir, tmp / f"{p.id}_take.wav")
+            done += render_take(model, aligner, p.id, tk, out_dir, tmp / f"{p.id}_take.wav", args.seed_offset)
             if i % 50 == 0:
                 rate = (time.time() - started) / i
                 print(f"  {p.id}: {i}/{len(todo)} takes, {rate:.1f}s/take", flush=True)

@@ -1,4 +1,6 @@
-"""Render the voice library: personas (cast.py) x takes (phrases.py).
+"""Render takes with edge-tts (fallback engine; the shipped library is rendered by chatterbox_render.py).
+
+Personas from edge_cast.py x takes (phrases.py).
 
 Each take is one edge-tts request with word boundaries switched on. The clips it holds are cut out at the middle of
 the gap between the last word of one segment and the first word of the next, then put through the voice half of
@@ -29,7 +31,7 @@ import edge_tts
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from cast import BY_ID, CAST, REPO, Persona  # noqa: E402
+from edge_cast import BY_ID, CAST, REPO, Persona  # noqa: E402
 from phrases import TAKES, Take  # noqa: E402
 from radio import voice_chain  # noqa: E402
 

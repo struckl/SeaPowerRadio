@@ -1,12 +1,12 @@
 """The NATO/English voice cast for Sea Power Radio.
 
-Every persona is one person on the net: a Microsoft Edge neural voice (edge-tts, same engine as Ratten Chatter)
-plus a fixed rate and pitch offset. Base voices are reused with clearly different offsets to get more distinct
-people than there are base voices — the plugin hands every element of a mission its own persona, so the pool size
-is the number of elements that can talk before anyone has to share.
+Every persona is one person on the net, cloned by Chatterbox from a ~12 s reference clip of one real speaker of the
+CSTR VCTK Corpus (CC BY 4.0, studio recordings made for voice cloning research -- see README credits). One speaker
+per persona, so every persona is a genuinely different person; the plugin hands each element of a mission its own
+persona.
 
-Accents are spread on purpose (US, UK, Canada, Australia, New Zealand, Ireland): a NATO task group is not staffed
-by forty identical Americans. Child-sounding voices (en-US-Ana, en-GB-Maisie) are left out.
+Accents follow NATO navies of the period: US, Canada, England (several regions), Scotland, Ireland, Northern
+Ireland, Australia, New Zealand. Roughly 70 % male. Ids are <accent>_<gender>_<nn>; `vctk` is the speaker id.
 
 Run this file to write ../../mod/voices/personas.txt, which the plugin reads at startup:
 
@@ -22,74 +22,69 @@ from pathlib import Path
 @dataclass(frozen=True)
 class Persona:
     id: str
-    voice: str
+    vctk: str            # VCTK speaker id, e.g. "p334"
     gender: str          # "m" / "f"
-    accent: str          # "us", "gb", "ca", "au", "nz", "ie"
-    rate: str = "+0%"
-    pitch: str = "+0Hz"
+    accent: str          # "us", "ca", "gb", "sc", "ie", "ni", "au", "nz"
+    note: str = ""       # VCTK accent/region, for humans
     language: str = "en"
 
 
-def _p(id_: str, voice: str, gender: str, rate: str = "+0%", pitch: str = "+0Hz") -> Persona:
-    accent = id_.split("_")[0]
-    return Persona(id_, voice, gender, accent, rate, pitch)
+def _p(id_: str, vctk: str, note: str) -> Persona:
+    accent, gender, _ = id_.split("_")
+    return Persona(id_, vctk, gender, accent, note)
 
 
 CAST: list[Persona] = [
-    # --- United States, male: every base voice twice, once lower/slower, once brighter/quicker -------------
-    _p("us_m_01", "en-US-AndrewNeural", "m", "-3%", "-6Hz"),
-    _p("us_m_02", "en-US-AndrewNeural", "m", "+5%", "+5Hz"),
-    _p("us_m_03", "en-US-AndrewMultilingualNeural", "m", "-6%", "-10Hz"),
-    _p("us_m_04", "en-US-AndrewMultilingualNeural", "m", "+2%", "+2Hz"),
-    _p("us_m_05", "en-US-BrianNeural", "m", "+3%", "+0Hz"),
-    _p("us_m_06", "en-US-BrianNeural", "m", "-4%", "-8Hz"),
-    _p("us_m_07", "en-US-BrianMultilingualNeural", "m", "+6%", "+4Hz"),
-    _p("us_m_08", "en-US-BrianMultilingualNeural", "m", "-2%", "-5Hz"),
-    _p("us_m_09", "en-US-ChristopherNeural", "m", "-4%", "+0Hz"),
-    _p("us_m_10", "en-US-ChristopherNeural", "m", "+4%", "+6Hz"),
-    _p("us_m_11", "en-US-EricNeural", "m", "-5%", "-6Hz"),
-    _p("us_m_12", "en-US-EricNeural", "m", "+3%", "+3Hz"),
-    _p("us_m_13", "en-US-GuyNeural", "m", "-6%", "-10Hz"),
-    _p("us_m_14", "en-US-GuyNeural", "m", "+2%", "+2Hz"),
-    _p("us_m_15", "en-US-RogerNeural", "m", "+6%", "+4Hz"),
-    _p("us_m_16", "en-US-RogerNeural", "m", "-3%", "-6Hz"),
-    _p("us_m_17", "en-US-SteffanNeural", "m", "-7%", "-8Hz"),
-    _p("us_m_18", "en-US-SteffanNeural", "m", "+2%", "+3Hz"),
-    # --- United States, female -----------------------------------------------------------------------------
-    _p("us_f_01", "en-US-AriaNeural", "f", "-2%", "-4Hz"),
-    _p("us_f_02", "en-US-AvaNeural", "f", "+2%", "-2Hz"),
-    _p("us_f_03", "en-US-AvaMultilingualNeural", "f", "-3%", "-5Hz"),
-    _p("us_f_04", "en-US-EmmaNeural", "f", "-4%", "-6Hz"),
-    _p("us_f_05", "en-US-EmmaMultilingualNeural", "f", "+4%", "+0Hz"),
-    _p("us_f_06", "en-US-JennyNeural", "f", "+1%", "-3Hz"),
-    _p("us_f_07", "en-US-MichelleNeural", "f", "-3%", "-5Hz"),
-    # --- United Kingdom --------------------------------------------------------------------------------------
-    _p("gb_m_01", "en-GB-RyanNeural", "m", "-1%", "-4Hz"),
-    _p("gb_m_02", "en-GB-RyanNeural", "m", "+5%", "+5Hz"),
-    _p("gb_m_03", "en-GB-ThomasNeural", "m", "-3%", "-6Hz"),
-    _p("gb_m_04", "en-GB-ThomasNeural", "m", "+5%", "+6Hz"),
-    _p("gb_f_01", "en-GB-LibbyNeural", "f", "+2%", "+0Hz"),
-    _p("gb_f_02", "en-GB-SoniaNeural", "f", "+4%", "-2Hz"),
-    # --- Canada ----------------------------------------------------------------------------------------------
-    _p("ca_m_01", "en-CA-LiamNeural", "m", "+2%", "+0Hz"),
-    _p("ca_m_02", "en-CA-LiamNeural", "m", "-5%", "-8Hz"),
-    _p("ca_f_01", "en-CA-ClaraNeural", "f", "-1%", "-3Hz"),
-    # --- Australia -------------------------------------------------------------------------------------------
-    _p("au_m_01", "en-AU-WilliamMultilingualNeural", "m", "-3%", "-4Hz"),
-    _p("au_m_02", "en-AU-WilliamMultilingualNeural", "m", "+5%", "+5Hz"),
-    _p("au_f_01", "en-AU-NatashaNeural", "f", "+1%", "-3Hz"),
-    # --- New Zealand -----------------------------------------------------------------------------------------
-    _p("nz_m_01", "en-NZ-MitchellNeural", "m", "-3%", "-5Hz"),
-    _p("nz_m_02", "en-NZ-MitchellNeural", "m", "+4%", "+5Hz"),
-    _p("nz_f_01", "en-NZ-MollyNeural", "f", "+5%", "+0Hz"),
-    # --- Ireland ---------------------------------------------------------------------------------------------
-    _p("ie_m_01", "en-IE-ConnorNeural", "m", "-2%", "-4Hz"),
-    _p("ie_m_02", "en-IE-ConnorNeural", "m", "+6%", "+7Hz"),
-    _p("ie_f_01", "en-IE-EmilyNeural", "f", "+3%", "+0Hz"),
+    # --- male (30) -------------------------------------------------------------------------------------------
+    _p("us_m_01", "p334", "American, Chicago"),
+    _p("us_m_02", "p345", "American, Florida"),
+    _p("us_m_03", "p311", "American, Iowa"),
+    _p("us_m_04", "p360", "American, New Jersey"),
+    _p("ca_m_01", "p316", "Canadian, Alberta"),
+    _p("ca_m_02", "p302", "Canadian, Montreal"),
+    _p("ca_m_03", "p363", "Canadian, Toronto"),
+    _p("au_m_01", "p374", "Australian"),
+    _p("au_m_02", "p326", "Australian, Sydney"),
+    _p("gb_m_01", "p227", "English, Cumbria"),
+    _p("gb_m_02", "p226", "English, Surrey"),
+    _p("gb_m_03", "p232", "English, Southern England"),
+    _p("gb_m_04", "p243", "English, London"),
+    _p("gb_m_05", "p256", "English, Birmingham"),
+    _p("gb_m_06", "p259", "English, Nottingham"),
+    _p("gb_m_07", "p270", "English, Yorkshire"),
+    _p("gb_m_08", "p274", "English, Essex"),
+    _p("gb_m_09", "p286", "English, Newcastle"),
+    _p("gb_m_10", "p278", "English, Cheshire"),
+    _p("gb_m_11", "p279", "English, Leicester"),
+    _p("sc_m_01", "p281", "Scottish, Edinburgh"),
+    _p("sc_m_02", "p237", "Scottish, Fife"),
+    _p("sc_m_03", "p263", "Scottish, Aberdeen"),
+    _p("sc_m_04", "p252", "Scottish, Edinburgh"),
+    _p("sc_m_05", "p260", "Scottish, Orkney"),
+    _p("ie_m_01", "p245", "Irish, Dublin"),
+    _p("ie_m_02", "p298", "Irish, Tipperary"),
+    _p("ie_m_03", "p364", "Irish, Donegal"),
+    _p("ni_m_01", "p292", "Northern Irish, Belfast"),
+    _p("ni_m_02", "p304", "Northern Irish, Belfast"),
+    # --- female (13) -----------------------------------------------------------------------------------------
+    _p("us_f_01", "p294", "American, San Francisco"),
+    _p("us_f_02", "p318", "American, Napa"),
+    _p("us_f_03", "p362", "American"),
+    _p("us_f_04", "p341", "American, Ohio"),
+    _p("us_f_05", "p299", "American, California"),
+    _p("us_f_06", "p306", "American, New York"),
+    _p("ca_f_01", "p343", "Canadian, Alberta"),
+    _p("ca_f_02", "p303", "Canadian, Toronto"),
+    _p("gb_f_01", "p276", "English, Oxford"),
+    _p("gb_f_02", "p257", "English, Southern England"),
+    _p("sc_f_01", "p262", "Scottish, Edinburgh"),
+    _p("ie_f_01", "p283", "Irish, Cork"),
+    _p("nz_f_01", "p335", "New Zealand"),
 ]
 
 BY_ID = {p.id: p for p in CAST}
 assert len(BY_ID) == len(CAST), "duplicate persona id"
+assert len({p.vctk for p in CAST}) == len(CAST), "VCTK speaker used twice"
 
 REPO = Path(__file__).resolve().parents[2]
 PERSONAS_FILE = REPO / "mod" / "voices" / "personas.txt"

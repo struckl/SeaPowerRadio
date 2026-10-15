@@ -82,8 +82,12 @@ def voice_chain(src: Path, dest: Path, start: float | None = None, end: float | 
         f"alimiter=limit={VOICE_CEILING}:level=disabled",
         f"aresample={OUT_SAMPLE_RATE}",
     ])
+    # Write next to the target and rename, so a render killed mid-write never leaves a truncated clip that a
+    # resumed run would mistake for a finished one.
+    part = dest.with_name(dest.stem + ".part.mp3")
     run_ffmpeg(["-i", str(src), "-af", chain, "-c:a", "libmp3lame", "-q:a", "4",
-                "-ar", str(OUT_SAMPLE_RATE), "-ac", "1", str(dest)], src.name)
+                "-ar", str(OUT_SAMPLE_RATE), "-ac", "1", str(part)], src.name)
+    part.replace(dest)
 
 
 def transmission(parts: list[tuple[Path, float]], dest: Path, profile: str, seed: str) -> None:

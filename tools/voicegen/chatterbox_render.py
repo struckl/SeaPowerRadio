@@ -126,6 +126,8 @@ def main() -> None:
     for p in personas:
         out_dir = OUT_ROOT / p.id
         out_dir.mkdir(parents=True, exist_ok=True)
+        for leftover in out_dir.glob("*.part.mp3"):  # from a run that was stopped mid-write
+            leftover.unlink()
         todo = [t for t in takes if args.force or not all((out_dir / f"{k}.mp3").exists() for k in t.keys)]
         if not todo:
             continue

@@ -68,13 +68,36 @@ internal sealed class Callsigns
         return callsign;
     }
 
-    /// <summary>Lowest flight number not yet taken for this word, so two flights never share a callsign.</summary>
+    /// <summary>Lowest flight number 1–9 not yet taken for this word, or -1 when all nine are in use.</summary>
     public int NextFlightNumber(string flightWord)
     {
         for (int n = 1; n < 10; n++)
-            if (!used.Contains($"{flightWord} {n}-1") && !used.Contains($"{flightWord} {n}-2"))
+            if (!used.Contains($"{flightWord} {n}-1"))
                 return n;
-        return 9;
+        return -1;
+    }
+
+    /// <summary>
+    /// Callsigns for <paramref name="count"/> aircraft flying together: flights of at most four, numbers 1–9, a
+    /// fresh word when a word's nine flights are used up. Only those combinations exist as audio fragments.
+    /// </summary>
+    public List<string> Flight(CallsignKind kind, int count)
+    {
+        var result = new List<string>(count);
+        string word = NextWord(kind);
+        for (int start = 0; start < count; start += 4)
+        {
+            int flight = NextFlightNumber(word);
+            for (int tries = 0; flight < 0 && tries < Words[kind].Length; tries++)
+            {
+                word = NextWord(kind);
+                flight = NextFlightNumber(word);
+            }
+            if (flight < 0) flight = 9; // every word of this kind full: share rather than fail
+            for (int pos = 1; pos <= 4 && start + pos - 1 < count; pos++)
+                result.Add(Aircraft(word, flight, pos));
+        }
+        return result;
     }
 
     public string Single(CallsignKind kind)

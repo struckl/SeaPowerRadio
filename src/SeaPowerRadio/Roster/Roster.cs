@@ -91,10 +91,9 @@ internal sealed class Roster
     private void AddFlight(List<ObjectBase> members)
     {
         CallsignKind kind = KindOf(members[0]);
-        string word = callsigns.NextWord(kind);
-        int flight = callsigns.NextFlightNumber(word);
+        List<string> names = callsigns.Flight(kind, members.Count);
         for (int i = 0; i < members.Count; i++)
-            AddUnit(members[i], kind, callsigns.Aircraft(word, flight, i + 1));
+            AddUnit(members[i], kind, names[i]);
     }
 
     private void AddUnit(ObjectBase unit, CallsignKind kind, string callsign)
@@ -122,18 +121,16 @@ internal sealed class Roster
             foreach (Squadron squadron in type.Squadrons.OrderBy(s => s._name))
             {
                 if (squadron.Numbers <= 0) continue;
-                string word = callsigns.NextWord(kind);
-                int flight = callsigns.NextFlightNumber(word);
+                // Four to a flight, the way the deck launches them.
+                List<string> names = callsigns.Flight(kind, squadron.Numbers);
                 for (int slot = 0; slot < squadron.Numbers; slot++)
                 {
-                    // Four to a flight, the way the deck launches them.
-                    int flightNumber = flight + slot / 4;
                     var element = new RosterElement
                     {
                         Key = $"w{deckOwner.UniqueID}|{type._fileName}|{squadron._name}|{slot}",
                         ClassName = type.DisplayName,
                         Kind = kind,
-                        Callsign = callsigns.Aircraft(word, flightNumber, slot % 4 + 1),
+                        Callsign = names[slot],
                         Carrier = deckOwner,
                         AircraftIni = type._fileName,
                         Squadron = squadron._name,

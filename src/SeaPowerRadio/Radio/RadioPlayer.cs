@@ -10,7 +10,7 @@ namespace SeaPowerRadio.Radio;
 /// The radio net: one voice at a time, highest priority first.
 /// <list type="bullet">
 /// <item>Urgent calls (priority ≤ 2: missile inbound, we're hit, bingo) cut into a routine call.</item>
-/// <item>Replies to the player's orders go before routine reports.</item>
+/// <item>Replies to the player's orders go before routine reports – and are mixed louder and cleaner.</item>
 /// <item>Calls go stale: replies after 6 s, contact reports after 8 s, the rest after 15 s – a late "copy" is worse than none.</item>
 /// <item>The same phrase from several units at once (a whole flight acknowledging) is said at most twice.</item>
 /// <item>A short, varying gap between calls, like a real net.</item>
@@ -64,7 +64,7 @@ internal sealed class RadioPlayer
         if (!EnsureSource())
             return;
         float now = Time.unscaledTime;
-        queue.RemoveAll(q => !q.Urgent && now - q.SubmittedAt > (q.Response ? 6f : q.Priority >= 5 ? 8f : 15f));
+        queue.RemoveAll(q => !q.Urgent && now - q.SubmittedAt > (q.Role == CallRole.Reply ? 6f : q.Priority >= 5 ? 8f : 15f));
 
         bool playing = current != null && (preparing || source.isPlaying);
         if (playing)
@@ -108,7 +108,10 @@ internal sealed class RadioPlayer
             yield break;
         }
 
-        currentClip = RadioFx.Build(parts, t.Profile, unchecked(++seed * 7919), Settings.RadioNoise.Value);
+        // The mix hierarchy: replies to the player clean and in front, alerts just as loud, reports behind them.
+        float level = t.Role == CallRole.Report ? Settings.ReportVolume.Value : 1f;
+        float noise = Settings.RadioNoise.Value * (t.Role == CallRole.Reply ? 0.6f : 1f);
+        currentClip = RadioFx.Build(parts, t.Profile, unchecked(++seed * 7919), noise, level);
         source.clip = currentClip;
         source.volume = Settings.Volume.Value;
         source.Play();

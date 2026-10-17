@@ -18,15 +18,15 @@ internal sealed class Transmission
     public float SubmittedAt;
     public string Text;                                        // human-readable, for the log
 
-    public bool Response;                                      // a unit answering the player (ack, order, refusal)
+    public CallRole Role = CallRole.Report;                     // from the main phrase, see Catalog
 
-    public bool Urgent => Priority <= 2;
+    public bool Urgent => Role == CallRole.Alert;
 
     /// <summary>
-    /// Queue order: urgent calls first, then units answering the player – an order should be acknowledged right
-    /// away, like the stock system's command channel – then everything else by priority.
+    /// Queue order: alerts first, then units answering the player – an order should be acknowledged right away,
+    /// like the stock system's command channel – then reports by priority.
     /// </summary>
-    public int Rank => Urgent ? -1000 + Priority : Response ? -100 : Priority;
+    public int Rank => Role == CallRole.Alert ? -1000 + Priority : Role == CallRole.Reply ? -100 : Priority;
 }
 
 /// <summary>
@@ -66,9 +66,14 @@ internal static class TransmissionBuilder
             return false;
 
         if (t.Phrase != null)
+        {
             t.Clips.Add(null); // a beat between two phrases in one call
+        }
         else
+        {
             t.Phrase = phrase;
+            t.Role = v.Role;
+        }
         t.Priority = Math.Min(t.Priority, v.Priority);
 
         if (v.Slot == null)

@@ -16,6 +16,7 @@ internal static class Settings
     public static ConfigEntry<bool> ReplaceStockVoices;
     public static ConfigEntry<float> Volume;
     public static ConfigEntry<float> RadioNoise;
+    public static ConfigEntry<float> ReportVolume;
 
     public static ConfigEntry<bool> ContactReports;
     public static ConfigEntry<float> FadeHysteresis;
@@ -40,6 +41,10 @@ internal static class Settings
             "Mute the game's voice lines and have every unit say them in its own voice and callsign.");
         Volume = file.Bind("2. Radio", "Volume", 1.0f,
             new ConfigDescription("Radio volume on top of the game's voice volume slider.", new AcceptableValueRange<float>(0f, 2f)));
+        ReportVolume = file.Bind("2. Radio", "Reports volume", 0.5f,
+            new ConfigDescription("Level of the background traffic (contacts, launches, status) relative to replies to your " +
+                                  "orders and alerts, which always play at full level. 0.5 = about 6 dB quieter.",
+                                  new AcceptableValueRange<float>(0f, 1f)));
         RadioNoise = file.Bind("2. Radio", "Radio noise", 1.0f,
             new ConfigDescription("How much hiss and crackle sits under the voices. 0 = clean.", new AcceptableValueRange<float>(0f, 3f)));
 

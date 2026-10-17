@@ -4,6 +4,14 @@ using System.IO;
 
 namespace SeaPowerRadio.Radio;
 
+/// <summary>How a call sits in the mix: replies to the player in front, alerts as loud, reports in the background.</summary>
+internal enum CallRole
+{
+    Reply,
+    Alert,
+    Report,
+}
+
 /// <summary>One spoken variant of a phrase, as rendered (tools/voicegen/phrases.py → catalog.txt).</summary>
 internal sealed class PhraseVariant
 {
@@ -13,6 +21,7 @@ internal sealed class PhraseVariant
     public bool HasA;        // clip <Phrase>_<N>_a before the number
     public bool HasB;        // clip <Phrase>_<N>_b after the number
     public int Priority;
+    public CallRole Role;
 }
 
 /// <summary>
@@ -56,6 +65,7 @@ internal static class Catalog
                 HasA = f[3] == "1",
                 HasB = f[4] == "1",
                 Priority = int.Parse(f[5]),
+                Role = ParseRole(f.Length > 6 ? f[6] : null, int.Parse(f[5])),
             };
             if (!Phrases.TryGetValue(v.Phrase, out List<PhraseVariant> list))
                 Phrases[v.Phrase] = list = new List<PhraseVariant>();
@@ -69,6 +79,17 @@ internal static class Catalog
         }
         Loaded = true;
         ModLog.Info($"Voice catalog: {Phrases.Count} phrases, {Stock.Count} stock keys mapped.");
+    }
+
+    private static CallRole ParseRole(string role, int priority)
+    {
+        switch (role)
+        {
+            case "reply": return CallRole.Reply;
+            case "alert": return CallRole.Alert;
+            case "report": return CallRole.Report;
+            default: return priority <= 2 ? CallRole.Alert : priority >= 7 ? CallRole.Reply : CallRole.Report;
+        }
     }
 
     private static IEnumerable<string> ReadRows(string file)

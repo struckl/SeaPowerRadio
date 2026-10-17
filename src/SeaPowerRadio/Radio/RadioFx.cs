@@ -28,7 +28,7 @@ internal static class RadioFx
 
     private const float PhraseGapSeconds = 0.12f;
 
-    public static AudioClip Build(IList<AudioClip> parts, string profileName, int seed, float noiseScale)
+    public static AudioClip Build(IList<AudioClip> parts, string profileName, int seed, float noiseScale, float level = 1f)
     {
         var rng = new System.Random(seed);
         Profile p = Profiles.TryGetValue(profileName ?? "", out Profile found) ? found : Profiles["near"];
@@ -83,7 +83,7 @@ internal static class RadioFx
         // rendered clips sit around -26 LUFS. Bring the voice up to the stock level and catch the peaks with a soft
         // limiter – which also adds a little more transmitter grit. Hiss and crackle get the same gain, so the
         // noise/voice balance stays the one from the approved samples.
-        float gain = Mathf.Clamp(TargetSpeechRms / SpeechRms(speech), 1f, 12f);
+        float gain = Mathf.Clamp(TargetSpeechRms * level / SpeechRms(speech), 0.25f, 12f);
         for (int i = 0; i < length; i++)
             mix[i] = SoftLimit(mix[i] * gain);
 

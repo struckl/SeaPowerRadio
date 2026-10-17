@@ -176,6 +176,29 @@ internal sealed class Roster
         return Find(unit);
     }
 
+    /// <summary>
+    /// The element that speaks for a unit: its roster entry, or a late entry for a player unit nobody foresaw
+    /// (air support, a unit enabled by a trigger). Null for units that aren't the player's.
+    /// </summary>
+    public RosterElement Resolve(ObjectBase unit)
+    {
+        if (unit == null) return null;
+        RosterElement element = Find(unit);
+        if (element != null) return element;
+        return unit.IsPlayerObject && unit.isUnit() ? AddLate(unit) : null;
+    }
+
+    /// <summary>
+    /// Who speaks for the task force when the game reports without a speaker (mission updates, intel): the first
+    /// player ship still afloat, else any element that has a unit.
+    /// </summary>
+    public RosterElement CommandVoice()
+    {
+        RosterElement ship = elements.FirstOrDefault(e => !e.IsAirWingSlot && e.Unit != null && !e.Unit.IsDestroyed
+                                                         && (e.Kind == CallsignKind.Ship || e.Kind == CallsignKind.Shore));
+        return ship ?? elements.FirstOrDefault(e => e.Unit != null && !e.Unit.IsDestroyed) ?? elements.FirstOrDefault();
+    }
+
     public string Describe()
     {
         var sb = new StringBuilder();

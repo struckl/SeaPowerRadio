@@ -8,7 +8,8 @@ namespace SeaPowerRadio.Patches;
 /// <summary>
 /// Every stock voice line funnels through two private methods of <c>SeaPower.VoiceMessage</c>:
 /// <c>SubmitMessage</c> (PlayVoiceMessage / PlayVoiceSequence / PlayAircraftAltitude) and <c>AppendMessage</c>
-/// (AddVoiceToSequence). Prefixing both gives us each line's semantic key and speaker, and returning false mutes it.
+/// (AddVoiceToSequence). Prefixing both gives us each line's semantic key and speaker; when the mod speaks the
+/// line itself (Radio/StockVoiceRouter) the prefix returns false and the stock line is never queued.
 /// </summary>
 internal static class StockVoicePatches
 {
@@ -56,7 +57,7 @@ internal static class StockVoicePatches
             }
 
             EventBus.Publish(request);
-            return !Settings.SuppressStockVoice.Value;
+            return !Radio.StockVoiceRouter.Handle(request);
         }
         catch (Exception ex)
         {

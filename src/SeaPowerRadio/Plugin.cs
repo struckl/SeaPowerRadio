@@ -41,6 +41,8 @@ public class Plugin : IAnchorChainMod
                 return;
             }
 
+            Radio.Catalog.Load(Voices.VoiceLibrary.VoicesDirectory);
+
             Harmony = new Harmony(Guid);
             PatchRegistry.ApplyAll(Harmony);
             Roster.RosterService.Init();

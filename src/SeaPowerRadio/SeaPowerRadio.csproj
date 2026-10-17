@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>SeaPowerRadio</AssemblyName>
     <RootNamespace>SeaPowerRadio</RootNamespace>
     <Product>Per-unit radio voices and why-not callouts for Sea Power.</Product>
@@ -25,7 +25,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net472" Version="1.0.3" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.4.21" IncludeAssets="compile" PrivateAssets="all" />
     <PackageReference Include="HarmonyX" Version="2.9.0" IncludeAssets="compile" PrivateAssets="all" />
   </ItemGroup>
@@ -43,11 +42,14 @@
     <!--Pulled in by game types we touch (ObjectBase/SceneCreator signatures), compile-only.-->
     <Reference Include="Noesis.NoesisGUI"><HintPath>$(ManagedDir)\Noesis.NoesisGUI.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.ParticleSystemModule"><HintPath>$(ManagedDir)\UnityEngine.ParticleSystemModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UniRx"><HintPath>$(ManagedDir)\UniRx.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Unity.Entities"><HintPath>$(ManagedDir)\Unity.Entities.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Unity.Collections"><HintPath>$(ManagedDir)\Unity.Collections.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="AnchorChain"><HintPath>$(AnchorChainDir)\AnchorChain.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
 
   <ItemGroup>
-    <ModFiles Include="..\..\mod\**\*.*" />
+    <ModFiles Include="..\..\mod\**\*.*" Exclude="..\..\mod\**\*.part.mp3" />
   </ItemGroup>
 
   <!--Copy plugin + mod files into the local mod folder after every build (only if the game is installed).-->
@@ -55,7 +57,7 @@
     <MakeDir Directories="$(ModDeployDir)" />
     <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(ModDeployDir)" />
     <Copy SourceFiles="$(OutputPath)$(AssemblyName).pdb" DestinationFolder="$(ModDeployDir)" Condition="Exists('$(OutputPath)$(AssemblyName).pdb')" />
-    <Copy SourceFiles="@(ModFiles)" DestinationFolder="$(ModDeployDir)\%(RecursiveDir)" />
+    <Copy SourceFiles="@(ModFiles)" DestinationFolder="$(ModDeployDir)\%(RecursiveDir)" SkipUnchangedFiles="true" />
     <Message Importance="high" Text="SeaPowerRadio deployed to $(ModDeployDir)" />
   </Target>
 

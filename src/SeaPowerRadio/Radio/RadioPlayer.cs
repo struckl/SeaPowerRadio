@@ -10,7 +10,8 @@ namespace SeaPowerRadio.Radio;
 /// The radio net: one voice at a time, highest priority first.
 /// <list type="bullet">
 /// <item>Urgent calls (priority ≤ 2: missile inbound, we're hit, bingo) cut into a routine call.</item>
-/// <item>Routine calls go stale: contact reports after 8 s, the rest after 15 s – a late "copy" is worse than none.</item>
+/// <item>Replies to the player's orders go before routine reports.</item>
+/// <item>Calls go stale: replies after 6 s, contact reports after 8 s, the rest after 15 s – a late "copy" is worse than none.</item>
 /// <item>The same phrase from several units at once (a whole flight acknowledging) is said at most twice.</item>
 /// <item>A short, varying gap between calls, like a real net.</item>
 /// </list>
@@ -47,7 +48,7 @@ internal sealed class RadioPlayer
         }
         queue.Add(t);
         if (queue.Count > MaxQueue)
-            queue.Remove(queue.OrderByDescending(q => q.Priority).ThenBy(q => q.SubmittedAt).First());
+            queue.Remove(queue.OrderByDescending(q => q.Rank).ThenBy(q => q.SubmittedAt).First());
         if (Settings.LogRadio.Value)
             ModLog.Info($"[radio] queued p{t.Priority} {t.Voice}: {t.Text}");
     }
@@ -63,7 +64,7 @@ internal sealed class RadioPlayer
         if (!EnsureSource())
             return;
         float now = Time.unscaledTime;
-        queue.RemoveAll(q => !q.Urgent && now - q.SubmittedAt > (q.Priority >= 5 ? 8f : 15f));
+        queue.RemoveAll(q => !q.Urgent && now - q.SubmittedAt > (q.Response ? 6f : q.Priority >= 5 ? 8f : 15f));
 
         bool playing = current != null && (preparing || source.isPlaying);
         if (playing)
@@ -82,7 +83,7 @@ internal sealed class RadioPlayer
         if (queue.Count == 0 || (now < nextAllowed && !queue.Any(q => q.Urgent)))
             return;
 
-        Transmission next = queue.OrderBy(q => q.Priority).ThenBy(q => q.SubmittedAt).First();
+        Transmission next = queue.OrderBy(q => q.Rank).ThenBy(q => q.SubmittedAt).First();
         queue.Remove(next);
         current = next;
         preparing = true;

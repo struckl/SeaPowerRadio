@@ -41,6 +41,8 @@ internal static class StockVoiceRouter
         Transmission t = TransmissionBuilder.Build(speaker, phrase, number);
         if (t == null)
             return true;
+        // Lines a unit says about itself in reply to the player: acknowledgements, manoeuvres, sensors, refusals.
+        t.Response = request.Speaker != null && t.Priority >= 6;
         Player.Submit(t);
         return true;
     }

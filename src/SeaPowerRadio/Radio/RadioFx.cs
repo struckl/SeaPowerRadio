@@ -76,19 +76,48 @@ internal static class RadioFx
         float[] crackle = Velvet(rng, length, density, p.Crackle * noiseScale);
         BandLimit(crackle, rate, 600, 3200);
 
-        float peak = 0f;
         for (int i = 0; i < length; i++)
-        {
             mix[i] += hiss[i] + crackle[i];
-            peak = Math.Max(peak, Math.Abs(mix[i]));
-        }
-        if (peak > 0.8f)
-            for (int i = 0; i < length; i++)
-                mix[i] *= 0.8f / peak;
+
+        // Loudness: the game's own voice lines are mastered hot (about -11 LUFS, peaks at -6 dBFS) while the
+        // rendered clips sit around -26 LUFS. Bring the voice up to the stock level and catch the peaks with a soft
+        // limiter – which also adds a little more transmitter grit. Hiss and crackle get the same gain, so the
+        // noise/voice balance stays the one from the approved samples.
+        float gain = Mathf.Clamp(TargetSpeechRms / SpeechRms(speech), 1f, 12f);
+        for (int i = 0; i < length; i++)
+            mix[i] = SoftLimit(mix[i] * gain);
 
         AudioClip clip = AudioClip.Create("SeaPowerRadio.tx", length, 1, rate, false);
         clip.SetData(mix, 0);
         return clip;
+    }
+
+    // RMS of the stock voice clips while speaking (mean volume about -15 dBFS).
+    private const float TargetSpeechRms = 0.17f;
+    private const float LimitKnee = 0.6f;
+
+    /// <summary>RMS over the voiced part only (pauses between words would drag the average down).</summary>
+    private static float SpeechRms(float[] speech)
+    {
+        double sum = 0;
+        int count = 0;
+        foreach (float s in speech)
+        {
+            if (Math.Abs(s) < 0.005f) continue;
+            sum += s * s;
+            count++;
+        }
+        return count == 0 ? TargetSpeechRms : Math.Max(1e-4f, (float)Math.Sqrt(sum / count));
+    }
+
+    /// <summary>Linear below the knee, tanh above it, never past 0.98.</summary>
+    private static float SoftLimit(float x)
+    {
+        float a = Math.Abs(x);
+        if (a <= LimitKnee) return x;
+        float room = 0.98f - LimitKnee;
+        float y = LimitKnee + room * (float)Math.Tanh((a - LimitKnee) / room);
+        return x < 0 ? -y : y;
     }
 
     private static float Range(System.Random rng, float min, float max) => min + (float)rng.NextDouble() * (max - min);

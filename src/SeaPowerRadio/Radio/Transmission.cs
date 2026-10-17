@@ -18,7 +18,15 @@ internal sealed class Transmission
     public float SubmittedAt;
     public string Text;                                        // human-readable, for the log
 
+    public bool Response;                                      // a unit answering the player (ack, order, refusal)
+
     public bool Urgent => Priority <= 2;
+
+    /// <summary>
+    /// Queue order: urgent calls first, then units answering the player – an order should be acknowledged right
+    /// away, like the stock system's command channel – then everything else by priority.
+    /// </summary>
+    public int Rank => Urgent ? -1000 + Priority : Response ? -100 : Priority;
 }
 
 /// <summary>

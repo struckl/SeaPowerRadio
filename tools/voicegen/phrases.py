@@ -18,9 +18,9 @@ three digits (depth), {alt} altitude, {count} 2-9. The phrase is then cut into <
 they have around a real number. Without a slot the clip is <key>_<n>.
 
 Numbers are assembled by the plugin from pieces:
-    track 7034      -> pm_70 + pe_34            (pair mid + pair end)
-    bearing 273     -> dm_2  + pe_73            (digit mid + pair end)
-    bearing 090     -> dm_0  + pe_90
+    track 7034      -> pm_70 + pe_34            (pair mid + pair end: "seven zero, three four")
+    bearing 273     -> brg_273                  (a whole bearing)
+    depth 150       -> dm_1 + pe_50             ("one, five zero")
     depth 50        -> pe_50
     altitude 15000  -> alt_15  ("angels fifteen"); below 1000 ft: alt_lo_5 ("five hundred feet")
     count 3         -> cnt_3
@@ -92,9 +92,9 @@ def take(*segments: Segment, jitter: int = 3, sample: bool = False, priority: in
 CARRIER_CALLSIGN = "Viper two-one,"
 CALLSIGN_TAIL = "ready for tasking."
 DUMMY = {
-    "trk": "seven zero three four",
+    "trk": "seven zero, three four",
     "brg": "zero niner zero",
-    "num": "one five zero",
+    "num": "one, five zero",
     "alt": "angels twenty",
     "count": "three",
 }
@@ -130,7 +130,7 @@ PHRASES: list[Phrase] = [
     P("OnStation", "on station.", "in position.", priority=6),
     P("ReturningToFormation", "returning to station.", "rejoining the formation.", priority=6),
     P("ReturningToFormationAir", "rejoining on lead.", "coming back to the flight.", priority=6),
-    P("SetAltitude", "climbing to {alt}.", "leveling at {alt}.", priority=6),
+    P("SetAltitude", "climbing, {alt}.", "leveling off, {alt}.", priority=6),
     P("SetSpeedSlow", "slowing down.", "reducing speed.", priority=6),
     P("SetSpeedFull", "ahead full.", "increasing speed.", priority=6),
     P("SetSpeedFlank", "ahead flank!", "flank speed.", priority=6),
@@ -167,14 +167,14 @@ PHRASES: list[Phrase] = [
     P("LaunchTransient", "launch transient, bearing {brg}!", priority=3),
     P("BuoyContact", "buoy's hot.", "contact on the buoys.", priority=5),
     P("MadContact", "MAD, MAD, MAD!", "mad man, marking.", priority=5),
-    P("ContactFaded", "lost contact, track {trk}.", "track {trk} faded.", priority=5, sample=True),
-    P("ContactsFaded", "lost {count} contacts.", priority=5, note="mod aggregation"),
-    P("ContactIntermittent", "track {trk} intermittent.", "track {trk} is in and out.", priority=5,
+    P("ContactFaded", "lost contact, track {trk}.", "track {trk}, faded.", priority=5, sample=True),
+    P("ContactsFaded", "contacts lost, {count}.", priority=5, note="mod aggregation"),
+    P("ContactIntermittent", "track {trk}, intermittent.", "track {trk}, in and out.", priority=5,
       note="mod flicker detection"),
     P("ContactRegained", "regained track {trk}.", priority=5),
-    P("TrackHostile", "track {trk}, hostile.", "track {trk} is hostile.", priority=5),
-    P("TrackNeutral", "track {trk}, neutral.", "track {trk} is neutral.", priority=5),
-    P("TrackFriendly", "track {trk}, friendly.", "track {trk} is friendly.", priority=5),
+    P("TrackHostile", "track {trk}, hostile.", "track {trk}, confirmed hostile.", priority=5),
+    P("TrackNeutral", "track {trk}, neutral.", "track {trk}, confirmed neutral.", priority=5),
+    P("TrackFriendly", "track {trk}, friendly.", "track {trk}, confirmed friendly.", priority=5),
     P("BanditBandit", "bandit, bandit.", "bandits.", priority=5, sample=True),
     P("MerchantTraffic", "looks like merchant traffic.", priority=5),
     # T3 -- who / what identified it
@@ -213,7 +213,7 @@ PHRASES: list[Phrase] = [
     P("Winchester", "winchester.", "winchester, no more ordnance.", priority=6, sample=True),
 
     # === Hits / kills =============================================================================================
-    P("SplashTrack", "splash track {trk}!", "track {trk} is down!", priority=3),
+    P("SplashTrack", "splash track {trk}!", "track {trk}, he's down!", priority=3),
     P("HitTrack", "hit on track {trk}!", priority=3),
     P("SplashOne", "splash one!", "splash one bandit!", "good kill, good kill!", priority=3, sample=True),
     P("TargetDestroyed", "target destroyed.", "good hits, target's burning.", priority=4),
@@ -247,7 +247,7 @@ PHRASES: list[Phrase] = [
     P("WaveOff", "wave off, wave off.", priority=6),
 
     # === Submarine ================================================================================================
-    P("MakeDepth", "make my depth {num} feet.", priority=6),
+    P("MakeDepth", "make my depth, {num} feet.", priority=6),
     P("PeriscopeDepth", "periscope depth.", priority=6),
     P("Surface", "surface the boat.", priority=6),
     P("EmergencySurface", "emergency surface!", priority=2),
@@ -324,6 +324,38 @@ PHRASES: list[Phrase] = [
     P("WhyNot_RebaseTooFar", "negative, too far to make it.", priority=6, note="CanNotRebase + RebaseTooFar"),
     P("WhyNot_RebaseUnsupported", "negative, can't take that type aboard.", priority=6,
       note="CanNotRebase + RebaseUnsupported"),
+    P("WhyNot_ReloadIn1", "stand by, reloading, ready in one minute.", "reloading, give me one minute.", priority=4,
+      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
+    P("WhyNot_ReloadIn2", "stand by, reloading, ready in two minutes.", "reloading, give me two minutes.", priority=4,
+      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
+    P("WhyNot_ReloadIn3", "stand by, reloading, ready in three minutes.", "reloading, give me three minutes.", priority=4,
+      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
+    P("WhyNot_ReloadIn4", "stand by, reloading, ready in four minutes.", "reloading, give me four minutes.", priority=4,
+      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
+    P("WhyNot_ReloadIn5", "stand by, reloading, ready in five minutes.", "reloading, give me five minutes.", priority=4,
+      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
+    P("WhyNot_ReloadIn6", "stand by, reloading, ready in six minutes.", "reloading, give me six minutes.", priority=4,
+      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
+    P("WhyNot_ReloadIn7", "stand by, reloading, ready in seven minutes.", "reloading, give me seven minutes.", priority=4,
+      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
+    P("WhyNot_ReloadIn8", "stand by, reloading, ready in eight minutes.", "reloading, give me eight minutes.", priority=4,
+      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
+    P("WhyNot_ReloadIn9", "stand by, reloading, ready in nine minutes.", "reloading, give me nine minutes.", priority=4,
+      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
+    P("WhyNot_ReloadIn10", "stand by, reloading, ready in ten minutes.", "reloading, give me ten minutes.", priority=4,
+      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
+    P("WhyNot_ReloadSoon", "stand by, reloading, ready in under a minute.", "reloading, almost there.", priority=4),
+    P("WhyNot_ReloadLong", "stand by, reloading, that'll take a while.", priority=4),
+    P("WhyNot_SonarOnly", "negative, that's a sonar contact only, no targeting track.",
+      "unable, sonar track only, no fire control solution.", priority=4,
+      note="radar / ARS weapon ordered against a contact held only by sonar"),
+    P("WhyNot_NoSensorTrack", "unable, no sensor track on that target.", priority=4,
+      note="EngageState.TargetIsNotDetectableBySearchSensor"),
+    P("WhyNot_NotAllowed", "negative, not cleared to engage.", priority=4, note="EngageState.EngagementNotAllowed"),
+    P("Queued_2", "copy, queued, number two in line.", priority=6, note="order stacked behind another"),
+    P("Queued_3", "copy, queued, number three in line.", priority=6),
+    P("Queued_4", "copy, queued, number four in line.", priority=6),
+    P("Queued_5", "copy, queued, five in line.", priority=6),
 ]
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -346,7 +378,7 @@ CALLSIGN_WORDS = AIR_WORDS + SINGLE_WORDS
 
 SAMPLE_WORDS = {"Viper", "Sentinel"}
 SAMPLE_FLIGHTPOS = {"21", "22"}
-SAMPLE_NUMBERS = {"dm_0", "dm_2", "pe_90", "pe_70", "pm_70", "pe_34", "pe_35", "pe_73"}
+SAMPLE_NUMBERS = {"brg_090", "brg_273", "pm_70", "pe_34", "pe_35"}
 
 SLOT = re.compile(r"\{(trk|brg|num|alt|count)\}")
 
@@ -363,11 +395,15 @@ def phrase_takes(phrase: Phrase) -> list[Take]:
             number = DUMMY[m.group(1)]
             if after and after[0] in ".,!?":   # punctuation right after the number belongs to the number
                 number, after = number + after[0], after[1:].strip()
+            # A spoken pause on both sides of the number: every cut then falls into silence instead of into running
+            # speech, which is what made the first library's numbers sound chopped.
             if before:
-                segs.append(Segment(before, f"{phrase.key}_{n}_a"))
-            segs.append(Segment(number if after else number.rstrip(".,!?") + "."))
+                segs.append(Segment(before if before[-1] in ",.!?" else before + ",", f"{phrase.key}_{n}_a"))
             if after:
+                segs.append(Segment(number if number[-1] in ",.!?" else number + ","))
                 segs.append(Segment(after, f"{phrase.key}_{n}_b"))
+            else:
+                segs.append(Segment(number.rstrip(".,!?") + "."))
         takes.append(take(*segs, jitter=4, sample=phrase.sample, priority=phrase.priority))
     return takes
 
@@ -390,27 +426,76 @@ def build_takes() -> list[Take]:
         takes.append(take(Segment(f"{word},", f"cs_{word.lower()}"), Segment(CALLSIGN_TAIL),
                           jitter=1, sample=word in SAMPLE_WORDS))
 
-    # Number pieces. dm_D: a leading digit with more to come; pm_PP: a pair with more to come; pe_PP: closing pair.
+    # Number pieces, each recorded between spoken pauses so the cuts fall into silence:
+    #   brg_DDD  a whole bearing / course ("bearing, two seven three.")
+    #   pm_PP    first pair of a track number, more to come ("track, seven zero, one one.")
+    #   pe_PP    closing pair ("track, seven zero, three four.")
+    #   dm_D     leading digit of a three-digit number (depth: "depth, one, five zero.")
+    for deg in range(360):
+        b = f"{deg:03d}"
+        takes.append(take(Segment("bearing,"), Segment(f"{digits(b)}.", f"brg_{b}"),
+                          jitter=1, sample=f"brg_{b}" in SAMPLE_NUMBERS))
     for d in range(10):
-        takes.append(take(Segment("bearing"), Segment(DIGIT_WORDS[d], f"dm_{d}"), Segment("seven three."),
+        takes.append(take(Segment("depth,"), Segment(f"{DIGIT_WORDS[d]},", f"dm_{d}"), Segment("five zero."),
                           jitter=1, sample=f"dm_{d}" in SAMPLE_NUMBERS))
     for pair in range(100):
         p = f"{pair:02d}"
-        takes.append(take(Segment("track"), Segment(digits(p), f"pm_{p}"), Segment("one one."),
+        takes.append(take(Segment("track,"), Segment(f"{digits(p)},", f"pm_{p}"), Segment("one one."),
                           jitter=1, sample=f"pm_{p}" in SAMPLE_NUMBERS))
-        takes.append(take(Segment("track seven zero"), Segment(f"{digits(p)}.", f"pe_{p}"),
+        takes.append(take(Segment("track, seven zero,"), Segment(f"{digits(p)}.", f"pe_{p}"),
                           jitter=1, sample=f"pe_{p}" in SAMPLE_NUMBERS))
     # Altitude: angels 1..60 (thousands of feet), and the low ones in hundreds.
     for k in range(1, 61):
-        takes.append(take(Segment("climbing to"), Segment(f"angels {cardinal(k)}.", f"alt_{k}"), jitter=1))
+        takes.append(take(Segment("climbing,"), Segment(f"angels {cardinal(k)}.", f"alt_{k}"), jitter=1))
     for h in (1, 2, 3, 5, 8):
-        takes.append(take(Segment("descending to"), Segment(f"{ONES[h]} hundred feet.", f"alt_lo_{h}"), jitter=1))
+        takes.append(take(Segment("descending,"), Segment(f"{ONES[h]} hundred feet.", f"alt_lo_{h}"), jitter=1))
     for c, word in COUNT_WORDS.items():
-        takes.append(take(Segment("lost"), Segment(word, f"cnt_{c}"), Segment("contacts."), jitter=1))
+        takes.append(take(Segment("contacts lost,"), Segment(f"{word}.", f"cnt_{c}"), jitter=1))
     return takes
 
 
-TAKES = build_takes()
+def callsign_number_takes() -> list[Take]:
+    """The number after an in-game callsign word ("Lancer | three"), in every voice."""
+    words = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven",
+             "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"]
+    return [take(Segment("Viper"), Segment(f"{words[n]},", f"cn_{n}"), Segment(CALLSIGN_TAIL), jitter=1)
+            for n in range(1, 21)]
+
+
+TAKES = build_takes() + callsign_number_takes()
+
+
+def name_takes(persona_id: str) -> list[Take]:
+    """In-game names bound to this voice (names.py): ship/shore names alone, squadron words before a number."""
+    import names as _names
+    out = []
+    bound = _bindings()
+    for n in _names.all_names():
+        if persona_id not in bound[n.key]:
+            continue
+        if n.kind == "unit":
+            out.append(take(Segment(n.spoken + ",", n.key), Segment(CALLSIGN_TAIL), jitter=1, priority=6))
+        else:
+            out.append(take(Segment(n.spoken, n.key), Segment("three,"), Segment(CALLSIGN_TAIL), jitter=1,
+                            priority=6))
+    return out
+
+
+_BINDINGS: dict[str, list[str]] | None = None
+
+
+def _bindings() -> dict[str, list[str]]:
+    global _BINDINGS
+    if _BINDINGS is None:
+        import names as _names
+        from cast import CAST
+        _BINDINGS = _names.bindings([p.id for p in CAST])
+    return _BINDINGS
+
+
+def takes_for(persona_id: str) -> list[Take]:
+    """Everything one voice says: the shared catalog plus the in-game names bound to it."""
+    return TAKES + name_takes(persona_id)
 _keys = [k for t in TAKES for k in t.keys]
 assert len(set(_keys)) == len(_keys), "duplicate clip key"
 
@@ -524,7 +609,7 @@ REPLY_PHRASES = {
 
 
 def role_of(p: Phrase) -> str:
-    if p.key in REPLY_PHRASES or p.key.startswith("WhyNot_") or p.priority >= 7:
+    if p.key in REPLY_PHRASES or p.key.startswith(("WhyNot_", "Queued_")) or p.priority >= 7:
         return "reply"
     if p.priority <= 2:
         return "alert"

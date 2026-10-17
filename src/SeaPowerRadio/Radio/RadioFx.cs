@@ -37,22 +37,25 @@ internal static class RadioFx
         foreach (AudioClip c in parts)
             if (c != null) { rate = c.frequency; break; }
 
-        // Voice: clips back to back, a short beat where a null marks a new phrase.
+        // Voice: clips back to back, a short beat where a null marks a new phrase. Where a cut fell into running
+        // speech (number pieces cut out of "seven zero three four"), the two clips are cross-faded instead of
+        // butted together, so the join doesn't chop.
         var voice = new List<float>(rate * 4);
+        bool previousWasClip = false;
         foreach (AudioClip c in parts)
         {
             if (c == null)
             {
                 voice.AddRange(new float[(int)(PhraseGapSeconds * rate)]);
+                previousWasClip = false;
                 continue;
             }
-            var data = new float[c.samples * c.channels];
-            c.GetData(data, 0);
-            if (c.channels == 1)
-                voice.AddRange(data);
+            float[] data = Mono(c);
+            if (previousWasClip)
+                AppendJoined(voice, data, rate);
             else
-                for (int i = 0; i < data.Length; i += c.channels)
-                    voice.Add(data[i]);
+                voice.AddRange(data);
+            previousWasClip = true;
         }
         float[] speech = voice.ToArray();
         BandLimit(speech, rate, p.Hp, p.Lp);
@@ -90,6 +93,65 @@ internal static class RadioFx
         AudioClip clip = AudioClip.Create("SeaPowerRadio.tx", length, 1, rate, false);
         clip.SetData(mix, 0);
         return clip;
+    }
+
+    private const float CrossfadeSeconds = 0.025f;
+    private const float EdgeSeconds = 0.015f;
+    private const float HotEdgeRatio = 0.5f;   // edge RMS vs. clip RMS above this = cut in running speech (~ -6 dB)
+
+    private static float[] Mono(AudioClip c)
+    {
+        var data = new float[c.samples * c.channels];
+        c.GetData(data, 0);
+        if (c.channels == 1)
+            return data;
+        var mono = new float[c.samples];
+        for (int i = 0; i < mono.Length; i++)
+            mono[i] = data[i * c.channels];
+        return mono;
+    }
+
+    /// <summary>
+    /// Append <paramref name="next"/>. If both sides of the seam are loud (the previous clip ends and this one
+    /// starts mid-sound), overlap them by a short equal-power crossfade; otherwise just butt them together.
+    /// </summary>
+    private static void AppendJoined(List<float> voice, float[] next, int rate)
+    {
+        int edge = (int)(EdgeSeconds * rate);
+        int fade = Math.Min((int)(CrossfadeSeconds * rate), Math.Min(voice.Count, next.Length) / 3);
+        if (fade < 8 || voice.Count < edge || next.Length < edge)
+        {
+            voice.AddRange(next);
+            return;
+        }
+
+        bool hotEnd = Rms(voice, voice.Count - edge, edge) > HotEdgeRatio * Rms(voice, Math.Max(0, voice.Count - rate / 2), Math.Min(voice.Count, rate / 2));
+        bool hotStart = Rms(next, 0, edge) > HotEdgeRatio * Rms(next, 0, Math.Min(next.Length, rate / 2));
+        if (!hotEnd && !hotStart)
+        {
+            voice.AddRange(next);
+            return;
+        }
+
+        int start = voice.Count - fade;
+        for (int i = 0; i < fade; i++)
+        {
+            float t = (i + 0.5f) / fade;
+            float fadeOut = Mathf.Cos(t * Mathf.PI * 0.5f);
+            float fadeIn = Mathf.Sin(t * Mathf.PI * 0.5f);
+            voice[start + i] = voice[start + i] * fadeOut + next[i] * fadeIn;
+        }
+        for (int i = fade; i < next.Length; i++)
+            voice.Add(next[i]);
+    }
+
+    private static float Rms(IList<float> x, int from, int count)
+    {
+        if (count <= 0) return 0f;
+        double sum = 0;
+        for (int i = from; i < from + count; i++)
+            sum += x[i] * x[i];
+        return (float)Math.Sqrt(sum / count);
     }
 
     // RMS of the stock voice clips while speaking (mean volume about -15 dBFS).

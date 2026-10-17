@@ -10,18 +10,21 @@ internal sealed class VoicePersona
     public string Id;          // folder name in the voice library, e.g. "us_m_03"
     public string Language;    // "en" in v1; Warsaw Pact voices plug in as another language
     public string Gender;      // "m" / "f"
-    public string Accent;      // "us", "gb", "ca", "au", "nz", "ie"
+    public string Accent;      // "us", "gb", "ca", "au", "nz", "ie", "sc", "ni"
 }
 
 /// <summary>
-/// Gives every element of a mission its own voice. Deterministic per mission (same seed → same voices after a
-/// reload) and unique while the pool lasts; once every persona is in use the pool is reshuffled and reused, so two
-/// elements share a voice only in missions with more elements than voices.
+/// Gives every element of a mission its own voice. Named units (a ship's in-game name, a squadron callsign) can
+/// only use the few voices their name was rendered in, so they ask for those first; everyone else gets the next
+/// unused voice of a per-mission shuffle. Deterministic per mission (same seed and order → same voices after a
+/// reload) and unique while the pool lasts; after that voices are shared.
 /// </summary>
 internal sealed class VoiceAssignment
 {
     private readonly List<VoicePersona> order;
+    private readonly Dictionary<string, VoicePersona> byId;
     private readonly Dictionary<string, VoicePersona> byElement = new Dictionary<string, VoicePersona>();
+    private readonly HashSet<string> used = new HashSet<string>();
     private int next;
 
     public VoiceAssignment(IEnumerable<VoicePersona> pool, string missionSeed, string language = "en")
@@ -29,23 +32,51 @@ internal sealed class VoiceAssignment
         var rng = new StableRandom("voices|" + missionSeed);
         // Sort first so the shuffle does not depend on the order the library happened to be read from disk.
         order = rng.Shuffled(pool.Where(p => p.Language == language).OrderBy(p => p.Id));
+        byId = order.ToDictionary(p => p.Id);
     }
 
     public int PoolSize => order.Count;
 
-    /// <summary>
-    /// Voice for an element. <paramref name="elementKey"/> must be stable across reloads (unit id from the mission
-    /// file, or carrier + air-wing slot for aircraft not launched yet). Elements must be requested in a stable order.
-    /// </summary>
+    /// <summary>Next unused voice for an element (stable key: unit id, or carrier + air-wing slot).</summary>
     public VoicePersona For(string elementKey)
     {
         if (byElement.TryGetValue(elementKey, out VoicePersona persona))
             return persona;
         if (order.Count == 0)
             return null;
-        persona = order[next % order.Count];
+        persona = null;
+        for (int i = 0; i < order.Count && persona == null; i++)
+        {
+            VoicePersona candidate = order[(next + i) % order.Count];
+            if (!used.Contains(candidate.Id))
+                persona = candidate;
+        }
+        persona ??= order[next % order.Count]; // everyone is taken: share
         next++;
+        return Bind(elementKey, persona);
+    }
+
+    /// <summary>
+    /// A voice from <paramref name="candidates"/> (the voices a name was rendered in): the first one nobody uses
+    /// yet, else the first one even if shared – saying the right name matters more than a unique voice.
+    /// Falls back to <see cref="For"/> when no candidate is in the library.
+    /// </summary>
+    public VoicePersona Prefer(string elementKey, IEnumerable<string> candidates)
+    {
+        var known = candidates?.Where(byId.ContainsKey).ToList();
+        if (known == null || known.Count == 0)
+            return For(elementKey);
+        string id = known.FirstOrDefault(c => !used.Contains(c)) ?? known[0];
+        return Bind(elementKey, byId[id]);
+    }
+
+    public bool IsAmong(VoicePersona persona, IEnumerable<string> candidates) =>
+        persona != null && candidates != null && candidates.Contains(persona.Id);
+
+    private VoicePersona Bind(string elementKey, VoicePersona persona)
+    {
         byElement[elementKey] = persona;
+        used.Add(persona.Id);
         return persona;
     }
 }

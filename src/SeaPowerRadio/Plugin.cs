@@ -42,6 +42,7 @@ public class Plugin : IAnchorChainMod
             }
 
             Radio.Catalog.Load(Voices.VoiceLibrary.VoicesDirectory);
+            Radio.Names.Load(Voices.VoiceLibrary.VoicesDirectory);
 
             Harmony = new Harmony(Guid);
             PatchRegistry.ApplyAll(Harmony);

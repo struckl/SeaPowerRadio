@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using SeaPower;
 using SeaPowerRadio.Core;
+using SeaPowerRadio.Radio;
 using SeaPowerRadio.Voices;
 
 namespace SeaPowerRadio.Roster;
@@ -14,8 +15,9 @@ internal sealed class RosterElement
     public ObjectBase Unit;        // null for an air-wing slot whose aircraft is not airborne
     public string ClassName;
     public CallsignKind Kind;
-    public string Callsign;
+    public string Callsign;        // generated fallback ("Viper 1-1"), used when the in-game name can't be said
     public VoicePersona Voice;
+    public GameName BoundName;     // the in-game name this element's voice was chosen for, if any
 
     // Air-wing slots only.
     public ObjectBase Carrier;
@@ -86,6 +88,21 @@ internal sealed class Roster
 
         foreach (ObjectBase deckOwner in units.Where(u => u._obp?._flightDeck != null))
             AddAirWing(deckOwner);
+
+        // Named units first – their names exist only in a few voices – then everyone else from the pool.
+        foreach (RosterElement e in elements.Where(e => e.BoundName != null))
+            e.Voice = voices.Prefer(e.Key, e.BoundName.Voices);
+        foreach (RosterElement e in elements.Where(e => e.Voice == null))
+            e.Voice = voices.For(e.Key);
+    }
+
+    /// <summary>The in-game name a unit says: a ship's short name, or an aircraft's squadron callsign word.</summary>
+    public static GameName NameOf(ObjectBase unit)
+    {
+        if (unit == null) return null;
+        if (IsAir(unit))
+            return Names.TryParseAircraft(unit.Name.Value, out string word, out _, out _) ? Names.SquadronWord(word) : null;
+        return Names.Unit(unit._obp?._shortName) ?? Names.Unit(unit.getName());
     }
 
     private void AddFlight(List<ObjectBase> members)
@@ -106,8 +123,8 @@ internal sealed class Roster
             ClassName = unit.ClassName,
             Kind = kind,
             Callsign = callsign,
+            BoundName = NameOf(unit),
         };
-        element.Voice = voices.For(element.Key);
         elements.Add(element);
         byUnit[unit.GetInstanceID()] = element;
     }
@@ -136,7 +153,6 @@ internal sealed class Roster
                         Squadron = squadron._name,
                         Slot = slot,
                     };
-                    element.Voice = voices.For(element.Key);
                     elements.Add(element);
                 }
             }
@@ -160,6 +176,13 @@ internal sealed class Roster
 
         slot.Unit = aircraft;
         byUnit[aircraft.GetInstanceID()] = slot;
+        // The deck picks the callsign at launch ("Lancer 3"); that word only exists in a few voices.
+        GameName name = NameOf(aircraft);
+        if (name != null && !voices.IsAmong(slot.Voice, name.Voices))
+        {
+            slot.BoundName = name;
+            slot.Voice = voices.Prefer(slot.Key + "|" + name.Key, name.Voices);
+        }
         return slot;
     }
 
@@ -173,7 +196,10 @@ internal sealed class Roster
             AddFlight(new List<ObjectBase> { unit });
         else
             AddUnit(unit, kind, callsigns.Single(kind));
-        return Find(unit);
+        RosterElement added = Find(unit);
+        if (added != null && added.Voice == null)
+            added.Voice = added.BoundName != null ? voices.Prefer(added.Key, added.BoundName.Voices) : voices.For(added.Key);
+        return added;
     }
 
     /// <summary>
@@ -208,7 +234,8 @@ internal sealed class Roster
             string who = e.IsAirWingSlot
                 ? $"[hangar {e.Carrier.getName()} / {e.Squadron} #{e.Slot + 1}]"
                 : e.Unit.getUIDAndName();
-            sb.AppendLine($"  {e.Callsign,-16} {e.Voice?.Id ?? "-",-10} {e.Kind,-10} {e.ClassName,-22} {who}");
+            string says = e.BoundName != null ? e.BoundName.Text + (e.BoundName.Squadron ? " (squadron)" : "") : "gen: " + e.Callsign;
+            sb.AppendLine($"  {says,-24} {e.Voice?.Id ?? "-",-10} {e.Kind,-10} {e.ClassName,-22} {who}");
         }
         return sb.ToString();
     }

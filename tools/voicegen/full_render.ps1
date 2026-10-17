@@ -17,6 +17,7 @@ param(
     [string[]]$Games = @("HuntGame", "Sea Power", "NuclearOption", "cs2"),
     [int]$ResumeAfter = 120,
     [string]$Voices = "all",
+    [string]$RenderArgs = "",          # extra chatterbox_render.py arguments, e.g. "--keys-file tools/voicegen/rerender_keys.txt"
     [switch]$ShutdownWhenDone,
     [int]$ShutdownDelay = 300
 )
@@ -95,11 +96,11 @@ function Test-Library {
 
 Write-Log "supervisor started (pid $PID), pausing for: $($Games -join ', '), shutdown when done: $ShutdownWhenDone"
 
-$ok = Invoke-SupervisedRender ""
+$ok = Invoke-SupervisedRender "$RenderArgs "
 $complete = $ok -and (Test-Library)
 if ($ok -and -not $complete) {
     Write-Log "library incomplete, retry pass with new seeds"
-    $ok = Invoke-SupervisedRender "--seed-offset 1 "
+    $ok = Invoke-SupervisedRender "$RenderArgs --seed-offset 1 "
     $complete = $ok -and (Test-Library)
 }
 Write-Log ("render done: success=$ok, library complete=$complete")

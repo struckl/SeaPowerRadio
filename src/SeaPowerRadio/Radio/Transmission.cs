@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SeaPower;
 using SeaPowerRadio.Roster;
 using SeaPowerRadio.Voices;
 using UnityEngine;
@@ -51,9 +52,45 @@ internal static class TransmissionBuilder
             SubmittedAt = Time.unscaledTime,
             Priority = 7,
         };
-        t.Clips.AddRange(Callsign(speaker.Callsign));
-        t.Text = speaker.Callsign + ",";
+        t.Clips.AddRange(CallsignFor(speaker, out string said));
+        t.Text = said + ",";
         return t;
+    }
+
+    /// <summary>
+    /// The callsign as the game shows it right now: a ship's short name ("Pargo"), an aircraft's squadron callsign
+    /// ("Lancer 3", a wingman "Lancer 3-2" – read live, because formations rename aircraft). Falls back to the
+    /// generated NATO callsign when the name wasn't rendered in this voice (custom mission names, mod ships,
+    /// squadrons without callsigns).
+    /// </summary>
+    public static List<string> CallsignFor(RosterElement e, out string said)
+    {
+        ObjectBase unit = e.Unit;
+        string voice = e.Voice?.Id;
+        if (unit != null && voice != null)
+        {
+            GameName name = Roster.Roster.NameOf(unit);
+            if (name != null && ClipLibrary.Exists(voice, name.Key))
+            {
+                if (!name.Squadron)
+                {
+                    said = name.Text;
+                    return new List<string> { name.Key };
+                }
+                if (Names.TryParseAircraft(unit.Name.Value, out _, out int number, out int position))
+                {
+                    var clips = new List<string> { name.Key };
+                    if (position > 0 && number <= 9 && position <= 4)
+                        clips.Add($"fp_{number}{position}");
+                    else if (number >= 1 && number <= 20)
+                        clips.Add($"cn_{number}");
+                    said = unit.Name.Value;
+                    return clips;
+                }
+            }
+        }
+        said = e.Callsign;
+        return new List<string>(Callsign(e.Callsign));
     }
 
     /// <summary>Add a phrase (with an optional number) to the transmission. False if it can't be spoken.</summary>
@@ -84,7 +121,7 @@ internal static class TransmissionBuilder
         else
         {
             if (v.HasA) t.Clips.Add($"{phrase}_{v.N}_a");
-            t.Clips.AddRange(Number(v.Slot, number.Value));
+            t.Clips.AddRange(Number(v.Slot, number.Value, t.Voice));
             if (v.HasB) t.Clips.Add($"{phrase}_{v.N}_b");
             t.Text += $" {phrase}({number.Value})";
         }
@@ -103,14 +140,22 @@ internal static class TransmissionBuilder
             yield return $"fp_{parts[1][0]}{parts[1][2]}";
     }
 
-    /// <summary>Number pieces: dm_D (leading digit), pm_PP (pair, more to come), pe_PP (closing pair).</summary>
-    public static IEnumerable<string> Number(string kind, int value)
+    /// <summary>
+    /// Number pieces: brg_DDD (a whole bearing), dm_D (leading digit), pm_PP (pair, more to come), pe_PP (closing
+    /// pair). Libraries rendered before whole bearings existed fall back to dm + pe.
+    /// </summary>
+    public static IEnumerable<string> Number(string kind, int value, string voice = null)
     {
         switch (kind)
         {
             case "brg":
                 value = ((value % 360) + 360) % 360;
                 string b = value.ToString("000");
+                if (voice == null || ClipLibrary.Exists(voice, "brg_" + b))
+                {
+                    yield return "brg_" + b;
+                    break;
+                }
                 yield return "dm_" + b[0];
                 yield return "pe_" + b.Substring(1);
                 break;

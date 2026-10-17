@@ -61,6 +61,7 @@ internal static class PatchRegistry
     {
         Features.Add(Patches.StockVoicePatches.Declare());
         Features.Add(Patches.MissionPatches.Declare());
+        Features.Add(Patches.WhyNotPatches.Declare());
 
         foreach (Feature feature in Features)
             Apply(harmony, feature);

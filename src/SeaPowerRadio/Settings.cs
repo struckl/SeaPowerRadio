@@ -1,6 +1,7 @@
 using System.IO;
 using BepInEx;
 using BepInEx.Configuration;
+using UnityEngine;
 
 namespace SeaPowerRadio;
 
@@ -17,6 +18,11 @@ internal static class Settings
     public static ConfigEntry<float> Volume;
     public static ConfigEntry<float> RadioNoise;
     public static ConfigEntry<float> ReportVolume;
+
+    public static ConfigEntry<bool> WhyNot;
+    public static ConfigEntry<bool> DetachForVid;
+    public static ConfigEntry<bool> QueueOverlay;
+    public static ConfigEntry<KeyCode> QueueOverlayKey;
 
     public static ConfigEntry<bool> ContactReports;
     public static ConfigEntry<float> FadeHysteresis;
@@ -47,6 +53,17 @@ internal static class Settings
                                   new AcceptableValueRange<float>(0f, 1f)));
         RadioNoise = file.Bind("2. Radio", "Radio noise", 1.0f,
             new ConfigDescription("How much hiss and crackle sits under the voices. 0 = clean.", new AcceptableValueRange<float>(0f, 3f)));
+
+        WhyNot = file.Bind("4. Why not", "Explain refusals", true,
+            "Units say why an ordered engagement isn't happening (reloading, no radar track, out of envelope, sonar " +
+            "contact only...), tell you their place in the queue, and why a wingman won't VID.");
+        DetachForVid = file.Bind("4. Why not", "Detach wingman for VID", false,
+            "A wingman ordered to VID is released from its formation so the VID actually happens (the game would " +
+            "keep it in formation). Off = it just tells you it is holding formation.");
+        QueueOverlay = file.Bind("5. Order queue", "Show order queue", true,
+            "Small window listing the selected unit's stacked attack orders, each with a delete button.");
+        QueueOverlayKey = file.Bind("5. Order queue", "Toggle key", KeyCode.F8,
+            "Shows / hides the order queue window.");
 
         ContactReports = file.Bind("3. Contacts", "Contact reports", true,
             "New, lost, intermittent and hostile contacts are called out by the unit that detected them.");

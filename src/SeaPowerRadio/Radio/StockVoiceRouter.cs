@@ -1,3 +1,6 @@
+using System;
+using System.Linq;
+using SeaPower;
 using SeaPowerRadio.Core;
 using SeaPowerRadio.Roster;
 
@@ -38,10 +41,56 @@ internal static class StockVoiceRouter
             return true; // an enemy or neutral unit "talking": the player's net doesn't hear it
 
         int? number = numberKind != null && request.Number >= 0 ? request.Number : (int?)null;
+        phrase = Refine(phrase, request, ref number);
         Transmission t = TransmissionBuilder.Build(speaker, phrase, number);
         if (t == null)
             return true;
         Player.Submit(t);
         return true;
+    }
+
+    /// <summary>
+    /// Say what is actually going to happen instead of the stock acknowledgement:
+    /// <list type="bullet">
+    /// <item>An attack order stacked behind earlier ones: "copy, queued, number three in line" (the stock line is
+    /// played before the order joins the queue, so the queue holds the earlier ones).</item>
+    /// <item>A VID order to a wingman flying in formation: "unable, holding formation on lead". The aircraft state
+    /// machine only starts a visual ID from its default state, never from formation flight, so the order would sit
+    /// there unnoticed (docs/recon.md section 6). With "Detach wingman for VID" on, the wingman is released from the
+    /// formation and the VID goes ahead instead.</item>
+    /// </list>
+    /// </summary>
+    private static string Refine(string phrase, StockVoiceRequest request, ref int? number)
+    {
+        ObjectBase unit = request.Speaker;
+        if (unit == null || !Settings.WhyNot.Value)
+            return phrase;
+
+        if (phrase == "EngageTrack" && !(unit is Aircraft))
+        {
+            int ahead = unit._currentEngageTasks.Count(t => !t._isAutoAttack);
+            if (ahead >= 1 && Catalog.Has("Queued_2"))
+            {
+                number = null;
+                return "Queued_" + Math.Min(ahead + 1, 5);
+            }
+        }
+
+        if (phrase == "Identify" && unit is Aircraft aircraft && aircraft.InAirFormation())
+        {
+            if (Settings.DetachForVid.Value && aircraft.Formation != null)
+            {
+                aircraft.Formation.MakeUnitActIndependently(aircraft);
+                ModLog.Info($"[why-not] {unit.getName()}: detached from formation for VID");
+                return phrase;
+            }
+            string text = unit.getName() + ": " + WhyNot.WhyNotMonitor.AlertText("WhyNot_HoldingFormation");
+            ModLog.Info("[why-not] " + text);
+            try { Globals._mainGameViewModel?.RaiseAlert(unit, text); }
+            catch (Exception) { /* the alert is a nice-to-have */ }
+            number = null;
+            return "WhyNot_HoldingFormation";
+        }
+        return phrase;
     }
 }

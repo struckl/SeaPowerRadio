@@ -6,7 +6,8 @@ namespace SeaPowerRadio.Patches;
 /// <summary>
 /// The bottom-right message list: every RaiseAlert overload ends in the AlertyMcAlertFace setter, which appends to
 /// TopAlerts and evicts the oldest beyond three. The prefix does the same, but keeps messages whose radio call
-/// is still waiting (Radio/AlertLink).
+/// is still waiting (Radio/AlertLink). Before that, every unit and track the message mentions is made a link
+/// (Radio/MessageLinker) – the message log shows the same message, so it gets the links too.
 /// </summary>
 internal static class AlertPatches
 {
@@ -18,7 +19,10 @@ internal static class AlertPatches
 
     private static bool SetPrefix(MainGameViewModel __instance, Alert value)
     {
-        if (!AlertLink.Enabled || value == null)
+        if (value == null)
+            return true;
+        MessageLinker.Link(value);
+        if (!AlertLink.Enabled)
             return true;
         try
         {

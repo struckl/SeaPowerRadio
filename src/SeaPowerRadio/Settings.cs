@@ -19,6 +19,7 @@ internal static class Settings
     public static ConfigEntry<float> RadioNoise;
     public static ConfigEntry<float> ReportVolume;
     public static ConfigEntry<bool> LinkAlerts;
+    public static ConfigEntry<bool> LinkMentions;
 
     public static ConfigEntry<bool> WhyNot;
     public static ConfigEntry<bool> DetachForVid;
@@ -55,6 +56,9 @@ internal static class Settings
         LinkAlerts = file.Bind("2. Radio", "Keep messages until spoken", true,
             "The message bottom right that belongs to a radio call stays visible until the call has been spoken, " +
             "and is highlighted while it is being spoken.");
+        LinkMentions = file.Bind("2. Radio", "Clickable units and tracks", true,
+            "Every unit and track a message mentions (bottom right and in the message log) is a link that moves " +
+            "the camera there - own units, contacts, track numbers - not only the ones the game links itself.");
         RadioNoise = file.Bind("2. Radio", "Radio noise", 1.0f,
             new ConfigDescription("How much hiss and crackle sits under the voices. 0 = clean.", new AcceptableValueRange<float>(0f, 3f)));
 

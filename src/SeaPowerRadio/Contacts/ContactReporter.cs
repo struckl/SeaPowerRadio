@@ -204,7 +204,7 @@ internal sealed class ContactReporter
         foreach (Vehicle v in batch.Take(MaxLinkedMessages))
             RaiseLinked(speaker, v, $"New {Domain(v)} contact - Track ${{TrackId}}, bearing {Bearing(speaker, v):000}");
         if (batch.Count > MaxLinkedMessages)
-            RaiseLinked(speaker, null, $"{batch.Count - MaxLinkedMessages} more new contacts: " +
+            RaiseLinked(speaker, null, $"{batch.Count - MaxLinkedMessages} more new contacts: Tracks " +
                                        string.Join(", ", batch.Skip(MaxLinkedMessages).Select(v => v.Id)));
         List<Alert> alerts = AlertLink.TakeFor(RaiserFor(speaker));
         Transmission t = TransmissionBuilder.Build(speaker, phrase, bearing);
@@ -248,7 +248,7 @@ internal sealed class ContactReporter
                 foreach (Contact c in pendingFaded.Take(MaxLinkedMessages))
                     RaiseLinked(speaker, c.Vehicle, "Lost contact - Track ${TrackId}");
                 if (pendingFaded.Count > MaxLinkedMessages)
-                    RaiseLinked(speaker, null, $"Lost {pendingFaded.Count - MaxLinkedMessages} more contacts: " +
+                    RaiseLinked(speaker, null, $"Lost {pendingFaded.Count - MaxLinkedMessages} more contacts: Tracks " +
                                                string.Join(", ", pendingFaded.Skip(MaxLinkedMessages).Select(c => c.Id)));
                 List<Alert> alerts = AlertLink.TakeFor(RaiserFor(speaker));
                 Transmission t = pendingFaded.Count == 1

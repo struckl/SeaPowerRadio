@@ -273,9 +273,9 @@ internal sealed class WhyNotMonitor
         track.LastAny = now;
 
         string weapon = AmmoName(unit, task);
-        string target = task?._targetObject != null ? $"track {task._targetObject.GetMapContactID()}" : "position";
-        string text = $"{unit.getName()}: {AlertText(phrase)} ({weapon} → {target})";
-        ModLog.Info($"[why-not] {text} [{detail}]");
+        string target = task?._targetObject != null ? $"Track {task._targetObject.GetMapContactID()}" : "position";
+        string text = $"${{Name}}: {AlertText(phrase)} ({weapon} at {target})";  // unit and track become links
+        ModLog.Info($"[why-not] {text.Replace("${Name}", unit.getName())} [{detail}]");
         try { Globals._mainGameViewModel?.RaiseAlert(unit, text); }
         catch (Exception ex) { ModLog.Debug($"[why-not] alert failed: {ex.Message}"); }
 

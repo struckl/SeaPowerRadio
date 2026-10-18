@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using SeaPower;
+using SeapowerUI.ViewModels;
 using SeaPowerRadio.Core;
 using SeaPowerRadio.Radio;
 using SeaPowerRadio.Roster;
@@ -122,14 +123,14 @@ internal sealed class ContactReporter
                 if (Now - c.IntermittentCalledAt > Settings.ContactCooldown.Value)
                 {
                     c.IntermittentCalledAt = Now;
-                    Say(SpeakerFor(c.Vehicle), "ContactIntermittent", c.Id);
+                    Say(SpeakerFor(c.Vehicle), "ContactIntermittent", c.Id, c.Vehicle, "Track ${TrackId} intermittent");
                 }
             }
         }
         else
         {
             if (c.ReportedFaded && Now - c.LastFadedCall > 30 && !c.Intermittent)
-                Say(SpeakerFor(c.Vehicle), "ContactRegained", c.Id);
+                Say(SpeakerFor(c.Vehicle), "ContactRegained", c.Id, c.Vehicle, "Regained Track ${TrackId}");
             c.DormantSince = -1;
             c.ReportedFaded = false;
         }
@@ -143,15 +144,21 @@ internal sealed class ContactReporter
         Vehicle v = c.Vehicle;
         RelationsState relation = Globals._playerTaskforce.RelationshipTo(side);
         (ObjectBase unit, SensorSystem.SensorType sensor, string sensorName) = Detector(v);
-        ModLog.Info($"[contact] track {c.Id} classified {relation} – by {(unit != null ? unit.getUIDAndName() : "?")}" +
+        ModLog.Info($"[contact] track {c.Id} classified {relation} - by {(unit != null ? unit.getUIDAndName() : "?")}" +
                     $" via {sensorName ?? sensor.ToString()} (best track: {v.Type.Value})");
         if (!Settings.ContactReports.Value)
             return;
-        if (relation != RelationsState.Hostile && !(relation == RelationsState.Neutral && Settings.AnnounceNeutral.Value))
-            return;
 
+        // Every classification gets a message (with a clickable track); hostile ones - and neutral ones if
+        // configured - are also called out.
         RosterElement speaker = Speaker(unit);
-        if (speaker == null) return;
+        string what = v.Identified.Value && v.BaseObject != null ? v.BaseObject.ClassName : Domain(v);
+        string by = CauseText(sensor);
+        RaiseLinked(speaker, v, $"Track ${{TrackId}} classified {RelationText(relation)} - {what}{(by != null ? ", " + by : "")}");
+        List<Alert> alerts = AlertLink.TakeFor(RaiserFor(speaker)); // not spoken: the message fades normally
+        bool speak = relation == RelationsState.Hostile || (relation == RelationsState.Neutral && Settings.AnnounceNeutral.Value);
+        if (!speak || speaker == null)
+            return;
         Transmission t = TransmissionBuilder.Start(speaker);
         string phrase = relation == RelationsState.Hostile ? "TrackHostile" : "TrackNeutral";
         if (!TransmissionBuilder.Append(t, phrase, c.Id))
@@ -159,6 +166,7 @@ internal sealed class ContactReporter
         string cause = CauseOf(sensor);
         if (cause != null)
             TransmissionBuilder.Append(t, cause, null);
+        t.Alerts.AddRange(alerts);
         player.Submit(t);
     }
 
@@ -192,8 +200,19 @@ internal sealed class ContactReporter
         if (speaker == null) return;
         int bearing = Bearing(speaker, first);
         string phrase = batch.Count >= 3 ? "NewContactsMultiple" : NewContactPhrase(first);
+        // One message per contact, each with a clickable track number (a few at most; the rest as a summary).
+        foreach (Vehicle v in batch.Take(MaxLinkedMessages))
+            RaiseLinked(speaker, v, $"New {Domain(v)} contact - Track ${{TrackId}}, bearing {Bearing(speaker, v):000}");
+        if (batch.Count > MaxLinkedMessages)
+            RaiseLinked(speaker, null, $"{batch.Count - MaxLinkedMessages} more new contacts: " +
+                                       string.Join(", ", batch.Skip(MaxLinkedMessages).Select(v => v.Id)));
+        List<Alert> alerts = AlertLink.TakeFor(RaiserFor(speaker));
         Transmission t = TransmissionBuilder.Build(speaker, phrase, bearing);
-        player.Submit(t);
+        if (t != null)
+        {
+            t.Alerts.AddRange(alerts);
+            player.Submit(t);
+        }
         ModLog.Info($"[contact] new: {string.Join(", ", batch.Select(v => v.Id))} reported by {speaker.Callsign}");
     }
 
@@ -226,10 +245,20 @@ internal sealed class ContactReporter
             RosterElement speaker = SpeakerFor(pendingFaded[0].Vehicle);
             if (speaker != null)
             {
+                foreach (Contact c in pendingFaded.Take(MaxLinkedMessages))
+                    RaiseLinked(speaker, c.Vehicle, "Lost contact - Track ${TrackId}");
+                if (pendingFaded.Count > MaxLinkedMessages)
+                    RaiseLinked(speaker, null, $"Lost {pendingFaded.Count - MaxLinkedMessages} more contacts: " +
+                                               string.Join(", ", pendingFaded.Skip(MaxLinkedMessages).Select(c => c.Id)));
+                List<Alert> alerts = AlertLink.TakeFor(RaiserFor(speaker));
                 Transmission t = pendingFaded.Count == 1
                     ? TransmissionBuilder.Build(speaker, "ContactFaded", pendingFaded[0].Id)
                     : TransmissionBuilder.Build(speaker, "ContactsFaded", Math.Min(pendingFaded.Count, 9));
-                player.Submit(t);
+                if (t != null)
+                {
+                    t.Alerts.AddRange(alerts);
+                    player.Submit(t);
+                }
             }
         }
         pendingFaded.Clear();
@@ -313,9 +342,75 @@ internal sealed class ContactReporter
         return Mathf.RoundToInt(((heading % 360f) + 360f) % 360f) % 360;
     }
 
-    private void Say(RosterElement speaker, string phrase, int number)
+    private void Say(RosterElement speaker, string phrase, int number, Vehicle v, string text)
     {
         if (speaker == null || !Settings.ContactReports.Value) return;
-        player.Submit(TransmissionBuilder.Build(speaker, phrase, number));
+        RaiseLinked(speaker, v, text);
+        List<Alert> alerts = AlertLink.TakeFor(RaiserFor(speaker));
+        Transmission t = TransmissionBuilder.Build(speaker, phrase, number);
+        if (t == null) return;
+        t.Alerts.AddRange(alerts);
+        player.Submit(t);
+    }
+
+    private const int MaxLinkedMessages = 4;
+
+    /// <summary>The unit a message is "from": the speaker, or the task force's command voice.</summary>
+    private static ObjectBase RaiserFor(RosterElement speaker) =>
+        speaker?.Unit != null ? speaker.Unit : RosterService.Current?.CommandVoice()?.Unit;
+
+    /// <summary>
+    /// A message bottom right in which the reporting unit and the track number are both links: the game's
+    /// RaiseAlert(raising, about, text) turns ${Name} into a link to the reporter and ${TrackId} into a link that
+    /// jumps to the contact - the stock contact messages only link the reporter, if anything.
+    /// </summary>
+    private static void RaiseLinked(RosterElement speaker, Vehicle v, string text)
+    {
+        var vm = Globals._mainGameViewModel;
+        if (vm == null) return;
+        ObjectBase raiser = RaiserFor(speaker);
+        ObjectBase about = v?.BaseObject;
+        try
+        {
+            if (raiser != null && about != null)
+                vm.RaiseAlert(raiser, about, "${Name}: " + text);
+            else if (raiser != null)
+                vm.RaiseAlert(raiser, "${Name}: " + text.Replace("${TrackId}", v?.Id.ToString() ?? "?"));
+            else
+                vm.RaiseAlert(text.Replace("${TrackId}", v?.Id.ToString() ?? "?"));
+        }
+        catch (Exception ex)
+        {
+            ModLog.Debug($"[contact] alert failed: {ex.Message}");
+        }
+    }
+
+    private static string Domain(Vehicle v)
+    {
+        switch (v?.BaseObject?._type)
+        {
+            case ObjectBase.ObjectType.Vessel: return "surface";
+            case ObjectBase.ObjectType.Submarine:
+            case ObjectBase.ObjectType.Torpedo:
+            case ObjectBase.ObjectType.Biologic: return "subsurface";
+            case ObjectBase.ObjectType.LandUnit: return "ground";
+            default: return "air";
+        }
+    }
+
+    private static string RelationText(RelationsState r) =>
+        r == RelationsState.Hostile ? "HOSTILE" : r == RelationsState.Neutral ? "neutral" : r == RelationsState.Friendly ? "friendly" : "unknown";
+
+    private static string CauseText(SensorSystem.SensorType sensor)
+    {
+        switch (CauseOf(sensor))
+        {
+            case "IdByVisual": return "visual ID";
+            case "IdByEsm": return "by ESM";
+            case "IdBySonar": return "by sonar";
+            case "IdByRadar": return "by radar";
+            case "IdByIntel": return "by intel / datalink";
+            default: return null;
+        }
     }
 }

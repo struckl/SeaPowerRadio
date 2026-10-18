@@ -63,6 +63,7 @@ internal static class PatchRegistry
         Features.Add(Patches.MissionPatches.Declare());
         Features.Add(Patches.WhyNotPatches.Declare());
         Features.Add(Patches.AlertPatches.Declare());
+        Features.Add(Patches.ContactAlertPatches.Declare());
 
         foreach (Feature feature in Features)
             Apply(harmony, feature);

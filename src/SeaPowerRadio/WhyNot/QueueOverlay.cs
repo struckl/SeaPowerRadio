@@ -11,6 +11,9 @@ namespace SeaPowerRadio.WhyNot;
 /// which throws away the whole queue; here orders 3 and 4 can go while 1, 2 and 5 stay. Each row also shows what
 /// the order is waiting for (the weapon's engage state, or the reload time left).
 /// Toggle with the configured key (F8).
+/// <para>The game's UI (Noesis) reads mouse clicks through IMGUI too and swallows every click over one of its
+/// panels before an ordinary OnGUI sees it – so this window draws at the lowest GUI depth (gets events first),
+/// deletes on mouse-down instead of waiting for the release, and keeps clicks inside it from reaching the game.</para>
 /// </summary>
 internal sealed class QueueOverlay : MonoBehaviour
 {
@@ -24,6 +27,7 @@ internal sealed class QueueOverlay : MonoBehaviour
     {
         if (!Settings.QueueOverlay.Value)
             return;
+        GUI.depth = -10000; // before NoesisView (depth = -camera depth), which uses up clicks over its panels
         Event ev = Event.current;
         if (ev.type == EventType.KeyDown && ev.keyCode == Settings.QueueOverlayKey.Value)
         {
@@ -67,11 +71,23 @@ internal sealed class QueueOverlay : MonoBehaviour
             string ammo = (t._ammunition ?? unit.getAmmunitionByName(t._ammoId))?._ap?._displayedName ?? t._ammoId;
             string target = t._targetObject != null ? $"Track {t._targetObject.GetMapContactID()}" : "position";
             GUI.Label(new Rect(8, y, 330, 22), $"{i + 1}. {ammo} → {target} · {Status(unit, t, systems)}", row);
-            if (GUI.Button(new Rect(392, y, 36, 20), "✕"))
+            var delete = new Rect(392, y, 36, 20);
+            Event ev = Event.current;
+            if (ev.type == EventType.MouseDown && ev.button == 0 && delete.Contains(ev.mousePosition))
+            {
+                // On the press, not the release: a click can change the game's selection before the release arrives.
                 Delete(unit, t, systems);
+                ev.Use();
+            }
+            GUI.Button(delete, "✕");
             y += 24f;
         }
         GUI.DragWindow(new Rect(0, 0, 10000, 20));
+        // Whatever is left of a click inside the window is ours – not a click on the game's UI or the map below.
+        Event rest = Event.current;
+        if ((rest.type == EventType.MouseDown || rest.type == EventType.MouseUp)
+            && new Rect(0, 0, window.width, window.height).Contains(rest.mousePosition))
+            rest.Use();
     }
 
     private static string Status(ObjectBase unit, EngageTask t, List<WeaponSystem> systems)
@@ -94,10 +110,11 @@ internal sealed class QueueOverlay : MonoBehaviour
         try
         {
             WhyNotMonitor.MarkCleared(unit);
-            foreach (WeaponSystem w in systems.Where(w => w._executingEngageTask && w._takenEngageTask == t))
+            foreach (WeaponSystem w in systems.Where(w => w._takenEngageTask == t))
                 w.EndEngageTask();
             unit.RemoveEngageTask(t);
-            ModLog.Info($"[queue] {unit.getName()}: deleted order {t._ammoId} -> {t._targetObject?.GetMapContactID()}");
+            ModLog.Info($"[queue] {unit.getName()}: deleted order {t._ammoId} -> {t._targetObject?.GetMapContactID()}" +
+                        $" ({unit._currentEngageTasks?.Count ?? 0} left)");
         }
         catch (Exception ex)
         {

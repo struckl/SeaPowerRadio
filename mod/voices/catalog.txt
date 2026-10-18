@@ -165,6 +165,13 @@ Ejecting|1|-|0|0|1|alert
 Ejecting|2|-|0|0|1|alert
 BingoFuel|1|-|0|0|2|alert
 BingoFuel|2|-|0|0|2|alert
+FuelJoker|1|-|0|0|4|report
+FuelJoker|2|-|0|0|4|report
+FuelJoker|3|-|0|0|4|report
+FuelBingo|1|-|0|0|2|alert
+FuelBingo|2|-|0|0|2|alert
+FuelEmergency|1|-|0|0|1|alert
+FuelEmergency|2|-|0|0|1|alert
 ReturnToBase|1|-|0|0|6|reply
 ReturnToBase|2|-|0|0|6|reply
 AircraftLaunching|1|-|0|0|6|reply

@@ -64,6 +64,7 @@ internal static class PatchRegistry
         Features.Add(Patches.WhyNotPatches.Declare());
         Features.Add(Patches.AlertPatches.Declare());
         Features.Add(Patches.ContactAlertPatches.Declare());
+        Features.Add(Patches.RtbPatches.Declare());
 
         foreach (Feature feature in Features)
             Apply(harmony, feature);
@@ -76,6 +77,7 @@ internal static class PatchRegistry
         {
             Type type = AccessTools.TypeByName(spec.Type);
             MethodBase method = type == null ? null
+                : spec.Method == ".ctor" ? AccessTools.Constructor(type, spec.Args ?? Type.EmptyTypes)
                 : spec.Args == null ? AccessTools.Method(type, spec.Method)
                 : AccessTools.Method(type, spec.Method, spec.Args);
             if (method == null)

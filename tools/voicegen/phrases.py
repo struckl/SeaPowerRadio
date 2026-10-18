@@ -235,6 +235,16 @@ PHRASES: list[Phrase] = [
 
     # === Fuel / RTB / air ops =====================================================================================
     P("BingoFuel", "bingo, bingo. Returning to base.", "bingo fuel, RTB.", priority=2, sample=True),
+    # The mod's own fuel calls (Air/FuelMonitor.cs), against the nearest deck or field that can take the aircraft:
+    # joker = at cruise speed only just enough left to get there, bingo = only just enough even at the most
+    # economical speed, emergency = not enough at all.
+    P("FuelJoker", "joker fuel.", "joker, joker.", "we're at joker.", priority=4,
+      note="mod: at cruise speed only just enough fuel to reach the nearest deck"),
+    P("FuelBingo", "bingo fuel, request RTB.", "bingo, bingo. We need to head for a deck now.", priority=2,
+      note="mod: only just enough fuel to reach the nearest deck at the most economical speed"),
+    P("FuelEmergency", "fuel emergency, we won't make it to a deck.",
+      "emergency fuel. We need a tanker or we're going in the water.", priority=1,
+      note="mod: not enough fuel to reach any deck"),
     P("ReturnToBase", "RTB.", "returning to base.", priority=6),
     P("AircraftLaunching", "launching aircraft.", priority=6),
     P("AllAircraftLaunched", "all aircraft away.", priority=6),

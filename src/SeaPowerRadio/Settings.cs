@@ -26,6 +26,9 @@ internal static class Settings
     public static ConfigEntry<bool> QueueOverlay;
     public static ConfigEntry<KeyCode> QueueOverlayKey;
 
+    public static ConfigEntry<bool> FuelCalls;
+    public static ConfigEntry<bool> RtbHighlight;
+
     public static ConfigEntry<bool> ContactReports;
     public static ConfigEntry<float> FadeHysteresis;
     public static ConfigEntry<float> ContactCooldown;
@@ -72,6 +75,14 @@ internal static class Settings
             "Small window listing the selected unit's stacked attack orders, each with a delete button.");
         QueueOverlayKey = file.Bind("5. Order queue", "Toggle key", KeyCode.F8,
             "Shows / hides the order queue window.");
+
+        FuelCalls = file.Bind("6. Air ops", "Fuel calls", true,
+            "Aircraft and helicopters call joker, bingo and fuel emergency against the nearest deck or airfield that " +
+            "can take them: joker = at cruise speed only just enough fuel to get there, bingo = only just enough even " +
+            "at the most economical speed, emergency = not enough at all.");
+        RtbHighlight = file.Bind("6. Air ops", "Highlight RTB", true,
+            "Aircraft returning to base are yellow on the map and in the formation manager, and returning groups " +
+            "move to the bottom of the formation manager.");
 
         ContactReports = file.Bind("3. Contacts", "Contact reports", true,
             "New, lost, intermittent and hostile contacts are called out by the unit that detected them.");

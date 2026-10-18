@@ -1,4 +1,5 @@
 using System;
+using SeaPowerRadio.Air;
 using SeaPowerRadio.Contacts;
 using SeaPowerRadio.Core;
 using SeaPowerRadio.Radio;
@@ -18,6 +19,7 @@ internal sealed class RadioHost : MonoBehaviour
     private RadioPlayer player;
     private ContactReporter contacts;
     private WhyNotMonitor whyNot;
+    private FuelMonitor fuel;
 
     private void Awake()
     {
@@ -25,6 +27,7 @@ internal sealed class RadioHost : MonoBehaviour
         player = new RadioPlayer(this);
         contacts = new ContactReporter(player);
         whyNot = new WhyNotMonitor(player);
+        fuel = new FuelMonitor(player);
         gameObject.AddComponent<QueueOverlay>();
         StockVoiceRouter.Player = player;
         EventBus.MissionStarted += OnMissionStarted;
@@ -35,6 +38,8 @@ internal sealed class RadioHost : MonoBehaviour
     {
         player.Clear();
         whyNot.Clear();
+        fuel.Clear();
+        RtbMarker.Clear();
         contacts.Attach();
     }
 
@@ -43,6 +48,7 @@ internal sealed class RadioHost : MonoBehaviour
         contacts.Detach();
         player.Clear();
         AlertLink.Clear();
+        RtbMarker.Clear();
         ClipLibrary.Clear();
     }
 
@@ -53,6 +59,8 @@ internal sealed class RadioHost : MonoBehaviour
             player.Tick();
             contacts.Tick();
             whyNot.Tick();
+            fuel.Tick();
+            RtbMarker.Tick();
             AlertLink.Tick();
         }
         catch (Exception ex)

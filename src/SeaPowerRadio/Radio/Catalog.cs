@@ -125,14 +125,15 @@ internal static class Catalog
         Phrases.TryGetValue(phrase, out List<PhraseVariant> list) && list.Count > 0 ? list[0].Priority : 6;
 
     /// <summary>
-    /// A variant to speak. Variants that need a number are only used when there is one; the variant this voice used
-    /// last time is avoided, so nobody says the identical line twice in a row.
+    /// A variant to speak. Variants that need a number are only used when there is one, and only variants whose
+    /// clips exist in this voice (a library can be partly rendered); the variant this voice used last time is
+    /// avoided, so nobody says the identical line twice in a row.
     /// </summary>
     public static PhraseVariant Pick(string phrase, string voice, bool haveNumber)
     {
         if (!Phrases.TryGetValue(phrase, out List<PhraseVariant> all))
             return null;
-        var usable = all.FindAll(v => haveNumber || v.Slot == null);
+        var usable = all.FindAll(v => (haveNumber || v.Slot == null) && Rendered(v, voice));
         if (usable.Count == 0)
             return null;
         string memo = voice + "|" + phrase;
@@ -143,4 +144,18 @@ internal static class Catalog
         LastVariant[memo] = pick.N;
         return pick;
     }
+
+    /// <summary>Does this voice have the clips of this variant?</summary>
+    public static bool Rendered(PhraseVariant v, string voice)
+    {
+        if (voice == null) return false;
+        if (v.Slot == null)
+            return ClipLibrary.Exists(voice, $"{v.Phrase}_{v.N}");
+        return (!v.HasA || ClipLibrary.Exists(voice, $"{v.Phrase}_{v.N}_a"))
+               && (!v.HasB || ClipLibrary.Exists(voice, $"{v.Phrase}_{v.N}_b"));
+    }
+
+    /// <summary>Can this voice say the phrase at all (any variant rendered)?</summary>
+    public static bool CanSay(string phrase, string voice, bool haveNumber = false) =>
+        Phrases.TryGetValue(phrase, out List<PhraseVariant> all) && all.Exists(v => (haveNumber || v.Slot == null) && Rendered(v, voice));
 }

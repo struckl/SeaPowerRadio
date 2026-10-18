@@ -69,10 +69,11 @@ internal static class StockVoiceRouter
         if (phrase == "EngageTrack" && !(unit is Aircraft))
         {
             int ahead = unit._currentEngageTasks.Count(t => !t._isAutoAttack);
-            if (ahead >= 1 && Catalog.Has("Queued_2"))
+            string queued = "Queued_" + Math.Min(ahead + 1, 5);
+            if (ahead >= 1 && Catalog.CanSay(queued, RosterService.Current?.Find(unit)?.Voice?.Id))
             {
                 number = null;
-                return "Queued_" + Math.Min(ahead + 1, 5);
+                return queued;
             }
         }
 

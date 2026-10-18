@@ -245,6 +245,21 @@ PHRASES: list[Phrase] = [
     P("FuelEmergency", "fuel emergency, we won't make it to a deck.",
       "emergency fuel. We need a tanker or we're going in the water.", priority=1,
       note="mod: not enough fuel to reach any deck"),
+
+    # Search and rescue (Air/SarReporter.cs): survivors in the water -> rescuer on the way -> pickup -> full ->
+    # delivered on deck.
+    P("SarSurvivors", "survivors in the water, bearing {brg}.", "raft in the water, bearing {brg}.", priority=4,
+      note="mod: own life rafts appeared (ship sunk, aircrew down)"),
+    P("SarEnRoute", "proceeding to the survivors.", "rescue en route.", priority=5,
+      note="mod: a SAR zone sent this unit to a raft"),
+    P("SarPickup", "one survivor aboard.", "pickup complete, one aboard.", priority=4,
+      note="mod: pickup, one aboard"),
+    P("SarPickupCount", "pickup complete, {count} souls aboard.", "survivors aboard, {count} total.", priority=4,
+      note="mod: pickup, 2-9 aboard"),
+    P("SarFull", "cabin's full, no more room.", "we're full up, can't take any more.", priority=4,
+      note="mod: transport capacity reached"),
+    P("SarDelivered", "survivors delivered.", "on deck, survivors are off.", priority=6,
+      note="mod: landed with survivors aboard"),
     P("ReturnToBase", "RTB.", "returning to base.", priority=6),
     P("AircraftLaunching", "launching aircraft.", priority=6),
     P("AllAircraftLaunched", "all aircraft away.", priority=6),

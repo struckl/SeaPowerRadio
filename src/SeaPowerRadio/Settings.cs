@@ -28,6 +28,7 @@ internal static class Settings
 
     public static ConfigEntry<bool> FuelCalls;
     public static ConfigEntry<bool> RtbHighlight;
+    public static ConfigEntry<bool> SarCalls;
 
     public static ConfigEntry<bool> ContactReports;
     public static ConfigEntry<float> FadeHysteresis;
@@ -83,6 +84,9 @@ internal static class Settings
         RtbHighlight = file.Bind("6. Air ops", "Highlight RTB", true,
             "Aircraft returning to base are yellow on the map and in the formation manager, and returning groups " +
             "move to the bottom of the formation manager.");
+        SarCalls = file.Bind("6. Air ops", "Search and rescue calls", true,
+            "Survivors in the water, rescuer proceeding, pickup complete with souls aboard, cabin full, survivors " +
+            "delivered - spoken and as messages (replaces the game's one-line pickup message).");
 
         ContactReports = file.Bind("3. Contacts", "Contact reports", true,
             "New, lost, intermittent and hostile contacts are called out by the unit that detected them.");

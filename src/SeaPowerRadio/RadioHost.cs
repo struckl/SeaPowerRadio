@@ -20,6 +20,7 @@ internal sealed class RadioHost : MonoBehaviour
     private ContactReporter contacts;
     private WhyNotMonitor whyNot;
     private FuelMonitor fuel;
+    private SarReporter sar;
 
     private void Awake()
     {
@@ -28,6 +29,7 @@ internal sealed class RadioHost : MonoBehaviour
         contacts = new ContactReporter(player);
         whyNot = new WhyNotMonitor(player);
         fuel = new FuelMonitor(player);
+        sar = new SarReporter(player);
         gameObject.AddComponent<QueueOverlay>();
         StockVoiceRouter.Player = player;
         EventBus.MissionStarted += OnMissionStarted;
@@ -39,6 +41,7 @@ internal sealed class RadioHost : MonoBehaviour
         player.Clear();
         whyNot.Clear();
         fuel.Clear();
+        sar.Clear();
         RtbMarker.Clear();
         contacts.Attach();
     }
@@ -60,6 +63,7 @@ internal sealed class RadioHost : MonoBehaviour
             contacts.Tick();
             whyNot.Tick();
             fuel.Tick();
+            sar.Tick();
             RtbMarker.Tick();
             AlertLink.Tick();
         }

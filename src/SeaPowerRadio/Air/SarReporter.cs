@@ -103,9 +103,9 @@ internal sealed class SarReporter
         if (e == null)
             return;
         Transmission t = TransmissionBuilder.Start(e);
-        bool said = aboard >= 2 && aboard <= 9
-            ? TransmissionBuilder.Append(t, "SarPickupCount", aboard)
-            : TransmissionBuilder.Append(t, "SarPickup", null);
+        bool said = aboard == 1 ? TransmissionBuilder.Append(t, "SarPickup", null)
+            : aboard <= 9 ? TransmissionBuilder.Append(t, "SarPickupCount", aboard)   // counts are recorded 2-9
+            : TransmissionBuilder.Append(t, "SarPickupMany", null);
         if (full)
             said |= TransmissionBuilder.Append(t, "SarFull", null);
         if (!said)

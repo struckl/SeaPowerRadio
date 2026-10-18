@@ -180,6 +180,8 @@ SarPickup|1|-|0|0|4|report
 SarPickup|2|-|0|0|4|report
 SarPickupCount|1|count|1|1|4|report
 SarPickupCount|2|count|1|1|4|report
+SarPickupMany|1|-|0|0|4|report
+SarPickupMany|2|-|0|0|4|report
 SarFull|1|-|0|0|4|report
 SarFull|2|-|0|0|4|report
 SarDelivered|1|-|0|0|6|report

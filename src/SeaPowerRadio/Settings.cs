@@ -18,6 +18,7 @@ internal static class Settings
     public static ConfigEntry<float> Volume;
     public static ConfigEntry<float> RadioNoise;
     public static ConfigEntry<float> ReportVolume;
+    public static ConfigEntry<bool> LinkAlerts;
 
     public static ConfigEntry<bool> WhyNot;
     public static ConfigEntry<bool> DetachForVid;
@@ -51,6 +52,9 @@ internal static class Settings
             new ConfigDescription("Level of the background traffic (contacts, launches, status) relative to replies to your " +
                                   "orders and alerts, which always play at full level. 0.5 = about 6 dB quieter.",
                                   new AcceptableValueRange<float>(0f, 1f)));
+        LinkAlerts = file.Bind("2. Radio", "Keep messages until spoken", true,
+            "The message bottom right that belongs to a radio call stays visible until the call has been spoken, " +
+            "and is highlighted while it is being spoken.");
         RadioNoise = file.Bind("2. Radio", "Radio noise", 1.0f,
             new ConfigDescription("How much hiss and crackle sits under the voices. 0 = clean.", new AcceptableValueRange<float>(0f, 3f)));
 

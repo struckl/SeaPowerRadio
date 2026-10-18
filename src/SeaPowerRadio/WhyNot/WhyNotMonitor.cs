@@ -281,7 +281,10 @@ internal sealed class WhyNotMonitor
 
         Transmission t = TransmissionBuilder.Build(e, phrase, null);
         if (t != null)
+        {
+            t.Alerts.AddRange(AlertLink.TakeFor(unit));
             player.Submit(t);
+        }
     }
 
     private static string AmmoName(ObjectBase unit, EngageTask task)

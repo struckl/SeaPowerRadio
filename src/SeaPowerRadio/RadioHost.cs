@@ -42,6 +42,7 @@ internal sealed class RadioHost : MonoBehaviour
     {
         contacts.Detach();
         player.Clear();
+        AlertLink.Clear();
         ClipLibrary.Clear();
     }
 
@@ -52,6 +53,7 @@ internal sealed class RadioHost : MonoBehaviour
             player.Tick();
             contacts.Tick();
             whyNot.Tick();
+            AlertLink.Tick();
         }
         catch (Exception ex)
         {

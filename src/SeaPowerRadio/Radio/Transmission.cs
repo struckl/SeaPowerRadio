@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using SeaPower;
+using SeapowerUI.ViewModels;
 using SeaPowerRadio.Roster;
 using SeaPowerRadio.Voices;
 using UnityEngine;
@@ -18,6 +19,7 @@ internal sealed class Transmission
     public string Profile;                                     // radio flavour, see RadioFx
     public float SubmittedAt;
     public string Text;                                        // human-readable, for the log
+    public readonly List<Alert> Alerts = new List<Alert>();     // the bottom-right messages this call speaks
 
     public CallRole Role = CallRole.Report;                     // from the main phrase, see Catalog
 

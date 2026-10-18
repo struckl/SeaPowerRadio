@@ -45,6 +45,7 @@ internal static class StockVoiceRouter
         Transmission t = TransmissionBuilder.Build(speaker, phrase, number);
         if (t == null)
             return true;
+        t.Alerts.AddRange(AlertLink.TakeFor(request.Speaker));
         Player.Submit(t);
         return true;
     }

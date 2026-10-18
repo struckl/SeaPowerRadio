@@ -44,11 +44,17 @@ internal sealed class RadioPlayer
         if (same >= 2)
         {
             ModLog.Debug($"[radio] drop duplicate {t.Text}");
+            AlertLink.Release(t);
             return;
         }
         queue.Add(t);
+        AlertLink.Hold(t);
         if (queue.Count > MaxQueue)
-            queue.Remove(queue.OrderByDescending(q => q.Rank).ThenBy(q => q.SubmittedAt).First());
+        {
+            Transmission dropped = queue.OrderByDescending(q => q.Rank).ThenBy(q => q.SubmittedAt).First();
+            queue.Remove(dropped);
+            AlertLink.Release(dropped);
+        }
         if (Settings.LogRadio.Value)
             ModLog.Info($"[radio] queued p{t.Priority} {t.Voice}: {t.Text}");
     }
@@ -56,6 +62,8 @@ internal sealed class RadioPlayer
     public void Clear()
     {
         Stop();
+        foreach (Transmission q in queue)
+            AlertLink.Release(q);
         queue.Clear();
     }
 
@@ -64,7 +72,11 @@ internal sealed class RadioPlayer
         if (!EnsureSource())
             return;
         float now = Time.unscaledTime;
-        queue.RemoveAll(q => !q.Urgent && now - q.SubmittedAt > (q.Role == CallRole.Reply ? 6f : q.Priority >= 5 ? 8f : 15f));
+        foreach (Transmission stale in queue.Where(q => !q.Urgent && now - q.SubmittedAt > (q.Role == CallRole.Reply ? 6f : q.Priority >= 5 ? 8f : 15f)).ToList())
+        {
+            queue.Remove(stale);
+            AlertLink.Release(stale);
+        }
 
         bool playing = current != null && (preparing || source.isPlaying);
         if (playing)
@@ -115,6 +127,7 @@ internal sealed class RadioPlayer
         source.clip = currentClip;
         source.volume = Settings.Volume.Value;
         source.Play();
+        AlertLink.StartSpeaking(t);
         preparing = false;
         if (Settings.LogRadio.Value)
             ModLog.Info($"[radio] >> {t.Voice}: {t.Text}");
@@ -123,6 +136,7 @@ internal sealed class RadioPlayer
     private void Finish()
     {
         nextAllowed = Time.unscaledTime + Random.Range(0.35f, 0.9f);
+        AlertLink.Release(current);
         ReleaseClip();
         current = null;
     }
@@ -131,6 +145,7 @@ internal sealed class RadioPlayer
     {
         prepareVersion++;
         preparing = false;
+        AlertLink.Release(current);
         if (source != null)
             source.Stop();
         ReleaseClip();

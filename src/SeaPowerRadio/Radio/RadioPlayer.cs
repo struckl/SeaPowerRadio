@@ -116,6 +116,7 @@ internal sealed class RadioPlayer
         if (!parts.Any(c => c != null))
         {
             preparing = false;
+            AlertLink.Release(t);   // nothing to say after all: its messages fade normally instead of staying pinned
             current = null;
             yield break;
         }

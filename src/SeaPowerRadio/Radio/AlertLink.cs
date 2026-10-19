@@ -14,7 +14,7 @@ namespace SeaPowerRadio.Radio;
 /// why-not messages do the same. A call takes the messages raised for its speaker in the frame it was queued.</item>
 /// <item>While the call waits or plays, its messages stay fully visible (their fade timer is held), and a new
 /// message pushes out an older one that isn't waiting instead of a waiting one – the game keeps only three.</item>
-/// <item>The message being spoken right now gets a highlighted background.</item>
+/// <item>The message being spoken right now gets a thin amber bar in front of it.</item>
 /// </list>
 /// </summary>
 internal static class AlertLink
@@ -25,6 +25,7 @@ internal static class AlertLink
     private static readonly List<(Alert alert, int frame)> Recent = new List<(Alert, int)>();
     private static readonly HashSet<Alert> Waiting = new HashSet<Alert>();
     private static readonly HashSet<Alert> Speaking = new HashSet<Alert>();
+    private static readonly Dictionary<Alert, Noesis.Inline> Markers = new Dictionary<Alert, Noesis.Inline>();
     private static Noesis.Brush highlight;
 
     public static bool Enabled => Settings.LinkAlerts != null && Settings.LinkAlerts.Value;
@@ -108,16 +109,34 @@ internal static class AlertLink
         Recent.Clear();
         Waiting.Clear();
         Speaking.Clear();
+        Markers.Clear();
     }
 
+    /// <summary>A thin amber bar at the start of the message while it is being spoken.</summary>
     private static void SetHighlight(Alert a, bool on)
     {
         try
         {
-            if (a.AlertContent is Noesis.TextBlock text)
+            if (!(a.AlertContent is Noesis.TextBlock text))
+                return;
+            if (on && !Markers.ContainsKey(a))
             {
-                highlight ??= new Noesis.SolidColorBrush(Noesis.Color.FromArgb(0x70, 0xE8, 0xA8, 0x20));
-                text.Background = on ? highlight : null;
+                highlight ??= new Noesis.SolidColorBrush(Noesis.Color.FromArgb(0xFF, 0xF0, 0xB0, 0x28));
+                var bar = new Noesis.Border
+                {
+                    Width = 3f,
+                    Height = Math.Max(10f, text.FontSize),
+                    Background = highlight,
+                    Margin = new Noesis.Thickness(0f, 0f, 5f, -2f),
+                };
+                var marker = new Noesis.InlineUIContainer(bar);
+                text.Inlines.Insert(0, marker);
+                Markers[a] = marker;
+            }
+            else if (!on && Markers.TryGetValue(a, out Noesis.Inline marker))
+            {
+                text.Inlines.Remove(marker);
+                Markers.Remove(a);
             }
         }
         catch (Exception ex)

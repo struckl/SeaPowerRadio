@@ -20,6 +20,7 @@ internal static class Settings
     public static ConfigEntry<float> ReportVolume;
     public static ConfigEntry<bool> LinkAlerts;
     public static ConfigEntry<bool> LinkMentions;
+    public static ConfigEntry<bool> CallsignEveryCall;
 
     public static ConfigEntry<bool> WhyNot;
     public static ConfigEntry<bool> DetachForVid;
@@ -63,6 +64,9 @@ internal static class Settings
         LinkMentions = file.Bind("2. Radio", "Clickable units and tracks", true,
             "Every unit and track a message mentions (bottom right and in the message log) is a link that moves " +
             "the camera there - own units, contacts, track numbers - not only the ones the game links itself.");
+        CallsignEveryCall = file.Bind("2. Radio", "Callsign on every call", false,
+            "Say the unit's name at the start of every call. Off: only when a different unit talks than the one " +
+            "before - the same unit again just goes on, a wingman of the same flight only gives its number.");
         RadioNoise = file.Bind("2. Radio", "Radio noise", 1.0f,
             new ConfigDescription("How much hiss and crackle sits under the voices. 0 = clean.", new AcceptableValueRange<float>(0f, 3f)));
 

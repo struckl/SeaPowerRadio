@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using SeaPower;
+using SeaPowerRadio.Roster;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -26,6 +28,7 @@ internal sealed class RadioPlayer
     private readonly List<Transmission> queue = new List<Transmission>();
     private AudioSource source;
     private Transmission current;
+    private RosterElement lastSpeaker;      // who was on the net last: the callsign is only said on a change
     private AudioClip currentClip;
     private bool preparing;
     private int prepareVersion;
@@ -62,6 +65,7 @@ internal sealed class RadioPlayer
     public void Clear()
     {
         Stop();
+        lastSpeaker = null;
         foreach (Transmission q in queue)
             AlertLink.Release(q);
         queue.Clear();
@@ -97,6 +101,8 @@ internal sealed class RadioPlayer
 
         Transmission next = queue.OrderBy(q => q.Rank).ThenBy(q => q.SubmittedAt).First();
         queue.Remove(next);
+        Abbreviate(next);
+        lastSpeaker = next.Speaker;
         current = next;
         preparing = true;
         host.StartCoroutine(Prepare(next, ++prepareVersion));
@@ -132,6 +138,37 @@ internal sealed class RadioPlayer
         preparing = false;
         if (Settings.LogRadio.Value)
             ModLog.Info($"[radio] >> {t.Voice}: {t.Text}");
+    }
+
+    /// <summary>
+    /// The callsign only when someone else is talking than before: the same unit again just goes on ("fox three"),
+    /// a wingman of the same flight gives its number only ("two, fox three") – like a real net once everyone
+    /// knows who is up. The message bottom right still names the unit.
+    /// </summary>
+    private void Abbreviate(Transmission t)
+    {
+        if (Settings.CallsignEveryCall.Value || lastSpeaker == null || t.Speaker == null || t.CallsignClips == 0)
+            return;
+        ObjectBase unit = t.Speaker.Unit, last = lastSpeaker.Unit;
+        bool sameUnit = t.Speaker == lastSpeaker || (unit != null && unit == last);
+        if (sameUnit)
+        {
+            t.Clips.RemoveRange(0, t.CallsignClips);
+            t.CallsignClips = 0;
+            t.Text = "(same unit)" + t.Text.Substring(t.Text.IndexOf(',') + 1);
+            return;
+        }
+        if (unit != null && last != null
+            && Names.TryParseAircraft(unit.Name.Value, out string word, out int number, out int position)
+            && Names.TryParseAircraft(last.Name.Value, out string lastWord, out int lastNumber, out _)
+            && position > 0 && number == lastNumber && string.Equals(word, lastWord, System.StringComparison.OrdinalIgnoreCase)
+            && ClipLibrary.Exists(t.Voice, $"cn_{position}"))
+        {
+            t.Clips.RemoveRange(0, t.CallsignClips);
+            t.Clips.Insert(0, $"cn_{position}");
+            t.CallsignClips = 1;
+            t.Text = $"({position})" + t.Text.Substring(t.Text.IndexOf(',') + 1);
+        }
     }
 
     private void Finish()

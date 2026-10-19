@@ -14,6 +14,7 @@ internal sealed class Transmission
     public RosterElement Speaker;
     public string Voice;
     public readonly List<string> Clips = new List<string>();   // clip keys; null = short pause between phrases
+    public int CallsignClips;                                  // how many of the first clips are the callsign
     public string Phrase;                                      // main phrase key (for queue rules / logs)
     public int Priority;                                       // 1 = most urgent … 7 = acknowledgement
     public string Profile;                                     // radio flavour, see RadioFx
@@ -55,6 +56,7 @@ internal static class TransmissionBuilder
             Priority = 7,
         };
         t.Clips.AddRange(CallsignFor(speaker, out string said));
+        t.CallsignClips = t.Clips.Count;
         t.Text = said + ",";
         return t;
     }

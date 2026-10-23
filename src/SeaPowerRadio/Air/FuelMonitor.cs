@@ -20,8 +20,11 @@ namespace SeaPowerRadio.Air;
 /// The game itself only knows "bingo" against the home base: once fuel only just covers the way home at best
 /// efficiency it turns the aircraft home (BingoFuel state) and says no more than "returning to base". That moment
 /// is a bingo call too – the game can get there first when another deck is nearer than home, or at high time
-/// compression between two scans. Aircraft nothing in the mission can take (air support without a home base)
-/// fall out of the sky when the tank runs dry; they call by the share of a full tank instead.
+/// compression between two scans. Aircraft nothing in the mission can take have no home base: the game drops a
+/// mission's HomeBase when that field's air group doesn't carry the type (SceneCreator.RebaseAircraft), never sends
+/// them home and lets them fall out of the sky when the tank runs dry. They call all the same, against the nearest
+/// friendly field or deck they would call home – where the player sees the range circle stop reaching – and by
+/// the share of a full tank when there is none.
 /// Fuel model as in the game: <c>RangeInKm</c> is the fuel left, in km at best efficiency; a km flown costs the
 /// consumption coefficient of the speed and altitude flown (Aircraft.UpdateFuelConsumption,
 /// Helicopter.UpdateFuelConsumption).
@@ -105,6 +108,9 @@ internal sealed class FuelMonitor
             return;
         }
         (ObjectBase deck, float km) = NearestDeck(unit);
+        bool canLand = deck != null;
+        if (!canLand)
+            (deck, km) = NearestField(unit);
         float fuel = unit.RangeInKm.Value;
         float full = Math.Max(1f, unit._obp._maxRangeInKm);
 
@@ -123,7 +129,7 @@ internal sealed class FuelMonitor
         if (!states.TryGetValue(id, out State s))
         {
             states[id] = s = new State { LastFuel = fuel };
-            Describe(unit, deck, km, fuel, full, cruise, economy);
+            Describe(unit, deck, canLand, km, fuel, full, cruise, economy);
         }
         if (fuel > s.LastFuel + 1f && level < s.Said)
             s.Said = level;                         // refuelled in the air: calls can come again
@@ -134,6 +140,7 @@ internal sealed class FuelMonitor
             // The game has gone bingo before us and is taking it home: that is the bingo call, against home.
             level = Level.Bingo;
             deck = unit._homeBase;
+            canLand = true;
             km = Km(unit, deck);
         }
         else if (RtbMarker.IsRtb(unit) && s.Said < Level.Joker)
@@ -151,11 +158,12 @@ internal sealed class FuelMonitor
         if (level <= s.Said)
             return;
         s.Said = level;
-        Announce(e, unit, level, deck, km, fuel, full, level == Level.Joker ? cruise : economy);
+        Announce(e, unit, level, deck, canLand, km, fuel, full, level == Level.Joker ? cruise : economy);
     }
 
     /// <summary>Once per sortie: what the calls will be measured against, so the log shows the monitor is on it.</summary>
-    private static void Describe(ObjectBase unit, ObjectBase deck, float km, float fuel, float full, float cruise, float economy)
+    private static void Describe(ObjectBase unit, ObjectBase deck, bool canLand, float km, float fuel, float full,
+        float cruise, float economy)
     {
         string name = unit.getName();
         if (deck == null)
@@ -166,30 +174,34 @@ internal sealed class FuelMonitor
         }
         float joker = km * cruise * JokerMargin + JokerReserveKm;
         float bingo = km * economy * BingoMargin + BingoReserveKm;
-        ModLog.Info($"[fuel] watching {name}: {fuel:0} km of fuel, {deck.getName()} {km:0} km away " +
+        string where = canLand ? "" : " (can't land there - nothing in the mission takes it, the game won't send it home)";
+        ModLog.Info($"[fuel] watching {name}: {fuel:0} km of fuel, {deck.getName()} {km:0} km away{where} " +
                     $"- joker below {joker:0} km, bingo below {bingo:0} km (moves with the distance)");
     }
 
-    private void Announce(RosterElement e, ObjectBase unit, Level level, ObjectBase deck, float km, float fuel, float full, float burn)
+    private void Announce(RosterElement e, ObjectBase unit, Level level, ObjectBase deck, bool canLand, float km,
+        float fuel, float full, float burn)
     {
         float rangeNm = fuel / Math.Max(1f, burn) / 1.852f;
         string phrase, text;
         if (deck != null)
         {
             float nm = km / 1.852f;
+            string where = canLand ? "" : " (can't land there)";
             switch (level)
             {
                 case Level.Joker:
                     phrase = "FuelJoker";
-                    text = $"${{Name}}: Joker fuel - ${{Target}} is {nm:0} nm, range at cruise {rangeNm:0} nm";
+                    text = $"${{Name}}: Joker fuel - ${{Target}} is {nm:0} nm{where}, range at cruise {rangeNm:0} nm";
                     break;
                 case Level.Bingo:
                     phrase = "FuelBingo";
-                    text = $"${{Name}}: BINGO fuel - ${{Target}} is {nm:0} nm, range at best economy {rangeNm:0} nm. Send it home now";
+                    text = $"${{Name}}: BINGO fuel - ${{Target}} is {nm:0} nm{where}, range at best economy {rangeNm:0} nm. " +
+                           (canLand ? "Send it home now" : "Nothing in the mission takes it, the game won't bring it home");
                     break;
                 default:
                     phrase = "FuelEmergency";
-                    text = $"${{Name}}: FUEL EMERGENCY - ${{Target}} is {nm:0} nm, range only {rangeNm:0} nm. Needs a tanker";
+                    text = $"${{Name}}: FUEL EMERGENCY - ${{Target}} is {nm:0} nm{where}, range only {rangeNm:0} nm. Needs a tanker";
                     break;
             }
         }
@@ -298,5 +310,34 @@ internal sealed class FuelMonitor
             }
         }
         return (best, bestKm);
+    }
+
+    /// <summary>
+    /// Nothing in the mission takes it: the nearest friendly field or deck it would call home all the same. Aircraft:
+    /// airfields and decks that carry fixed-wing aircraft; helicopters: any deck.
+    /// </summary>
+    private static (ObjectBase field, float km) NearestField(ObjectBase unit)
+    {
+        ObjectBase best = null;
+        float bestKm = float.MaxValue;
+        Taskforce side = unit._taskforce;
+        if (side?._taskforceUnits == null)
+            return (null, 0f);
+        foreach (ObjectBase site in side._taskforceUnits)
+        {
+            FlightDeck deck = site == null ? null : site._obp?._flightDeck;
+            if (deck == null || site == unit || site.IsDestroyed)
+                continue;
+            if (unit is Aircraft && !(site is LandUnit)
+                && (deck._vehiclesOnBoard == null || !deck._vehiclesOnBoard.Any(v => v._type != VehicleType.Helicopter)))
+                continue;
+            float km = Km(unit, site);
+            if (km < bestKm)
+            {
+                best = site;
+                bestKm = km;
+            }
+        }
+        return (best, best != null ? bestKm : 0f);
     }
 }

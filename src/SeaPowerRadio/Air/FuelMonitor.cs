@@ -130,6 +130,11 @@ internal sealed class FuelMonitor
         {
             states[id] = s = new State { LastFuel = fuel };
             Describe(unit, deck, canLand, km, fuel, full, cruise, economy);
+            if (unit._homeBase == null)
+            {
+                try { LandingCheck.Log(unit); }
+                catch (Exception ex) { ModLog.Warn($"[fuel] {unit.getName()}: landing check failed: {ex.Message}"); }
+            }
         }
         if (fuel > s.LastFuel + 1f && level < s.Said)
             s.Said = level;                         // refuelled in the air: calls can come again

@@ -31,6 +31,8 @@ internal static class Settings
     public static ConfigEntry<bool> RtbHighlight;
     public static ConfigEntry<bool> SarCalls;
 
+    public static ConfigEntry<bool> UnitRoles;
+
     public static ConfigEntry<bool> ContactReports;
     public static ConfigEntry<float> FadeHysteresis;
     public static ConfigEntry<float> ContactCooldown;
@@ -92,6 +94,12 @@ internal static class Settings
         SarCalls = file.Bind("6. Air ops", "Search and rescue calls", true,
             "Survivors in the water, rescuer proceeding, pickup complete with souls aboard, cabin full, survivors " +
             "delivered - spoken and as messages (replaces the game's one-line pickup message).");
+
+        UnitRoles = file.Bind("7. Formation manager", "Show unit roles", true,
+            "A small line under each unit says what it is: the ship type (Destroyer, Frigate, Attack Submarine), " +
+            "the mission an aircraft is loaded for (CAP, Strike, SEAD, AEW...), the helicopter type (ASW " +
+            "Helicopter). Groups show the role their members share. Takes effect the next time the formation " +
+            "manager opens.");
 
         ContactReports = file.Bind("3. Contacts", "Contact reports", true,
             "New, lost, intermittent and hostile contacts are called out by the unit that detected them.");

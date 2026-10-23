@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using SeaPower;
 using SeapowerUI.ViewModels;
 using SeaPowerRadio.Radio;
@@ -16,9 +17,13 @@ namespace SeaPowerRadio.Air;
 /// <item><b>Bingo</b> – only just enough even at the most economical speed: it has to go now.</item>
 /// <item><b>Fuel emergency</b> – not enough at all, even flying economy: tanker or it goes in the water.</item>
 /// </list>
-/// The game itself only knows "bingo" against the home base, and acts on it (the aircraft turns home); these calls
-/// only report. Fuel model as in the game: <c>RangeInKm</c> is the fuel left, in km at best efficiency; a km flown
-/// costs the consumption coefficient of the speed and altitude flown (Aircraft.UpdateFuelConsumption,
+/// The game itself only knows "bingo" against the home base: once fuel only just covers the way home at best
+/// efficiency it turns the aircraft home (BingoFuel state) and says no more than "returning to base". That moment
+/// is a bingo call too – the game can get there first when another deck is nearer than home, or at high time
+/// compression between two scans. Aircraft nothing in the mission can take (air support without a home base)
+/// fall out of the sky when the tank runs dry; they call by the share of a full tank instead.
+/// Fuel model as in the game: <c>RangeInKm</c> is the fuel left, in km at best efficiency; a km flown costs the
+/// consumption coefficient of the speed and altitude flown (Aircraft.UpdateFuelConsumption,
 /// Helicopter.UpdateFuelConsumption).
 /// </summary>
 internal sealed class FuelMonitor
@@ -29,21 +34,30 @@ internal sealed class FuelMonitor
     {
         public Level Said;
         public float LastFuel;
+        public float NextTrace;
     }
 
-    private const float ScanInterval = 2f;
-    private const int CruiseSpeedIndex = 2;        // "medium" – what the game uses for "can it reach the tanker"
+    private const float ScanInterval = 0.5f;       // real seconds: at high time compression a lot happens in between
+    private const float TraceInterval = 30f;       // verbose log: each aircraft's sums this often
+    private const int CruiseSpeedIndex = 2;        // "Cruise" – what the game uses for "can it reach the tanker"
     private const float JokerMargin = 1.10f, JokerReserveKm = 10f;
     private const float BingoMargin = 1.05f, BingoReserveKm = 5f;
+    // Nowhere to land: share of a full tank.
+    private const float NoDeckJoker = 0.25f, NoDeckBingo = 0.15f, NoDeckEmergency = 0.05f;
     private const float KmPerMapUnit = 67.200066f / 1000f;
 
     private readonly RadioPlayer player;
     private readonly Dictionary<int, State> states = new Dictionary<int, State>();
+    private readonly HashSet<int> failed = new HashSet<int>();
     private float nextScan;
 
     public FuelMonitor(RadioPlayer player) => this.player = player;
 
-    public void Clear() => states.Clear();
+    public void Clear()
+    {
+        states.Clear();
+        failed.Clear();
+    }
 
     public void Tick()
     {
@@ -51,79 +65,161 @@ internal sealed class FuelMonitor
             return;
         nextScan = Time.unscaledTime + ScanInterval;
         Roster.Roster roster = RosterService.Current;
-        if (roster == null)
+        Taskforce side = Globals._playerTaskforce;
+        if (roster == null || side?._taskforceUnits == null)
             return;
-        foreach (RosterElement e in roster.Elements)
+        // Every player aircraft in the air, not only those in the roster: air support that turns up mid-mission
+        // gets its element (and voice) here if nothing has spoken for it yet.
+        foreach (ObjectBase unit in side._taskforceUnits.ToList())
         {
-            ObjectBase unit = e.Unit;
-            if (unit == null || unit.IsDestroyed || !unit.IsPlayerUnit || !(unit is Aircraft || unit is Helicopter))
+            if (unit == null || unit.IsDestroyed || !(unit is Aircraft || unit is Helicopter))
                 continue;
-            try { Scan(e, unit); }
-            catch (Exception ex) { ModLog.Debug($"[fuel] {unit.getName()}: {ex.Message}"); }
+            int id = unit.GetInstanceID();
+            try
+            {
+                Scan(roster, unit, id);
+            }
+            catch (Exception ex)
+            {
+                if (failed.Add(id))
+                    ModLog.Warn($"[fuel] {unit.getName()}: no fuel calls, scan failed: {ex}");
+            }
         }
     }
 
-    private void Scan(RosterElement e, ObjectBase unit)
+    private void Scan(Roster.Roster roster, ObjectBase unit, int id)
     {
-        int id = unit.GetInstanceID();
         bool inFlight = unit is Aircraft aircraft ? aircraft._isInFlight : ((Helicopter)unit)._isInFlight;
         if (!inFlight || unit._unlimitedFuel)
         {
             states.Remove(id);                      // on deck: the next sortie starts fresh
             return;
         }
+        RosterElement e = roster.Resolve(unit);
+        if (e == null)
+            return;
         if (!Burn(unit, out float cruise, out float economy))
+        {
+            if (failed.Add(id))
+                ModLog.Warn($"[fuel] {unit.getName()}: no fuel calls, its fuel model can't be read");
             return;
+        }
         (ObjectBase deck, float km) = NearestDeck(unit);
-        if (deck == null)
-            return;
-
         float fuel = unit.RangeInKm.Value;
-        Level level = fuel < km * economy ? Level.Emergency
-            : fuel < km * economy * BingoMargin + BingoReserveKm ? Level.Bingo
-            : fuel < km * cruise * JokerMargin + JokerReserveKm ? Level.Joker
-            : Level.None;
+        float full = Math.Max(1f, unit._obp._maxRangeInKm);
+
+        Level level;
+        if (deck != null)
+            level = fuel < km * economy ? Level.Emergency
+                : fuel < km * economy * BingoMargin + BingoReserveKm ? Level.Bingo
+                : fuel < km * cruise * JokerMargin + JokerReserveKm ? Level.Joker
+                : Level.None;
+        else
+            level = fuel < full * NoDeckEmergency ? Level.Emergency
+                : fuel < full * NoDeckBingo ? Level.Bingo
+                : fuel < full * NoDeckJoker ? Level.Joker
+                : Level.None;
 
         if (!states.TryGetValue(id, out State s))
+        {
             states[id] = s = new State { LastFuel = fuel };
+            Describe(unit, deck, km, fuel, full, cruise, economy);
+        }
         if (fuel > s.LastFuel + 1f && level < s.Said)
             s.Said = level;                         // refuelled in the air: calls can come again
         s.LastFuel = fuel;
 
-        string stateName = unit.StateMachine?.CurrentStateName;
-        if (stateName == "BingoFuel" && s.Said < Level.Bingo)
-            s.Said = Level.Bingo;                   // the game has called bingo itself and is taking it home
+        if (unit.StateMachine?.CurrentStateName == "BingoFuel" && level < Level.Bingo && unit._homeBase != null)
+        {
+            // The game has gone bingo before us and is taking it home: that is the bingo call, against home.
+            level = Level.Bingo;
+            deck = unit._homeBase;
+            km = Km(unit, deck);
+        }
         else if (RtbMarker.IsRtb(unit) && s.Said < Level.Joker)
+        {
             s.Said = Level.Joker;                   // already on its way home: no joker call
+        }
+
+        if (Settings.VerboseLog.Value && Time.unscaledTime >= s.NextTrace)
+        {
+            s.NextTrace = Time.unscaledTime + TraceInterval;
+            ModLog.Debug($"[fuel] {unit.getName()}: {fuel:0} km fuel, {(deck != null ? $"{deck.getName()} {km:0} km" : "no deck")}, " +
+                         $"level {level}, said {s.Said}, state {unit.StateMachine?.CurrentStateName}");
+        }
 
         if (level <= s.Said)
             return;
         s.Said = level;
-        Announce(e, unit, level, deck, km, fuel, level == Level.Joker ? cruise : economy);
+        Announce(e, unit, level, deck, km, fuel, full, level == Level.Joker ? cruise : economy);
     }
 
-    private void Announce(RosterElement e, ObjectBase unit, Level level, ObjectBase deck, float km, float fuel, float burn)
+    /// <summary>Once per sortie: what the calls will be measured against, so the log shows the monitor is on it.</summary>
+    private static void Describe(ObjectBase unit, ObjectBase deck, float km, float fuel, float full, float cruise, float economy)
     {
-        float nm = km / 1.852f;
+        string name = unit.getName();
+        if (deck == null)
+        {
+            ModLog.Info($"[fuel] watching {name}: {fuel:0} km of fuel ({fuel / full:P0}), nothing in the mission can take it " +
+                        $"- joker / bingo / emergency at {NoDeckJoker:P0} / {NoDeckBingo:P0} / {NoDeckEmergency:P0} of a full tank");
+            return;
+        }
+        float joker = km * cruise * JokerMargin + JokerReserveKm;
+        float bingo = km * economy * BingoMargin + BingoReserveKm;
+        ModLog.Info($"[fuel] watching {name}: {fuel:0} km of fuel, {deck.getName()} {km:0} km away " +
+                    $"- joker below {joker:0} km, bingo below {bingo:0} km (moves with the distance)");
+    }
+
+    private void Announce(RosterElement e, ObjectBase unit, Level level, ObjectBase deck, float km, float fuel, float full, float burn)
+    {
         float rangeNm = fuel / Math.Max(1f, burn) / 1.852f;
         string phrase, text;
-        switch (level)
+        if (deck != null)
         {
-            case Level.Joker:
-                phrase = "FuelJoker";
-                text = $"${{Name}}: Joker fuel - ${{Target}} is {nm:0} nm, range at cruise {rangeNm:0} nm";
-                break;
-            case Level.Bingo:
-                phrase = "FuelBingo";
-                text = $"${{Name}}: BINGO fuel - ${{Target}} is {nm:0} nm, range at best economy {rangeNm:0} nm. Send it home now";
-                break;
-            default:
-                phrase = "FuelEmergency";
-                text = $"${{Name}}: FUEL EMERGENCY - ${{Target}} is {nm:0} nm, range only {rangeNm:0} nm. Needs a tanker";
-                break;
+            float nm = km / 1.852f;
+            switch (level)
+            {
+                case Level.Joker:
+                    phrase = "FuelJoker";
+                    text = $"${{Name}}: Joker fuel - ${{Target}} is {nm:0} nm, range at cruise {rangeNm:0} nm";
+                    break;
+                case Level.Bingo:
+                    phrase = "FuelBingo";
+                    text = $"${{Name}}: BINGO fuel - ${{Target}} is {nm:0} nm, range at best economy {rangeNm:0} nm. Send it home now";
+                    break;
+                default:
+                    phrase = "FuelEmergency";
+                    text = $"${{Name}}: FUEL EMERGENCY - ${{Target}} is {nm:0} nm, range only {rangeNm:0} nm. Needs a tanker";
+                    break;
+            }
         }
-        ModLog.Info($"[fuel] {text.Replace("${Name}", unit.getName()).Replace("${Target}", deck.getName())}");
-        try { Globals._mainGameViewModel?.RaiseAlert(unit, deck, text); }
+        else
+        {
+            string left = (fuel / full).ToString("P0");
+            switch (level)
+            {
+                case Level.Joker:
+                    phrase = "FuelJoker";
+                    text = $"${{Name}}: Joker fuel - {left} left, range at cruise {rangeNm:0} nm. Nowhere in the area to land";
+                    break;
+                case Level.Bingo:
+                    phrase = "FuelBingo";
+                    text = $"${{Name}}: BINGO fuel - {left} left, range at best economy {rangeNm:0} nm. Nowhere in the area to land";
+                    break;
+                default:
+                    phrase = "FuelEmergency";
+                    text = $"${{Name}}: FUEL EMERGENCY - {left} left, range only {rangeNm:0} nm. Needs a tanker";
+                    break;
+            }
+        }
+        ModLog.Info($"[fuel] {text.Replace("${Name}", unit.getName()).Replace("${Target}", deck != null ? deck.getName() : "")}");
+        try
+        {
+            if (deck != null)
+                Globals._mainGameViewModel?.RaiseAlert(unit, deck, text);
+            else
+                Globals._mainGameViewModel?.RaiseAlert(unit, text);
+        }
         catch (Exception ex) { ModLog.Debug($"[fuel] alert failed: {ex.Message}"); }
 
         List<Alert> alerts = AlertLink.TakeFor(unit);
@@ -134,7 +230,11 @@ internal sealed class FuelMonitor
         player.Submit(t);
     }
 
-    /// <summary>Fuel per km flown (in the game's "km at best efficiency"): at cruise and at the cheapest speed.</summary>
+    /// <summary>
+    /// Fuel per km flown (in the game's "km at best efficiency"): at cruise and at the cheapest speed. The cheapest is
+    /// what the game itself reckons the way home with – distance × load factor (Aircraft/Helicopter
+    /// .UpdateFuelConsumption, the home base branch) – so our bingo always comes just before the game's.
+    /// </summary>
     private static bool Burn(ObjectBase unit, out float cruise, out float economy)
     {
         cruise = economy = 0f;
@@ -145,13 +245,9 @@ internal sealed class FuelMonitor
                 return false;
             float mass = 1f + ap._loadoutMass / ap._emptyMass;
             float altitude = Mathf.Max(0.05f, ap._altitudeEfficiencyCurve.Evaluate(a.getHeightInFeet()));
-            float atSpeed(int i, float alt) => ap._rangeMultiplierCurve.Evaluate(ap._speedValuesInMach[i]) / alt * mass;
-            cruise = Mathf.Max(1f, atSpeed(Math.Min(CruiseSpeedIndex, ap._speedValuesInMach.Length - 1), altitude));
-            // Economy may climb to cruise altitude on the way (the curve is 1 there), never worse than here.
-            float best = float.MaxValue;
-            for (int i = 0; i < ap._speedValuesInMach.Length; i++)
-                best = Math.Min(best, atSpeed(i, Math.Max(altitude, 1f)));
-            economy = Mathf.Max(1f, best);
+            float mach = ap._speedValuesInMach[Math.Min(CruiseSpeedIndex, ap._speedValuesInMach.Length - 1)];
+            economy = Mathf.Max(1f, mass);
+            cruise = Mathf.Max(economy, ap._rangeMultiplierCurve.Evaluate(mach) / altitude * mass);
             return true;
         }
         if (unit is Helicopter h)
@@ -169,6 +265,9 @@ internal sealed class FuelMonitor
         return false;
     }
 
+    private static float Km(ObjectBase unit, ObjectBase site) =>
+        (float)unit.Position.Value.GetDistance(site.Position.Value) * KmPerMapUnit;
+
     /// <summary>The closest place this aircraft can land: its home base, or any friendly deck/field that takes it.</summary>
     private static (ObjectBase deck, float km) NearestDeck(ObjectBase unit)
     {
@@ -176,7 +275,7 @@ internal sealed class FuelMonitor
         float bestKm = float.MaxValue;
         void Consider(ObjectBase site)
         {
-            float km = (float)unit.Position.Value.GetDistance(site.Position.Value) * KmPerMapUnit;
+            float km = Km(unit, site);
             if (km < bestKm)
             {
                 best = site;

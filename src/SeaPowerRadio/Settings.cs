@@ -84,7 +84,8 @@ internal static class Settings
         FuelCalls = file.Bind("6. Air ops", "Fuel calls", true,
             "Aircraft and helicopters call joker, bingo and fuel emergency against the nearest deck or airfield that " +
             "can take them: joker = at cruise speed only just enough fuel to get there, bingo = only just enough even " +
-            "at the most economical speed, emergency = not enough at all.");
+            "at the most economical speed, emergency = not enough at all. Aircraft nothing in the mission can take " +
+            "call at 25 / 15 / 5 % of a full tank.");
         RtbHighlight = file.Bind("6. Air ops", "Highlight RTB", true,
             "Aircraft returning to base are yellow on the map and in the formation manager, and returning groups " +
             "move to the bottom of the formation manager.");

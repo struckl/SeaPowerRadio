@@ -28,7 +28,7 @@ Start Sea Power → Mods → Create Mod:
 
 | Field | Value |
 | --- | --- |
-| Existing item | first upload: none (creates the item); later: pick *Sea Power Radio* |
+| Existing item | pick *Sea Power: Rats Radio* – Workshop item [3826433579](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579), first uploaded 2026-10-24 as 1.0.0 |
 | Folder | `StreamingAssets\SeaPowerRadio` (the folder `package.ps1 -Install` filled). **Double-click** `SeaPowerRadio` so the picker is *inside* it, then confirm: the picker takes the folder it is in, a single click only highlights. Confirming in `StreamingAssets` itself gets "… is a forbidden path!" (the game refuses `StreamingAssets` and `StreamingAssets\original`) |
 | Name | Sea Power: Rats Radio (the naming of "Sea Power: Rats Topographic Map" and "Sea Power: Rats Pop-Out Windows") |
 | Description | [workshop/description.bbcode](../workshop/description.bbcode) |

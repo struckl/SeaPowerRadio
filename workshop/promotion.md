@@ -1,6 +1,6 @@
 # Rats Radio – release and promotion
 
-Workshop: *(link after the upload)*
+Workshop: https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579 (item 3826433579, uploaded 2026-10-24 21:46, public, tags Overhaul, Realism, Audio, Scripting, Effects)
 Video: https://youtu.be/g7P1pg2J0Lk (70 s, the radio net while Yak-38s close in on the Iowa group – `workshop/radio-net.mp4`, not in git)
 Source: https://github.com/struckl/SeaPowerRadio · Release zip (manual install): GitHub release v1.0.0 (draft until
 published)
@@ -10,7 +10,16 @@ Images: `workshop/screenshots/` – 01-radio-net, 02-unit-roles-rtb, 03-message-
 
 ## 0. Steam Workshop upload (Main menu → Mods → Create Mod)
 
-The game must be closed for `tools\package.ps1 -Install`; the 1.0.0 folder is already installed (2026-10-24).
+**Uploaded 2026-10-24 21:46 – item 3826433579.** Two fixes still to make, because the upload came seven minutes
+before the AI wording was taken out of the texts:
+
+1. **Description:** on the Workshop page → Owner Controls → *Edit title & description* → replace the text with
+   [description.bbcode](description.bbcode) as it is now (no "cloned", no "generated while you play").
+2. **CREDITS.txt in the package:** Create Mod again → *Existing item: Sea Power: Rats Radio* → same folder
+   (`StreamingAssets\SeaPowerRadio` already has the new CREDITS.txt) → change note "Credits text". Steam only
+   sends the changed file, so this upload is small. Leave name, description, preview and tags as they are.
+
+The table below is how the first upload was done.
 
 | Field | Value |
 | --- | --- |
@@ -18,7 +27,7 @@ The game must be closed for `tools\package.ps1 -Install`; the 1.0.0 folder is al
 | Name | Sea Power: Rats Radio |
 | Description | [description.bbcode](description.bbcode) (6.6k of Steam's 8k characters) |
 | Preview image | `StreamingAssets\SeaPowerRadio\preview.jpg` |
-| Tags | Audio, Scripting |
+| Tags | Audio, Scripting (uploaded with Overhaul, Realism, Audio, Scripting, Effects) |
 | Dependencies | `3380210757` (Anchor Chain) |
 | Visibility | Hidden first, Public once the subscribed copy works |
 | Change log | First release: a voice and callsign for every unit, the stock voice lines re-spoken by the unit that said them, units that tell you why they won't fire, an order queue with single deletes, contact reports without spam, clickable messages, fuel, RTB and SAR calls, unit roles in the formation manager. |
@@ -47,7 +56,7 @@ Rats Radio – a Sea Power mod that makes the radio net sound like people instea
 • Unit roles in the formation manager
 
 All pre-rendered, ships with the mod – no internet needed. Needs Anchor Chain.
-Workshop: WORKSHOP-LINK
+Workshop: https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579
 Source (MIT): https://github.com/struckl/SeaPowerRadio
 Voices: CSTR VCTK Corpus (University of Edinburgh), CC BY 4.0.
 ```
@@ -109,7 +118,7 @@ Every unit and track number a message mentions takes the camera there – bottom
 
 Everything can be switched off in the config. All voices are pre-rendered and ship with the mod – no internet needed. Needs Anchor Chain.
 
-Workshop: WORKSHOP-LINK
+Workshop: https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579
 Video: https://youtu.be/g7P1pg2J0Lk
 Source (MIT): https://github.com/struckl/SeaPowerRadio
 
@@ -129,7 +138,7 @@ https://steamcommunity.com/app/1286220/discussions/3/ → Start a New Discussion
 end:
 
 ```
-[url=WORKSHOP-LINK][b]Get it on the Steam Workshop[/b][/url]
+[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579][b]Get it on the Steam Workshop[/b][/url]
 Bug reports and suggestions welcome here or on the Workshop page – please attach BepInEx\LogOutput.log.
 ```
 
@@ -153,7 +162,7 @@ The radio net sounds like people instead of a screen reader:
 - **Fuel calls** (joker / bingo / emergency vs the nearest deck that takes you), **RTB in yellow**, **SAR calls**, **unit roles** in the formation manager
 
 All pre-rendered, works offline, every feature switchable. Requires **Anchor Chain**.
-**Workshop:** WORKSHOP-LINK
+**Workshop:** https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579
 **Source (MIT):** <https://github.com/struckl/SeaPowerRadio>
 Feedback welcome!
 ```
@@ -165,10 +174,9 @@ https://discord.gg/CTDqUUJAVC – a mods / showcase channel if there is one, not
 ```
 Made a Sea Power mod for the radio net: **Rats Radio** 🔊 https://youtu.be/g7P1pg2J0Lk
 Every unit gets its own voice and callsign (43 voices), the stock lines are re-spoken by the unit that said them, and your units tell you *why* they won't fire – out of envelope, no radar lock, sonar only, reloading. Plus an order queue with single deletes, contacts without spam, clickable messages, fuel and SAR calls. Needs Anchor Chain.
-Workshop: WORKSHOP-LINK
+Workshop: https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579
 ```
 
 ---
 
-After the upload: replace `WORKSHOP-LINK` with the Workshop URL here, put it in the README and the description, and
-publish the GitHub release.
+Done 2026-10-24: Workshop link here, in the README and the GitHub release.

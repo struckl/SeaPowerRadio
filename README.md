@@ -4,6 +4,9 @@ A mod for [Sea Power: Naval Combat in the Missile Age](https://store.steampowere
 radio net sound like people instead of a screen reader, and makes units tell you **why** they are not doing what you
 ordered.
 
+**[Get it on the Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579)** – requires
+[Anchor Chain](https://steamcommunity.com/sharedfiles/filedetails/?id=3380210757).
+
 **[Watch and listen on YouTube](https://youtu.be/g7P1pg2J0Lk)** (70 s, sound on) – the radio net while Yak-38s close
 in on the Iowa group.
 
@@ -67,7 +70,7 @@ everything works offline.
    community mod loader, following its
    [installation guide](https://seapower-modders.github.io/AnchorChain/install-anchor-chain.html) (one manual step:
    copy its preloader into the game folder).
-2. Subscribe to **Sea Power: Rats Radio** on the Steam Workshop *(link follows with the first release)*. About 390 MB: the
+2. Subscribe to **[Sea Power: Rats Radio](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579)** on the Steam Workshop. About 390 MB: the
    43 rendered voices.
 3. Start a mission. The log `<Sea Power>\BepInEx\LogOutput.log` lists the roster: every unit with its callsign and
    voice.

@@ -23,3 +23,6 @@ tools/voicegen/samples/
 # Rendered voice library (reproducible via tools/voicegen; shipped with releases, not in git)
 mod/voices/*/
 tools/voicegen/refs/
+
+# Sound/video sample for YouTube (workshop/radio-net.mp4) – too big for git
+workshop/*.mp4

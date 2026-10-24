@@ -41,9 +41,53 @@ Start Sea Power → Mods → Create Mod:
 The first upload takes a while (~390 MB in ~57,000 files). Later updates only send and download the files that
 changed, so a plugin-only update is small for players.
 
-After the first upload: add the Workshop link to the README and the description, a short audio/video sample or more
-screenshots on the Workshop page (Steam web → Edit → Add/edit images & videos), and the release zip as a GitHub
-release (`v<version>`).
+After the first upload, on the Workshop page itself (Steam web → Edit → Add/edit images & videos):
+
+- the screenshots from [workshop/screenshots/](../workshop/screenshots), in their numbered order:
+
+  | Image | Shows |
+  | --- | --- |
+  | 01-radio-net | the message log full of radio calls over the Aegean (*Dangerous Straits 1985*): new air contacts with bearings, a hostile classification by ESM, a flight on position – every unit and track a link |
+  | 02-unit-roles-rtb | the formation manager with each ship's role line, the F-5 pair heading home in yellow on the map |
+  | 03-message-log | close-up of the message log |
+  | 04-unit-roles | close-up of the role lines (Battleship, Destroyer, Missile Cruiser …) |
+
+- the sound sample: `workshop/radio-net.mp4` (70 s, 1080p, the radio net while Yak-38s close in on the Iowa
+  group; not in git) uploaded to YouTube, then added as a video – the Workshop only embeds YouTube.
+
+Then the Workshop link into the README and the description, and the release zip as a GitHub release (`v<version>`).
+
+## Remaking the screenshots and the sample
+
+[tools/shot-director](../tools/shot-director) is the dev-only plugin (never shipped) that takes commands from
+`<Sea Power>\BepInEx\shotdirector.cmd` and logs to `shotdirector.log`; the full command list is at the top of
+`Director.cs`. Build it with `dotnet build tools/shot-director -c Release` (deploys to `StreamingAssets\ShotDirector\`),
+start the game through Steam, wait for the main menu, then for example:
+
+```
+load missions/NATO/Dangerous Straits 1985.ini
+click 3141 2067          (Play – twice, the first click only focuses the game)
+click 1920 1605          (Start mission)
+key f6                   (Topographic Map layer off, if installed)
+tc 8 … tc 1              (let contacts come in)
+select Iowa
+attack Iowa | 7021 | usn_rgm-84c
+rtb F-5A 343 MAI-1
+window formation | window eventlog
+center 37.30 25.95 9.3
+quit
+```
+
+Grab the main monitor from outside the game (the game's own `ScreenCapture` fails while Pop-Out has a window on
+another monitor) with DPI awareness on, at 3840x2160, and crop the top 46 px (Steam's performance overlay). For
+these shots Pop-Out's remembered popped windows were cleared for the session, so the formation manager and the
+message log opened on the main screen. The sample was recorded with Desktop Duplication + NVENC for the picture
+(`ffmpeg -f lavfi -i ddagrab=…`) and a WASAPI loopback of the speakers for the sound (Python `soundcard`), muxed and
+scaled to 1080p. Afterwards: `quit`, remove `StreamingAssets\ShotDirector\`, put back any config the run changed.
+
+The order queue window (F8) did not show up in this run, although Iowa had attack orders waiting – probably
+because the director's `select` doesn't select a unit the way a click on the map does (F8 also toggles the window
+off; it starts shown). A screenshot of it is still missing.
 
 ## Testing the Workshop copy
 
@@ -54,9 +98,7 @@ to Public.
 
 ## Still to do for the first release
 
-- Preview and a sound sample: `workshop/preview.jpg` (Workshop preview; the game's Mod Manager shows no pictures),
-  screenshots of the message log and the order queue; a short clip of the radio net in action helps more than any
-  text.
+- A screenshot of the order queue (F8) and of a spoken refusal ("Unable – target outside launch envelope").
 - Settings inside the game (most players won't edit the BepInEx config).
 - Test matrix: other game languages (unit roles, callsign words), large missions (many units), the game's own
   voice volume settings.

@@ -4,6 +4,8 @@ A mod for [Sea Power: Naval Combat in the Missile Age](https://store.steampowere
 radio net sound like people instead of a screen reader, and makes units tell you **why** they are not doing what you
 ordered.
 
+![The message log full of radio calls over the Aegean](workshop/screenshots/01-radio-net.jpg)
+
 - **Per-element voices** – every player unit, and every aircraft a carrier or airbase can launch, gets its own voice
   and a generated NATO callsign for the mission ("Viper two-one", "Sentinel"). Deterministic per mission, so a reload
   keeps the same voices.
@@ -30,6 +32,10 @@ ordered.
   is loaded for (CAP, Strike, SEAD, Anti Ship, ASW, AEW…), helicopter type (ASW Helicopter). Groups show the role
   their members share.
 - **Order queue window** (F8) – the selected unit's stacked attack orders, each with a delete button.
+
+| | |
+| --- | --- |
+| ![Message log close-up](workshop/screenshots/03-message-log.jpg) | ![Unit roles in the formation manager](workshop/screenshots/04-unit-roles.jpg) |
 
 Voices are pre-rendered: 43 distinct people (speakers of the VCTK corpus, cloned with Chatterbox) put through the
 radio chain from [Ratten Chatter](https://github.com/struckl/RattenChatter). Nothing is synthesized at runtime;

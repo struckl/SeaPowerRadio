@@ -32,7 +32,7 @@ Start Sea Power → Mods → Create Mod:
 | Folder | `StreamingAssets\SeaPowerRadio` (the folder `package.ps1 -Install` filled) |
 | Name | Sea Power Radio |
 | Description | [workshop/description.bbcode](../workshop/description.bbcode) |
-| Preview image | `workshop\preview.jpg` (the picker only takes .jpg; Steam wants it under 1 MB) |
+| Preview image | `StreamingAssets\SeaPowerRadio\preview.jpg` (put there by `package.ps1`: the picker only browses StreamingAssets and only takes .jpg; Steam wants it under 1 MB) |
 | Tags | Audio, Scripting |
 | Dependencies | `3380210757` (Anchor Chain) – shows as a required item on the Workshop page |
 | Visibility | first upload **Hidden** (or Friends only); Public once the subscribed copy is tested |
@@ -54,8 +54,9 @@ to Public.
 
 ## Still to do for the first release
 
-- Screenshots and a sound sample: `workshop/preview.jpg` (Workshop preview), `workshop/thumbnail.png` (Mod Manager
-  picture); a short clip of the radio net in action helps more than any text.
+- Preview and a sound sample: `workshop/preview.jpg` (Workshop preview; the game's Mod Manager shows no pictures),
+  screenshots of the message log and the order queue; a short clip of the radio net in action helps more than any
+  text.
 - Settings inside the game (most players won't edit the BepInEx config).
 - Test matrix: other game languages (unit roles, callsign words), large missions (many units), the game's own
   voice volume settings.

@@ -4,9 +4,10 @@
 
 .DESCRIPTION
     Release build without the automatic deploy, then dist\SeaPowerRadio\ with exactly what players get:
-    SeaPowerRadio.dll, _info.ini, LICENSE.txt, CREDITS.txt (the voices' CC BY 4.0 attribution), the Mod Manager
-    thumbnail (workshop\thumbnail.png, if present) and voices\ – the catalog files and the rendered library from
-    mod\voices\ (not in git; rendered with tools\voicegen). Refuses to stage a library with personas missing.
+    SeaPowerRadio.dll, _info.ini, LICENSE.txt, CREDITS.txt (the voices' CC BY 4.0 attribution), voices\ – the
+    catalog files and the rendered library from mod\voices\ (not in git; rendered with tools\voicegen) – and
+    preview.jpg, the Workshop preview (workshop\preview.jpg, if present): the game's upload screen only browses
+    StreamingAssets for it. Refuses to stage a library with personas missing.
     -Install mirrors the staged folder into <GameDir>\Sea Power_Data\StreamingAssets\SeaPowerRadio\, the folder to
     pick in the game's Create Mod screen (Sea Power must be closed). -Zip also writes dist\SeaPowerRadio-<version>.zip
     for a GitHub release.
@@ -42,8 +43,8 @@ Copy-Item (Join-Path $out 'SeaPowerRadio.dll') $dist
 Copy-Item (Join-Path $root 'mod\_info.ini') $dist
 Copy-Item (Join-Path $root 'LICENSE') (Join-Path $dist 'LICENSE.txt')
 Copy-Item (Join-Path $root 'VOICES-LICENSE.md') (Join-Path $dist 'CREDITS.txt')
-$thumbnail = Join-Path $root 'workshop\thumbnail.png'
-if (Test-Path $thumbnail) { Copy-Item $thumbnail $dist } else { Write-Warning 'workshop\thumbnail.png missing - no Mod Manager picture.' }
+$preview = Join-Path $root 'workshop\preview.jpg'
+if (Test-Path $preview) { Copy-Item $preview $dist } else { Write-Warning 'workshop\preview.jpg missing - nothing to pick as the Workshop preview.' }
 
 # robocopy is far faster than Copy-Item for ~57,000 small clips; half-written takes (*.part.mp3) stay behind.
 robocopy $voices (Join-Path $dist 'voices') /E /XF *.part.mp3 /NFL /NDL /NJH /NJS /NP | Out-Null

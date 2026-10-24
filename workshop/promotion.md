@@ -35,7 +35,7 @@ Paste into the video's description (YouTube Studio → Details):
 ```
 Rats Radio – a Sea Power mod that makes the radio net sound like people instead of a screen reader, and makes your units tell you why they won't do what you ordered. Mission: Dangerous Straits 1985 – Yak-38s closing in on the Iowa surface action group.
 
-• A voice for every unit – 43 people, cloned from real speakers (US, Canadian, English, Scottish, Irish, Northern Irish, Australian, New Zealand), every ship and every aircraft your carriers can launch
+• A voice for every unit – 43 voices based on real speakers (US, Canadian, English, Scottish, Irish, Northern Irish, Australian, New Zealand), every ship and every aircraft your carriers can launch
 • Callsigns – ships say their own name, aircraft their squadron callsign, the rest a NATO callsign; the same voices again after a reload
 • The stock lines re-spoken by the unit that said them, with radio hiss, mic click and squelch
 • A real net – urgent calls cut in, replies before reports, stale calls dropped, callsign only when the speaker changes
@@ -46,7 +46,7 @@ Rats Radio – a Sea Power mod that makes the radio net sound like people instea
 • Fuel calls (joker, bingo, emergency) against the nearest deck that can take the aircraft, RTB aircraft in yellow, search and rescue calls
 • Unit roles in the formation manager
 
-All pre-rendered – no internet, nothing generated while you play. Needs Anchor Chain.
+All pre-rendered, ships with the mod – no internet needed. Needs Anchor Chain.
 Workshop: WORKSHOP-LINK
 Source (MIT): https://github.com/struckl/SeaPowerRadio
 Voices: CSTR VCTK Corpus (University of Edinburgh), CC BY 4.0.
@@ -69,7 +69,7 @@ The stock radio has two voices per nation and sounds like a screen reader, and w
 
 **A voice for every unit**
 
-- 43 distinct people, cloned from real speakers – American, Canadian, English, Scottish, Irish, Northern Irish, Australian and New Zealand accents, men and women
+- 43 distinct voices based on real speakers – American, Canadian, English, Scottish, Irish, Northern Irish, Australian and New Zealand accents, men and women
 - Every ship, sub, aircraft and helicopter of yours gets its own voice, including every aircraft your carriers and airbases can launch, the moment it takes off
 - Ships say their own name ("Iowa"), aircraft their squadron callsign from the game ("Lancer 3-2"), the rest a NATO callsign ("Viper two-one")
 - The same voices again when you reload the mission
@@ -107,13 +107,13 @@ Every unit and track number a message mentions takes the camera there – bottom
 - Search and rescue calls: survivors in the water, pickup complete with souls aboard, cabin full, survivors delivered
 - A line under every unit in the formation manager says what it is – Destroyer, Attack Submarine, CAP, Strike, SEAD, ASW Helicopter – in your game language
 
-Everything can be switched off in the config. All voices are pre-rendered – nothing is generated while you play, no internet. Needs Anchor Chain.
+Everything can be switched off in the config. All voices are pre-rendered and ship with the mod – no internet needed. Needs Anchor Chain.
 
 Workshop: WORKSHOP-LINK
 Video: https://youtu.be/g7P1pg2J0Lk
 Source (MIT): https://github.com/struckl/SeaPowerRadio
 
-Voices cloned from speakers of the CSTR VCTK corpus (University of Edinburgh, CC BY 4.0). Feedback welcome – especially lines that sound wrong for the situation.
+Voices based on speakers of the CSTR VCTK corpus (University of Edinburgh, CC BY 4.0), rendered with Chatterbox. Feedback welcome – especially lines that sound wrong for the situation.
 
 ---
 
@@ -143,7 +143,7 @@ the GitHub link keeps Discord from adding a third preview box. Under Discord's 2
 ```
 ## Rats Radio – new Sea Power mod 🔊 https://youtu.be/g7P1pg2J0Lk
 The radio net sounds like people instead of a screen reader:
-- **43 voices** cloned from real speakers – every ship and every aircraft your carriers can launch gets its own; ships say their name, aircraft their squadron callsign
+- **43 voices** based on real speakers – every ship and every aircraft your carriers can launch gets its own; ships say their name, aircraft their squadron callsign
 - **Stock lines replaced** – re-spoken by the unit that said them, with hiss, mic click and squelch
 - **A real net** – urgent calls cut in, replies before reports, stale calls dropped, callsign only when the speaker changes
 - **Why not?** – units tell you why they won't fire: rear aspect, out of envelope, no radar lock, sonar only, reloading, order dropped… 20+ reasons, plus wingmen that won't VID

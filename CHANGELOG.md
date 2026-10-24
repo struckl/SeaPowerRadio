@@ -4,8 +4,9 @@
 
 Tested on Sea Power 0.8.7.
 
-- 43 pre-rendered voices (VCTK speakers cloned with Chatterbox) through a radio chain; every player unit and every
-  aircraft a carrier or airbase can launch gets its own voice and a NATO callsign, stable per mission.
+- 43 pre-rendered voices (based on speakers of the VCTK corpus, rendered with Chatterbox) through a radio chain;
+  every player unit and every aircraft a carrier or airbase can launch gets its own voice and a NATO callsign, stable
+  per mission.
 - The game's stock voice lines muted and re-spoken by the unit that said them; brevity on the net (callsign only
   when the speaker changes).
 - Why-not diagnostics: units say why they don't fire or follow an order; order queue window (F8).

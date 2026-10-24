@@ -57,8 +57,8 @@ in on the Iowa group.
 | --- | --- |
 | ![Message log close-up](workshop/screenshots/03-message-log.jpg) | ![Unit roles in the formation manager](workshop/screenshots/04-unit-roles.jpg) |
 
-Voices are pre-rendered: 43 distinct people (speakers of the VCTK corpus, cloned with Chatterbox) put through the
-radio chain from [Ratten Chatter](https://github.com/struckl/RattenChatter). Nothing is synthesized at runtime;
+Voices are pre-rendered: 43 distinct voices (based on speakers of the VCTK corpus, rendered with Chatterbox) put
+through the radio chain from [Ratten Chatter](https://github.com/struckl/RattenChatter). Nothing is rendered at runtime;
 everything works offline.
 
 ## Installation
@@ -113,7 +113,7 @@ and can be rebuilt with the voice pipeline below.
 ## Voice pipeline
 
 `tools/voicegen/` (Python + ffmpeg). Shipped voices: [Chatterbox](https://github.com/resemble-ai/chatterbox) on a
-local GPU, each persona cloned from one speaker of the [CSTR VCTK Corpus](https://doi.org/10.7488/ds/2645).
+local GPU, each persona rendered from one speaker of the [CSTR VCTK Corpus](https://doi.org/10.7488/ds/2645).
 edge-tts (`generate.py`) remains as a fallback engine.
 
 | File | What it is |
@@ -185,8 +185,8 @@ Built on [BepInEx](https://github.com/BepInEx/BepInEx), [HarmonyX](https://githu
 [Anchor Chain](https://github.com/SeaPower-Modders/AnchorChain). Radio chain from
 [Ratten Chatter](https://github.com/struckl/RattenChatter).
 
-Voices generated with [Chatterbox](https://github.com/resemble-ai/chatterbox) by Resemble AI (MIT license; generated
-audio carries Resemble's imperceptible Perth watermark), cloned from speakers of the **CSTR VCTK Corpus**:
+Voices rendered with [Chatterbox](https://github.com/resemble-ai/chatterbox) (MIT license) from speakers of the
+**CSTR VCTK Corpus**:
 Yamagishi, Junichi; Veaux, Christophe; MacDonald, Kirsten (2019). *CSTR VCTK Corpus: English Multi-speaker Corpus
 for CSTR Voice Cloning Toolkit (version 0.92)*. University of Edinburgh, The Centre for Speech Technology Research.
 https://doi.org/10.7488/ds/2645 – licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).

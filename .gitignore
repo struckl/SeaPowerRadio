@@ -1,0 +1,25 @@
+# Build output
+bin/
+obj/
+*.user
+.vs/
+
+# Release staging (tools/package.ps1)
+dist/
+
+# Python
+.venv/
+.venv-*/
+__pycache__/
+
+# Local
+.env
+.claude/
+
+# Rendered audio scratch
+tools/voicegen/out/
+tools/voicegen/samples/
+
+# Rendered voice library (reproducible via tools/voicegen; shipped with releases, not in git)
+mod/voices/*/
+tools/voicegen/refs/

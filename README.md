@@ -76,8 +76,9 @@ A successful build copies the DLL and `mod/` (voice library, `_info.ini`) into
 `<GameDir>/Sea Power_Data/StreamingAssets/SeaPowerRadio/`. `GameDir` can also be set as an environment variable.
 Pass `-p:Deploy=false` to build without touching the game folder – and do, while the game is running (it locks the
 DLLs). Releases: [docs/workshop.md](docs/workshop.md) (`tools/package.ps1`); in-game test checklists:
-[docs/testing.md](docs/testing.md); the stock voice lines and where the game raises them:
-[docs/stock-voice-events.md](docs/stock-voice-events.md).
+[docs/testing.md](docs/testing.md); the game systems the mod hooks into (stock voices, why a unit doesn't fire,
+mission lifecycle, contacts) and how to decompile the game: [docs/how-it-works.md](docs/how-it-works.md); the stock
+voice lines and where the game raises them: [docs/stock-voice-events.md](docs/stock-voice-events.md).
 
 The rendered voice library (`mod/voices/<persona>/`, ~57,000 mp3 clips) is not in git: it comes with every release
 and can be rebuilt with the voice pipeline below.

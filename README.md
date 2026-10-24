@@ -47,7 +47,7 @@ everything works offline.
    community mod loader, following its
    [installation guide](https://seapower-modders.github.io/AnchorChain/install-anchor-chain.html) (one manual step:
    copy its preloader into the game folder).
-2. Subscribe to Sea Power Radio on the Steam Workshop *(link follows with the first release)*. About 390 MB: the
+2. Subscribe to **Sea Power: Rats Radio** on the Steam Workshop *(link follows with the first release)*. About 390 MB: the
    43 rendered voices.
 3. Start a mission. The log `<Sea Power>\BepInEx\LogOutput.log` lists the roster: every unit with its callsign and
    voice.
@@ -81,7 +81,8 @@ dotnet build src/SeaPowerRadio/SeaPowerRadio.csproj -c Release -p:GameDir="C:\Pr
 A successful build copies the DLL and `mod/` (voice library, `_info.ini`) into
 `<GameDir>/Sea Power_Data/StreamingAssets/SeaPowerRadio/`. `GameDir` can also be set as an environment variable.
 Pass `-p:Deploy=false` to build without touching the game folder – and do, while the game is running (it locks the
-DLLs). Releases: [docs/workshop.md](docs/workshop.md) (`tools/package.ps1`); in-game test checklists:
+DLLs). Releases: [docs/workshop.md](docs/workshop.md) (`tools/package.ps1`), release posts:
+[workshop/promotion.md](workshop/promotion.md); in-game test checklists:
 [docs/testing.md](docs/testing.md); the game systems the mod hooks into (stock voices, why a unit doesn't fire,
 mission lifecycle, contacts) and how to decompile the game: [docs/how-it-works.md](docs/how-it-works.md); the stock
 voice lines and where the game raises them: [docs/stock-voice-events.md](docs/stock-voice-events.md).

@@ -4,16 +4,32 @@ A mod for [Sea Power: Naval Combat in the Missile Age](https://store.steampowere
 radio net sound like people instead of a screen reader, and makes units tell you **why** they are not doing what you
 ordered.
 
+**[Watch and listen on YouTube](https://youtu.be/g7P1pg2J0Lk)** (70 s, sound on) – the radio net while Yak-38s close
+in on the Iowa group.
+
 ![The message log full of radio calls over the Aegean](workshop/screenshots/01-radio-net.jpg)
 
-- **Per-element voices** – every player unit, and every aircraft a carrier or airbase can launch, gets its own voice
-  and a generated NATO callsign for the mission ("Viper two-one", "Sentinel"). Deterministic per mission, so a reload
-  keeps the same voices.
+- **Per-element voices** – 43 distinct people (American, Canadian, English, Scottish, Irish, Northern Irish,
+  Australian and New Zealand accents, men and women). Every player unit, and every aircraft a carrier or airbase can
+  launch, gets its own voice the moment it exists. Deterministic per mission, so a reload keeps the same voices.
+- **Callsigns** – ships and shore units say their in-game short name ("Iowa", "Pargo"), aircraft their squadron
+  callsign from the game ("Lancer 3-2"), everyone else a generated NATO callsign ("Viper two-one", "Sentinel").
+  Every clip is cut from a whole spoken sentence, so callsign, phrase, bearings, track numbers, altitudes and counts
+  join like one person talking.
 - **Stock voices replaced** – the game's voice lines are muted and re-spoken by the unit that actually said them.
+  Voice lines of other mods play as before.
 - **Brevity on the net** – a unit only says its name when it takes over the net from someone else; the same
   unit again just goes on, a wingman of the same flight gives its number only ("two, fox three").
-- **Why-not diagnostics** – "Negative, target not in rear aspect", "Unable, holding formation on lead", who
-  identified a contact and with what sensor – spoken, on screen and in the log.
+- **A real net** – one voice at a time: urgent calls (missile inbound, we're hit, bingo) cut in, replies to your
+  orders go before routine reports and are mixed louder and cleaner, stale calls are dropped (a late "copy" is worse
+  than none), the same phrase from a whole flight is said at most twice. Radio sound per transmission: carrier hiss,
+  mic click, crackle, squelch tail; plays through the game's voice channel, so its volume slider applies.
+- **Why-not diagnostics** – the reasons the game knows but never says, spoken by the unit, as a message and in
+  the log: not in rear aspect, outside the launch envelope, can't reach, inside minimum range, no radar lock, no
+  sensor track, sonar contact only, below the radar horizon, no line of sight, too low / too high, not in the firing
+  arc, seeker can't see the target, wrong speed, not cleared, reloading (with the time left), nothing left to fire,
+  defending against a missile, order dropped by the game, and a wingman holding formation instead of flying a VID
+  (optionally released from formation so the VID happens). Who identified a contact and with what sensor.
 - **No contact spam** – faded/regained contacts with hysteresis, cooldowns and flicker detection; contact
   messages bottom right link the track number, so a click jumps to the contact.
 - **Everything clickable** – every unit and track a message mentions (own units, contacts, track numbers) is a link
@@ -31,7 +47,11 @@ ordered.
   words and language: ship type (Destroyer, Frigate, Attack Submarine, Aircraft Carrier), the mission an aircraft
   is loaded for (CAP, Strike, SEAD, Anti Ship, ASW, AEW…), helicopter type (ASW Helicopter). Groups show the role
   their members share.
-- **Order queue window** (F8) – the selected unit's stacked attack orders, each with a delete button.
+- **Order queue window** (F8) – the selected unit's stacked attack orders, each with a delete button (the game only
+  has "cease fire", which drops all of them) and what it is waiting for: the weapon's state or the reload time left.
+- **Messages held until spoken** – the message of a call stays bottom right until it has been spoken, with a thin
+  marker on the one being spoken.
+- **Everything switchable** – every feature has its own entry in the config.
 
 | | |
 | --- | --- |

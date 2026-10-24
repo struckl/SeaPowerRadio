@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased (first Workshop release in preparation)
+## 1.0.0 – 2026-10-24 (first Workshop release)
+
+Tested on Sea Power 0.8.7.
 
 - 43 pre-rendered voices (VCTK speakers cloned with Chatterbox) through a radio chain; every player unit and every
   aircraft a carrier or airbase can launch gets its own voice and a NATO callsign, stable per mission.

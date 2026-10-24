@@ -144,6 +144,7 @@ mod/                      files shipped next to the DLL (voices/: personas.txt, 
                           names.txt, rendered clips; _info.ini)
 tools/voicegen/           offline voice pipeline (cast.py = the persona list)
 tools/package.ps1         release build → dist/SeaPowerRadio/ (+ release zip)
+tools/shot-director/      dev-only plugin that drives the game for the Workshop screenshots (never shipped)
 docs/                     test checklists, stock voice inventory, Workshop release
 ```
 

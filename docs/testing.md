@@ -211,3 +211,16 @@ Test in a mission with ships, a submarine, a carrier or airbase and a helicopter
 
 `tools/voicegen/reel.py` stitches clips into transmissions like the plugin does → `tools/voicegen/samples/` (the shipped voices: Chatterbox + VCTK).
 
+
+## 1.0.0 – release check (2026-10-24)
+
+The build that goes to the Workshop, installed with `tools/package.ps1 -Install` (game closed).
+
+1. Log: `Sea Power Radio 1.0.0 loaded. Features: …` – no feature marked `(OFF)`; no `[Error  :SeaPowerRadio]`
+   lines during the run.
+2. Start a mission with aircraft in the air and enemy contacts (e.g. *Dangerous Straits 1985*). Log: `Roster for
+   mission …` with every unit, its callsign and voice.
+3. Run sections 1 and 2 above (voices and contact reports, why-not, order queue F8) and the formation manager check.
+4. `<Sea Power>\Sea Power_Data\StreamingAssets\SeaPowerRadio\` contains `SeaPowerRadio.dll`, `_info.ini`,
+   `LICENSE.txt`, `CREDITS.txt`, `preview.jpg` and `voices\` (43 voice folders and the four .txt files) – and no
+   `.pdb`.

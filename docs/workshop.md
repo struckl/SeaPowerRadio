@@ -41,6 +41,25 @@ Start Sea Power → Mods → Create Mod:
 The first upload takes a while (~390 MB in ~57,000 files). Later updates only send and download the files that
 changed, so a plugin-only update is small for players.
 
+### Updates without opening the game
+
+[tools/workshop-upload](../tools/workshop-upload) (dev-only, never shipped) makes the calls the Create Mod screen
+makes for an existing item, through the running Steam client and the game's own Steamworks.NET – but only the
+content and the change note; title, description, tags, preview, visibility, dependencies and the compatibility
+metadata stay as they are. Steam must be running, signed in with the owner account (no password involved); the game
+can stay closed. 1.0.1 went up this way.
+
+```powershell
+dotnet build tools\workshop-upload -c Release
+$up = 'tools\workshop-upload\bin\Release\net8.0\WorkshopUpload.exe'
+& $up check 3826433579                                   # title, owner, visibility, last update – changes nothing
+& $up upload 3826433579 dist\SeaPowerRadio <change note file>   # the staged folder from package.ps1
+```
+
+It refuses an item the signed-in account doesn't own and a folder without `_info.ini`, prints the upload progress
+and the item's new update time. A changed `_info.ini` `[Compatibility]` or new dependencies still need the game's
+Create Mod screen.
+
 After the first upload, on the Workshop page itself (Steam web → Edit → Add/edit images & videos):
 
 - the screenshots from [workshop/screenshots/](../workshop/screenshots), in their numbered order:

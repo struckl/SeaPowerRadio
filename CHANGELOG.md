@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.2 – 2026-10-25
 
 - Refusals: a ship ordered to fire a fixed-launcher missile (Harpoon) out of range said "negative, sonar contact
   only" – the order waits while the ship turns, and the mod didn't see the game's own reason there. It now says

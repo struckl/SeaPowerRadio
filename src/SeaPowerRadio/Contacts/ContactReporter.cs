@@ -16,7 +16,9 @@ namespace SeaPowerRadio.Contacts;
 /// Contact calls, replacing the game's (which has no hysteresis and repeats "contact faded" on every flicker):
 /// <list type="bullet">
 /// <item>New contact: spoken by the unit whose sensor found it, with the bearing from that unit. Several new
-/// contacts within a few seconds → one "multiple contacts" call.</item>
+/// contacts within a few seconds → one "multiple contacts" call. Contacts that keep turning up one by one in the
+/// same place (a raid found aircraft by aircraft) are one group: called once, once more as "multiple contacts" when
+/// it reaches three, then only messages.</item>
 /// <item>Faded: only after the contact stayed lost for <c>FadeHysteresis</c> s (regained earlier = silence), at most
 /// once per contact per <c>ContactCooldown</c> s. Several fades together → "lost N contacts".</item>
 /// <item>Flicker: a contact that drops out <c>FlickerCount</c> times within a minute is called "intermittent" once,
@@ -42,12 +44,25 @@ internal sealed class ContactReporter
         public readonly CompositeDisposable Subscriptions = new CompositeDisposable();
     }
 
+    /// <summary>New contacts already called in one place, so the next one there isn't news on its own.</summary>
+    private sealed class Group
+    {
+        public string Domain;
+        public GeoPosition At;
+        public double LastAt;
+        public int Count;
+        public bool MultipleSaid;
+    }
+
     private const double AggregateWindow = 3.0;
     private const double FlickerWindow = 60.0;
     private const double StableAgain = 120.0;
+    private const double GroupMemory = 120.0;      // mission seconds since the group's latest new contact
+    private const float GroupRadiusNm = 10f;
 
     private readonly RadioPlayer player;
     private readonly Dictionary<Vehicle, Contact> contacts = new Dictionary<Vehicle, Contact>();
+    private readonly List<Group> groups = new List<Group>();
     private readonly List<(Vehicle vehicle, double at)> pendingNew = new List<(Vehicle, double)>();
     private readonly List<Contact> pendingFaded = new List<Contact>();
     private PlottingTable table;
@@ -79,6 +94,7 @@ internal sealed class ContactReporter
         contacts.Clear();
         pendingNew.Clear();
         pendingFaded.Clear();
+        groups.Clear();
     }
 
     private void OnNewVehicle(object sender, Vehicle vehicle)
@@ -199,22 +215,53 @@ internal sealed class ContactReporter
         RosterElement speaker = SpeakerFor(first);
         if (speaker == null) return;
         int bearing = Bearing(speaker, first);
-        string phrase = batch.Count >= 3 ? "NewContactsMultiple" : NewContactPhrase(first);
+        bool speak = NewsFor(first, batch.Count, out bool multiple);
+        string phrase = multiple ? "NewContactsMultiple" : NewContactPhrase(first);
         // One message per contact, each with a clickable track number (a few at most; the rest as a summary).
         foreach (Vehicle v in batch.Take(MaxLinkedMessages))
             RaiseLinked(speaker, v, $"New {Domain(v)} contact - Track ${{TrackId}}, bearing {Bearing(speaker, v):000}");
         if (batch.Count > MaxLinkedMessages)
             RaiseLinked(speaker, null, $"{batch.Count - MaxLinkedMessages} more new contacts: Tracks " +
                                        string.Join(", ", batch.Skip(MaxLinkedMessages).Select(v => v.Id)));
-        List<Alert> alerts = AlertLink.TakeFor(RaiserFor(speaker));
-        Transmission t = TransmissionBuilder.Build(speaker, phrase, bearing);
+        List<Alert> alerts = AlertLink.TakeFor(RaiserFor(speaker)); // not spoken: the messages fade normally
+        Transmission t = speak ? TransmissionBuilder.Build(speaker, phrase, bearing) : null;
         if (t != null)
         {
             t.Alerts.AddRange(alerts);
             player.Submit(t);
         }
-        ModLog.Info($"[contact] new: {string.Join(", ", batch.Select(v => v.Id))} reported by {speaker.Callsign}");
+        ModLog.Info($"[contact] new: {string.Join(", ", batch.Select(v => v.Id))} reported by {speaker.Callsign}" +
+                    (speak ? "" : " (same group as an earlier call, not spoken)"));
     }
+
+    /// <summary>
+    /// Is a batch of new contacts news on the net? Aircraft of a raid (ships of a group) are often found one by one,
+    /// seconds apart: the first is called, the group once more as "multiple contacts" when it reaches three, the
+    /// rest only get their messages - instead of "new air contact, bearing 327" five times in a row.
+    /// </summary>
+    private bool NewsFor(Vehicle first, int count, out bool multiple)
+    {
+        string domain = Domain(first);
+        GeoPosition at = first.Position.Value;
+        groups.RemoveAll(g => Now - g.LastAt > GroupMemory);
+        Group group = groups.FirstOrDefault(g => g.Domain == domain && Nm(g.At, at) <= GroupRadiusNm);
+        if (group == null)
+        {
+            groups.Add(new Group { Domain = domain, At = at, LastAt = Now, Count = count, MultipleSaid = count >= 3 });
+            multiple = count >= 3;
+            return true;
+        }
+        group.At = at;
+        group.LastAt = Now;
+        group.Count += count;
+        multiple = true;
+        if (group.MultipleSaid || group.Count < 3)
+            return false;
+        group.MultipleSaid = true;
+        return true;
+    }
+
+    private static float Nm(GeoPosition a, GeoPosition b) => (float)a.GetDistance(b) * 0.036285132f;
 
     private void CollectFaded()
     {

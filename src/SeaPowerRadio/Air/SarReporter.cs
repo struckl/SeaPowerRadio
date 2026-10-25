@@ -13,7 +13,7 @@ namespace SeaPowerRadio.Air;
 /// Search and rescue on the net, the way a SAR crew reports it:
 /// <list type="bullet">
 /// <item><b>Survivors in the water</b> – own life rafts appear (a ship sank, aircrew went down): the closest own
-/// unit calls them with the bearing.</item>
+/// unit calls them with the bearing, once per group of rafts.</item>
 /// <item><b>Proceeding to the survivors</b> – a SAR zone sent a helicopter or ship to a raft.</item>
 /// <item><b>Pickup complete, N souls aboard</b> – survivors taken aboard (the game's raft pickup); with
 /// <b>cabin full</b> when a helicopter has no room left (a SAR zone then sends it home).</item>
@@ -26,11 +26,14 @@ internal sealed class SarReporter
     public static SarReporter Instance { get; private set; }
 
     private const double QuietAfterStart = 10.0;   // rafts placed by the mission itself are no news
-    private const double RaftBatch = 5.0;          // a sinking ship puts out its rafts over a few seconds
+    private const double RaftBatch = 5.0;          // rafts that appear together make one call
     private const double EnRouteCooldown = 60.0;
+    private const double ReportedMemory = 600.0;   // a reported group of survivors stays news this long
+    private const float SameGroupNm = 3f;          // a raft this close to a reported one belongs to it
 
     private readonly RadioPlayer player;
     private readonly List<ObjectBase> newRafts = new List<ObjectBase>();
+    private readonly List<(GeoPosition at, double when)> reported = new List<(GeoPosition, double)>();
     private readonly Dictionary<int, double> enRouteSaid = new Dictionary<int, double>();
     private readonly HashSet<int> delivered = new HashSet<int>();
     private double batchDue = -1;
@@ -48,6 +51,7 @@ internal sealed class SarReporter
         newRafts.Clear();
         enRouteSaid.Clear();
         delivered.Clear();
+        reported.Clear();
         batchDue = -1;
     }
 
@@ -134,6 +138,19 @@ internal sealed class SarReporter
         if (rafts.Count == 0)
             return;
         ObjectBase first = rafts[0];
+
+        // A sinking ship puts out its rafts one at a time over a minute or more: the first ones are the news, the
+        // rafts that follow them into the same patch of water are not (five "survivors in the water" in a row).
+        reported.RemoveAll(r => Now - r.when > ReportedMemory);
+        int known = reported.FindIndex(r => Nm(r.at, first._geoPosition) < SameGroupNm);
+        if (known >= 0)
+        {
+            reported[known] = (first._geoPosition, Now);
+            ModLog.Info($"[sar] {rafts.Count} more raft(s) where survivors were already reported - not called again");
+            return;
+        }
+        reported.Add((first._geoPosition, Now));
+
         RosterElement speaker = Closest(first);
         ObjectBase from = speaker?.Unit;
         if (from == null)
@@ -205,6 +222,7 @@ internal sealed class SarReporter
         return Mathf.RoundToInt(((heading % 360f) + 360f) % 360f) % 360;
     }
 
-    private static float Nm(ObjectBase from, ObjectBase to) =>
-        (float)from._geoPosition.GetDistance(to._geoPosition) * 0.036285132f;
+    private static float Nm(ObjectBase from, ObjectBase to) => Nm(from._geoPosition, to._geoPosition);
+
+    private static float Nm(GeoPosition a, GeoPosition b) => (float)a.GetDistance(b) * 0.036285132f;
 }

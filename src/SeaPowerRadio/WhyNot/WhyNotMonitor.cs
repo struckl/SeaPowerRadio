@@ -12,7 +12,8 @@ namespace SeaPowerRadio.WhyNot;
 /// Says why an ordered engagement isn't happening. The game decides this every frame but never tells the player:
 /// <list type="bullet">
 /// <item>A weapon system working on the order sits in a blocking <c>WeaponSystem.EngageState</c> (target not in
-/// rear aspect, out of envelope, no radar track, nose not on target…) for more than <c>StateHold</c> s.</item>
+/// rear aspect, out of envelope, no radar track, nose not on target…) for more than <c>StateHold</c> s - also
+/// while the ship still turns to bring a fixed launcher to bear.</item>
 /// <item>An order waits with no weapon system taking it: every tube/launcher for that ammunition is reloading
 /// ("ready in four minutes"), the target is held by sonar only while the weapon needs a radar track, or nothing
 /// is left to fire.</item>
@@ -114,16 +115,24 @@ internal sealed class WhyNotMonitor
             return;
         }
 
-        // Weapon systems working on an order, stuck in a blocking state.
+        // Weapon systems working on an order, stuck in a blocking state. A ship that has to turn for a fixed
+        // launcher (Harpoon, Tomahawk boxes) hands the order to an alignment task first: its weapon system already
+        // has the state the game shows in the status bar ("Engaging … with RGM-84C (Target too far)") but hasn't
+        // taken the order yet - left out, the order looked untaken and got a wrong guess ("sonar contact only").
+        var working = new Dictionary<WeaponSystem, EngageTask>();
         foreach (WeaponSystem w in systems)
+            if (w._executingEngageTask && w._takenEngageTask != null)
+                working[w] = w._takenEngageTask;
+        foreach (AlignUnitToTarget a in unit._alignmentTasks ?? new List<AlignUnitToTarget>())
+            if (a?._weaponSystem != null && a._engageTask != null && tasks.Contains(a._engageTask) && !working.ContainsKey(a._weaponSystem))
+                working[a._weaponSystem] = a._engageTask;
+        foreach (WeaponSystem idle in track.States.Keys.Where(w => !working.ContainsKey(w)).ToList())
+            track.States.Remove(idle);
+        foreach (KeyValuePair<WeaponSystem, EngageTask> pair in working)
         {
-            if (!w._executingEngageTask || w._takenEngageTask == null)
-            {
-                track.States.Remove(w);
-                continue;
-            }
+            WeaponSystem w = pair.Key;
             WeaponSystem.EngageState state = w._engageState;
-            string reason = ReasonFor(state, w, unit);
+            string reason = ReasonFor(state, pair.Value._targetObject);
             if (reason == null)
             {
                 track.States.Remove(w);
@@ -135,13 +144,14 @@ internal sealed class WhyNotMonitor
                 continue;
             }
             if (now - held.since >= StateHold)
-                Report(e, unit, track, reason, w._takenEngageTask, $"{w._vwp?._systemName ?? "weapon"} state {state}");
+                Report(e, unit, track, reason, pair.Value,
+                    $"{w._vwp?._systemName ?? "weapon"} state {state}{(w._executingEngageTask ? "" : " while the unit aligns")}");
         }
 
         // Orders nobody has taken yet.
         foreach (EngageTask t in tasks)
         {
-            if (systems.Any(w => w._executingEngageTask && w._takenEngageTask == t))
+            if (working.ContainsValue(t))
             {
                 track.PendingSince.Remove(t);
                 continue;
@@ -160,7 +170,7 @@ internal sealed class WhyNotMonitor
     }
 
     /// <summary>Blocking engage states and what the unit says about them. Null = working normally.</summary>
-    private static string ReasonFor(WeaponSystem.EngageState state, WeaponSystem w, ObjectBase unit)
+    private static string ReasonFor(WeaponSystem.EngageState state, ObjectBase target)
     {
         switch (state)
         {
@@ -171,9 +181,9 @@ internal sealed class WhyNotMonitor
             case WeaponSystem.EngageState.TargetTooClose: return "WhyNot_TargetTooClose";
             case WeaponSystem.EngageState.TargetIsNotDetectableByFCR:
             case WeaponSystem.EngageState.PrelaunchSensorAlignment:
-                return TargetSonarOnly(w._takenEngageTask?._targetObject, unit) ? "WhyNot_SonarOnly" : "WhyNot_NoRadarLock";
+                return TargetSonarOnly(target) ? "WhyNot_SonarOnly" : "WhyNot_NoRadarLock";
             case WeaponSystem.EngageState.TargetIsNotDetectableBySearchSensor:
-                return TargetSonarOnly(w._takenEngageTask?._targetObject, unit) ? "WhyNot_SonarOnly" : "WhyNot_NoSensorTrack";
+                return TargetSonarOnly(target) ? "WhyNot_SonarOnly" : "WhyNot_NoSensorTrack";
             case WeaponSystem.EngageState.TargetIsBeyondFCRHorizon: return "WhyNot_BeyondRadarHorizon";
             case WeaponSystem.EngageState.NoLOSToTarget: return "WhyNot_NoLineOfSight";
             case WeaponSystem.EngageState.LauncherTooLow: return "WhyNot_TooLow";
@@ -211,7 +221,7 @@ internal sealed class WhyNotMonitor
             }
             return null; // busy with an earlier order: that is the queue, not a problem
         }
-        if (TargetSonarOnly(t._targetObject, unit) && NeedsNonSonarTrack(unit, t))
+        if (TargetSonarOnly(t._targetObject) && NeedsNonSonarTrack(unit, t))
         {
             detail = "target held by sonar only";
             return "WhyNot_SonarOnly";
@@ -221,7 +231,7 @@ internal sealed class WhyNotMonitor
 
     private static string DroppedReason(ObjectBase unit, EngageTask t)
     {
-        if (TargetSonarOnly(t._targetObject, unit) && NeedsNonSonarTrack(unit, t))
+        if (TargetSonarOnly(t._targetObject) && NeedsNonSonarTrack(unit, t))
             return "WhyNot_SonarOnly";
         if (unit.getAmmunitionAmountByName(t._ammoId) < 1)
             return "WhyNot_NoAmmo";
@@ -235,14 +245,18 @@ internal sealed class WhyNotMonitor
         return minutes <= 10 ? "WhyNot_ReloadIn" + minutes : "WhyNot_ReloadLong";
     }
 
-    /// <summary>The player's picture of the target comes from sonar only (no radar, visual or ESM track).</summary>
-    private static bool TargetSonarOnly(ObjectBase target, ObjectBase unit)
+    /// <summary>
+    /// The player's picture of the target comes from sonar only: sonar holds it and no radar, visual, ESM or other
+    /// sensor does. The contact's <c>Type</c> (the sensor of its latest update) is not enough - a group's own
+    /// passive sonar hears a frigate that radar and ESM hold as well, and the frigate then looks like a sonar contact.
+    /// </summary>
+    private static bool TargetSonarOnly(ObjectBase target)
     {
-        if (target == null) return false;
-        Vehicle v = target.GetMapVehicle(Globals._playerTaskforce);
+        Vehicle v = target?.GetMapVehicle(Globals._playerTaskforce);
         if (v == null) return false;
-        SensorSystem.SensorType type = v.Type.Value;
-        return type == SensorSystem.SensorType.PassiveSonar || type == SensorSystem.SensorType.ActiveSonar;
+        const SensorSystem.SensorTypeSet sonar = SensorSystem.SensorTypeSet.ActiveSonar | SensorSystem.SensorTypeSet.PassiveSonar;
+        SensorSystem.SensorTypeSet held = v.DetectingSensors;
+        return (held & sonar) != 0 && (held & ~sonar) == 0;
     }
 
     /// <summary>Anything that isn't a sonar-homing weapon needs a position fix a sonar bearing doesn't give.</summary>

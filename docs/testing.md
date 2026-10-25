@@ -169,7 +169,8 @@ map; in the formation manager the rows of returning groups/units are yellow and 
 aircrew goes down; helicopters and ships within reach pick them up (ObjectBase.CheckForRaftPickUp – helicopters
 count against `_transportCapacity`); SAR zones send units to rafts and send a full helicopter home. Calls:
 - *Survivors in the water* – own rafts appear (batched over 5 s, not in the first 10 s of a mission): the closest own
-  unit, with bearing, distance and raft track (link).
+  unit, with bearing, distance and raft track (link). Once per group: rafts that turn up within 3 nm of reported ones
+  in the next 10 min are not called again (a sinking ship puts them out one by one over a minute or more).
 - *Proceeding to the survivors* – a SAR zone sends a unit to a raft (once a minute per unit).
 - *Pickup complete, N souls aboard* (2-9, else "one survivor aboard") + *cabin full* when at capacity. Replaces the
   game's "Picked up survivors." with `Picked up 2 survivors - 4/6 aboard. Cabin full`.
@@ -224,6 +225,22 @@ Feedback on 1.0.0: long pauses between a word and its number. Contact reports an
    "climbing, angels twenty".
 4. No clipped digit starts: "seven" is not "even", "three" is not "ree", "four"/"five" keep the "f".
 
+
+## Refusals and repeated calls (2026-10-25)
+
+Found while recording the 1.0.1 video in *Dangerous Straits 1985*:
+
+1. **Out of range while the ship turns:** order the Iowa to fire Harpoons (RGM-84C) at a hostile ship beyond their
+   range (at the start: the Krivak, track 7020). The status bar says *Engaging … (Target too far)*; the Iowa says
+   "unable, target outside envelope" – not "negative, that's a sonar contact only" (1.0.1 said that: the order
+   waits on the ship's alignment, and the contact's latest sensor was the group's passive sonar). Log:
+   `[why-not] … [… state TargetTooFar while the unit aligns]`.
+2. **Sonar only still works:** a contact held by sonar and nothing else (a submarine on the towed array), ordered a
+   radar-guided weapon → "negative, that's a sonar contact only".
+3. **Survivors once:** let a ship of yours sink (the Duncan gets hit about 2 min in at 4×): one "survivors in the
+   water, bearing …"; the rafts that follow log `[sar] N more raft(s) where survivors were already reported`.
+4. **A raid once:** when the Yak-38s come in one by one, one "new air contact, bearing …", then one "multiple
+   contacts, bearing …"; the rest only as messages (`[contact] new: … (same group as an earlier call, not spoken)`).
 
 ## 1.0.0 – release check (2026-10-24)
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Refusals: a ship ordered to fire a fixed-launcher missile (Harpoon) out of range said "negative, sonar contact
+  only" – the order waits while the ship turns, and the mod didn't see the game's own reason there. It now says
+  "unable, target outside envelope", like the game's status bar. "Sonar contact only" is only said when sonar is the
+  only sensor holding the contact (the group's own passive sonar hearing a ship that radar and ESM also hold made it
+  look like a sonar contact).
+- No more repeated calls: a sinking ship's rafts, put out one by one, give one "survivors in the water" instead of
+  one per raft; a raid found aircraft by aircraft gives one "new air contact" and one "multiple contacts" instead of
+  "new air contact, bearing 327" for every aircraft. The messages bottom right still list every raft and track.
+
 ## 1.0.1 – 2026-10-25
 
 - No more long pauses before numbers: "bearing two seven three", "track seven zero three four" run together the

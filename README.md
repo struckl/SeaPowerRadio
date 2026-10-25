@@ -34,8 +34,9 @@ in on the Iowa group.
   arc, seeker can't see the target, wrong speed, not cleared, reloading (with the time left), nothing left to fire,
   defending against a missile, order dropped by the game, and a wingman holding formation instead of flying a VID
   (optionally released from formation so the VID happens). Who identified a contact and with what sensor.
-- **No contact spam** – faded/regained contacts with hysteresis, cooldowns and flicker detection; contact
-  messages bottom right link the track number, so a click jumps to the contact.
+- **No contact spam** – faded/regained contacts with hysteresis, cooldowns and flicker detection; a raid found
+  aircraft by aircraft is called once (and once more as "multiple contacts"), not per aircraft; contact messages
+  bottom right link the track number, so a click jumps to the contact.
 - **Everything clickable** – every unit and track a message mentions (own units, contacts, track numbers) is a link
   that moves the camera there.
 - **Fuel calls** – joker / bingo / fuel emergency against the nearest deck or airfield that can take the aircraft
@@ -45,8 +46,8 @@ in on the Iowa group.
   dry) call against the nearest friendly field all the same, or at 25 / 15 / 5 % of a full tank without one.
 - **RTB at a glance** – aircraft on their way home are yellow on the map and in the formation manager; returning
   groups sink to the bottom of the formation manager.
-- **Search and rescue calls** – survivors in the water (bearing), rescuer proceeding, pickup complete with souls
-  aboard, cabin full, survivors delivered on deck.
+- **Search and rescue calls** – survivors in the water (bearing, once per group of rafts), rescuer proceeding,
+  pickup complete with souls aboard, cabin full, survivors delivered on deck.
 - **Unit roles in the formation manager** – a small line under every unit says what it is, in the game's own
   words and language: ship type (Destroyer, Frigate, Attack Submarine, Aircraft Carrier), the mission an aircraft
   is loaded for (CAP, Strike, SEAD, Anti Ship, ASW, AEW…), helicopter type (ASW Helicopter). Groups show the role

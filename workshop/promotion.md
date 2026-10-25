@@ -37,6 +37,42 @@ images & videos): **the YouTube video first** (https://youtu.be/g7P1pg2J0Lk), th
 
 ---
 
+## 1.0.1 – YouTube video for the update (to upload)
+
+File: `workshop/radio-net-1.0.1.mp4` (not in git; 1:48, 2560×1440, 30 fps, -15 LUFS) – before/after intro with the
+same call in 1.0.0 and 1.0.1, then the radio net live in *Dangerous Straits 1985* at 4× time (contact reports with
+bearings, hostile tracks, Yak-38s inbound, "birds away", "we're hit", "splash track 7030"), end card for the
+Workshop. Recorded 2026-10-25 with the shot director; contact reports at full volume for the take (the default
+mixes them at 0.5).
+
+YouTube Studio → Create → Upload videos → the file. Not made for kids, category Gaming.
+
+**Title**
+
+Sea Power: Rats Radio 1.0.1 – bearings and track numbers without the pause
+
+**Description**
+
+```
+Rats Radio 1.0.1 – the update to the radio mod for Sea Power. After 1.0.0 players noticed a pause between a word and its number ("bearing … two seven three"). That pause is gone: bearings, track numbers and depths are now said in one breath, the way they sound on a real radio net. Pauses the sentence really has – after the callsign, "track 7034, faded" – stay.
+
+0:00 Before and after
+0:09 The radio net live: Dangerous Straits 1985, the Iowa group in the Aegean at 4× time
+1:10 Yak-38s inbound: air contacts, birds away, we're hit, splash
+
+Same 43 voices, nothing re-rendered – the Workshop update is only 0.1 MB.
+
+Workshop: https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579
+Needs Anchor Chain: https://steamcommunity.com/sharedfiles/filedetails/?id=3380210757
+Source (MIT): https://github.com/struckl/SeaPowerRadio
+Voices based on speakers of the CSTR VCTK corpus (University of Edinburgh, CC BY 4.0), rendered with Chatterbox.
+```
+
+Afterwards: the new link on the Workshop page (Owner Controls → Add/edit images & videos, in front of the 1.0.0
+video), in the README and at the top of this file.
+
+---
+
 ## 1. YouTube – description for the video (already uploaded)
 
 Paste into the video's description (YouTube Studio → Details):

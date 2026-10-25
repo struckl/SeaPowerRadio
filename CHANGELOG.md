@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.1 – 2026-10-25
 
 - No more long pauses before numbers: "bearing two seven three", "track seven zero three four" run together the
   way they are said. The silence at every join between clips is cut back – to 0.05 s between a word and its number,

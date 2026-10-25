@@ -61,6 +61,7 @@ Rats Radio 1.0.1 – the update to the radio mod for Sea Power. After 1.0.0 play
 1:10 Yak-38s inbound: air contacts, birds away, we're hit, splash
 
 Same 43 voices, nothing re-rendered – the Workshop update is only 0.1 MB.
+Also out, 1.0.2: ships give the right reason when they can't fire, and a sinking ship or an incoming raid is called once instead of per raft or per aircraft.
 
 Workshop: https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579
 Needs Anchor Chain: https://steamcommunity.com/sharedfiles/filedetails/?id=3380210757
@@ -70,6 +71,65 @@ Voices based on speakers of the CSTR VCTK corpus (University of Edinburgh, CC BY
 
 Afterwards: the new link on the Workshop page (Owner Controls → Add/edit images & videos, in front of the 1.0.0
 video), in the README and at the top of this file.
+
+---
+
+## Update posts – 1.0.1 + 1.0.2 (2026-10-25)
+
+Both updates are live on the Workshop (subscribers get them automatically) and on GitHub. Post after the YouTube
+upload and replace `YOUTUBE_LINK` with the new link; until then the Discord posts can go out with
+`workshop/screenshots/01-radio-net.jpg` attached instead. The video itself is too big for Discord without Nitro
+(41 MB, the 1080p preview 28 MB – the free limit is 10 MB).
+
+### Reddit – r/SeaPower_NCMA (video post, sound on)
+
+Upload `workshop/radio-net-1.0.1.mp4` as the post's video (native video autoplays in the feed).
+
+**Title**
+
+Rats Radio update: bearings and track numbers now sound like a real radio net – before/after (sound on)
+
+**Body**
+
+Thanks for all the feedback on the first version of Rats Radio! The one I heard most: a pause between a word and its number – "bearing … two seven three". Two updates are out on the Workshop, subscribers get them automatically:
+
+**1.0.1 – no more pause before numbers**
+
+- Bearings, track numbers and depths are said in one breath now, the way they sound on a real net – the video starts with the same call before and after
+- Pauses the sentence really has stay: after the callsign, "track 7034, faded"
+- Same 43 voices, nothing re-rendered – the update is tiny
+
+**1.0.2 – the right reason, and fewer repeats**
+
+- A ship ordered to fire Harpoons at a target out of range said "sonar contact only" – now it says "unable, target outside envelope", like the game's status bar
+- A sinking ship's rafts give one "survivors in the water" instead of one per raft
+- A raid found aircraft by aircraft gives one "new air contact" and one "multiple contacts" instead of a call for every aircraft
+
+The video: Dangerous Straits 1985, the Iowa group in the Aegean at 4× time – contact reports with bearings, hostile tracks, then the Yak-38s come in.
+
+Workshop: https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579
+Source (MIT): https://github.com/struckl/SeaPowerRadio
+
+Keep it coming – especially calls that sound wrong for the situation or come too often. BepInEx\LogOutput.log helps a lot.
+
+### Discord – BuOrd: Naval Modding Community, `#sp-mods`
+
+```
+## Rats Radio 1.0.2 🔊 YOUTUBE_LINK
+Two updates, both on the Workshop (subscribers get them automatically):
+- **No more pause before numbers** – bearings, track numbers and depths are said in one breath, like a real net; the video starts with before/after
+- **The right reason** – a ship firing Harpoons out of range said "sonar contact only"; now "target outside envelope", like the game's status bar
+- **Fewer repeats** – one "survivors in the water" per sinking instead of one per raft, one call per raid instead of one per aircraft
+**Workshop:** https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579
+Thanks for the feedback – keep it coming!
+```
+
+### Discord – MicroProse (Official), the same mods / showcase channel as the launch post
+
+```
+Rats Radio update (1.0.2) 🔊 YOUTUBE_LINK
+Bearings and track numbers are now said in one breath like on a real net, ships give the right reason when they can't fire, and survivors and raids are called once instead of per raft or per aircraft. On the Workshop – subscribers get it automatically: https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579
+```
 
 ---
 

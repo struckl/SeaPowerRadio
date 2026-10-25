@@ -1,14 +1,16 @@
 """Listening sample: stitch clips into radio transmissions the way the plugin will.
 
-Clips already carry their halves of the natural pauses (see phrases.py), so pieces are joined back to back with no
-added gap -- exactly what the plugin's PhraseAssembler does.
+Clips already carry their halves of the pauses they were cut in (see phrases.py), so pieces are joined back to back
+with no added gap, and the pauses at a number are closed up -- exactly what the plugin's TransmissionBuilder and
+RadioFx do.
 
 Writes to tools/voicegen/samples/:
   scenario<suffix>.mp3   a short engagement on the net, three voices (T1/T2 cases included)
   <persona>.mp3          one reel per voice: every sample phrase, prefixed with that voice's callsign
 
 Usage:
-    python tools/voicegen/reel.py --voices us_m_01,gb_m_01,us_f_01 [--suffix _v2]
+    python tools/voicegen/reel.py --voices us_m_01,gb_m_01,us_f_01 [--suffix _v2] [--library <mod/voices>]
+    python tools/voicegen/reel.py --voices ... --suffix _as_cut --as-cut     # joins with the pauses as cut
 """
 
 from __future__ import annotations
@@ -21,11 +23,18 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from cast import REPO  # noqa: E402
-from phrases import PHRASES, SLOT  # noqa: E402
+from phrases import PHRASES, SLOT, number_pauses  # noqa: E402
 from radio import concat_files, silence, transmission  # noqa: E402
 
 VOICES = REPO / "mod" / "voices"
 OUT = Path(__file__).resolve().parent / "samples"
+
+# Most silence where two clips join -- the plugin's TransmissionBuilder.MaxPause.
+NUMBER_PAUSE = 0.05     # word <-> number, no pause in the text: "bearing two seven three"
+GROUP_PAUSE = 0.08      # between the digit groups: "seven zero, three four"
+SPOKEN_PAUSE = 0.25     # a pause the speaker makes anyway (after the callsign, at a comma)
+NUMBER_PIECES = ("brg_", "pm_", "pe_", "dm_", "alt_", "cnt_")
+AS_CUT = False          # --as-cut: join with the pauses as cut, for comparison
 
 Parts = list[tuple[Path, float]]
 
@@ -37,42 +46,64 @@ def clip(voice: str, key: str) -> Path:
     return path
 
 
-def callsign(voice: str, word: str, flightpos: str | None) -> Parts:
-    parts = [(clip(voice, f"cs_{word}"), 0.0)]
-    if flightpos:
-        parts.append((clip(voice, f"fp_{flightpos}"), 0.0))
-    return parts
+def pauses_at_number(key: str) -> bool:
+    """Does the text pause where this clip meets its number? Only a phrase half can say no (Catalog.PausesAtNumber)."""
+    if not key.endswith(("_a", "_b")):
+        return True
+    phrase_key, _, n = key[:-2].rpartition("_")
+    phrase = next((p for p in PHRASES if p.key == phrase_key), None)
+    if phrase is None or not n.isdigit() or int(n) > len(phrase.variants):
+        return True
+    return number_pauses(phrase.variants[int(n) - 1])[0 if key.endswith("_a") else 1]
 
 
-def number(voice: str, kind: str, value: str) -> Parts:
-    """Number pieces, assembled the way the plugin's PhraseAssembler does (see phrases.py)."""
-    if kind == "trk":                                   # 7034 -> pm_70 + pe_34
-        keys = [f"pm_{value[:2]}", f"pe_{value[2:]}"]
-    elif kind in ("brg", "num"):                        # 273 -> dm_2 + pe_73, 50 -> pe_50
-        v = value.zfill(2)
-        keys = [f"dm_{v[0]}", f"pe_{v[1:]}"] if len(v) == 3 else [f"pe_{v}"]
-    elif kind == "alt":                                 # feet
+def max_pause(previous: str, key: str) -> float:
+    if AS_CUT:
+        return float("inf")
+    a, b = previous.startswith(NUMBER_PIECES), key.startswith(NUMBER_PIECES)
+    if a and b:
+        return GROUP_PAUSE
+    if a or b:
+        return SPOKEN_PAUSE if pauses_at_number(key if a else previous) else NUMBER_PAUSE
+    return SPOKEN_PAUSE
+
+
+def parts_of(voice: str, keys: list[str]) -> Parts:
+    return [(clip(voice, k), max_pause(keys[i - 1], k) if i else 0.0) for i, k in enumerate(keys)]
+
+
+def number(voice: str, kind: str, value: str) -> list[str]:
+    """Number pieces, assembled the way the plugin's TransmissionBuilder.Number does (see phrases.py)."""
+    if kind == "brg":                                   # 273 -> brg_273 (older libraries: dm_2 + pe_73)
+        b = value.zfill(3)
+        return [f"brg_{b}"] if (VOICES / voice / f"brg_{b}.mp3").exists() else [f"dm_{b[0]}", f"pe_{b[1:]}"]
+    if kind == "alt":                                   # feet
         feet = int(value)
-        keys = [f"alt_{round(feet / 1000)}"] if feet >= 1000 else [f"alt_lo_{max(1, round(feet / 100))}"]
-    else:                                               # count
-        keys = [f"cnt_{value}"]
-    return [(clip(voice, k), 0.0) for k in keys]
+        return [f"alt_{round(feet / 1000)}"] if feet >= 1000 else [f"alt_lo_{max(1, round(feet / 100))}"]
+    if kind == "count":
+        return [f"cnt_{value}"]
+    v = str(abs(int(value)))                            # trk, num
+    if len(v) >= 4:                                     # 7034 -> pm_70 + pe_34
+        return [f"pm_{v[-4:-2]}", f"pe_{v[-2:]}"]
+    if len(v) == 3:                                     # 150 -> dm_1 + pe_50
+        return [f"dm_{v[0]}", f"pe_{v[1:]}"]
+    return [f"pe_{v.zfill(2)}"]
 
 
 def say(voice: str, cs: tuple[str, str | None], key: str, rng: random.Random, value: str | None = None,
         n: int | None = None) -> Parts:
     phrase = next(p for p in PHRASES if p.key == key)
     n = n or rng.randint(1, len(phrase.variants))
-    parts = callsign(voice, *cs)
+    keys = [f"cs_{cs[0]}"] + ([f"fp_{cs[1]}"] if cs[1] else [])
     slot = SLOT.search(phrase.variants[n - 1])
     if slot is None:
-        return parts + [(clip(voice, f"{key}_{n}"), 0.0)]
+        return parts_of(voice, keys + [f"{key}_{n}"])
     for suffix in ("a", "number", "b"):
         if suffix == "number":
-            parts += number(voice, slot.group(1), value)
+            keys += number(voice, slot.group(1), value)
         elif (VOICES / voice / f"{key}_{n}_{suffix}.mp3").exists():
-            parts.append((clip(voice, f"{key}_{n}_{suffix}"), 0.0))
-    return parts
+            keys.append(f"{key}_{n}_{suffix}")
+    return parts_of(voice, keys)
 
 
 def build_reel(lines: list[tuple[Parts, str, float]], dest: Path, tag: str) -> None:
@@ -96,7 +127,12 @@ def main() -> None:
     parser.add_argument("--voices", required=True, help="three persona ids: lead, wingman, ship")
     parser.add_argument("--suffix", default="", help="appended to scenario file name")
     parser.add_argument("--no-voice-reels", action="store_true")
+    parser.add_argument("--library", type=Path, help="voice library to read (default: mod/voices of this checkout)")
+    parser.add_argument("--as-cut", action="store_true", help="join clips with the pauses as cut (no closing up)")
     args = parser.parse_args()
+    global VOICES, AS_CUT
+    VOICES = args.library or VOICES
+    AS_CUT = args.as_cut
     lead, wing, ship = args.voices.split(",")
     OUT.mkdir(exist_ok=True)
     rng = random.Random("reel")

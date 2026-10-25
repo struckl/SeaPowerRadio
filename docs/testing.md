@@ -210,6 +210,19 @@ Test in a mission with ships, a submarine, a carrier or airbase and a helicopter
 ## Sound samples
 
 `tools/voicegen/reel.py` stitches clips into transmissions like the plugin does → `tools/voicegen/samples/` (the shipped voices: Chatterbox + VCTK).
+`--as-cut --suffix _as_cut` renders the same scenario with the joins as cut (before the pauses were closed up).
+
+## Pauses at numbers (2026-10-25)
+
+Feedback on 1.0.0: long pauses between a word and its number. Contact reports and course replies, any mission:
+
+1. "New air contact, bearing two seven three", "coming to course zero niner zero": no audible gap between
+   "bearing" / "course" and the number, the digits run together.
+2. Track numbers ("engaging track seven zero three four"): a short break between "seven zero" and "three four",
+   none before "seven".
+3. Pauses the sentence has stay: after the callsign ("Viper two-one, …"), "track seven zero three five, faded",
+   "climbing, angels twenty".
+4. No clipped digit starts: "seven" is not "even", "three" is not "ree", "four"/"five" keep the "f".
 
 
 ## 1.0.0 – release check (2026-10-24)

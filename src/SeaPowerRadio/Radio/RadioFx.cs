@@ -28,7 +28,10 @@ internal static class RadioFx
 
     private const float PhraseGapSeconds = 0.12f;
 
-    public static AudioClip Build(IList<AudioClip> parts, string profileName, int seed, float noiseScale, float level = 1f)
+    /// <param name="maxPause">per part: most silence (seconds) where it joins the part before, see
+    /// TransmissionBuilder.MaxPause</param>
+    public static AudioClip Build(IList<AudioClip> parts, IList<float> maxPause, string profileName, int seed, float noiseScale,
+                                  float level = 1f)
     {
         var rng = new System.Random(seed);
         Profile p = Profiles.TryGetValue(profileName ?? "", out Profile found) ? found : Profiles["near"];
@@ -37,13 +40,16 @@ internal static class RadioFx
         foreach (AudioClip c in parts)
             if (c != null) { rate = c.frequency; break; }
 
-        // Voice: clips back to back, a short beat where a null marks a new phrase. Where a cut fell into running
-        // speech (number pieces cut out of "seven zero three four"), the two clips are cross-faded instead of
-        // butted together, so the join doesn't chop.
+        // Voice: clips back to back, a short beat where a null marks a new phrase. The silence at a join (the end of
+        // one clip plus the start of the next) is cut back to what the join allows, from the middle of the pause.
+        // Where a cut fell into running speech (number pieces cut out of "seven zero three four"), the two clips
+        // are cross-faded instead of butted together, so the join doesn't chop.
         var voice = new List<float>(rate * 4);
         bool previousWasClip = false;
-        foreach (AudioClip c in parts)
+        int trailingQuiet = 0;
+        for (int i = 0; i < parts.Count; i++)
         {
+            AudioClip c = parts[i];
             if (c == null)
             {
                 voice.AddRange(new float[(int)(PhraseGapSeconds * rate)]);
@@ -51,10 +57,30 @@ internal static class RadioFx
                 continue;
             }
             float[] data = Mono(c);
+            int leadingQuiet = LeadingSilence(data, rate);
+            int endQuiet = TrailingSilence(data, rate);
             if (previousWasClip)
+            {
+                int keep = (int)(Math.Min(maxPause[i], 10f) * rate);
+                if (trailingQuiet + leadingQuiet > keep)
+                {
+                    // Each side keeps up to half of what's allowed (the fade of one word, the onset of the next).
+                    int keepEnd = Math.Min(trailingQuiet, keep / 2);
+                    int keepStart = Math.Min(leadingQuiet, keep - keepEnd);
+                    keepEnd = Math.Min(trailingQuiet, keep - keepStart);
+                    voice.RemoveRange(voice.Count - (trailingQuiet - keepEnd), trailingQuiet - keepEnd);
+                    var rest = new float[data.Length - (leadingQuiet - keepStart)];
+                    Array.Copy(data, leadingQuiet - keepStart, rest, 0, rest.Length);
+                    data = rest;
+                    endQuiet = Math.Min(endQuiet, data.Length);
+                }
                 AppendJoined(voice, data, rate);
+            }
             else
+            {
                 voice.AddRange(data);
+            }
+            trailingQuiet = endQuiet;
             previousWasClip = true;
         }
         float[] speech = voice.ToArray();
@@ -98,6 +124,38 @@ internal static class RadioFx
     private const float CrossfadeSeconds = 0.025f;
     private const float EdgeSeconds = 0.015f;
     private const float HotEdgeRatio = 0.5f;   // edge RMS vs. clip RMS above this = cut in running speech (~ -6 dB)
+    private const float FrameSeconds = 0.010f;
+    private const float SoundRms = 0.01f;      // -40 dBFS: speech; breath and room tone sit below it, under the hiss bed
+    private const float OnsetRms = 0.0018f;    // -55 dBFS: the start of a digit ("s", "th", "f") after the band-limit
+
+    /// <summary>Silence at the end of a clip in samples: whole 10 ms frames below SoundRms.</summary>
+    private static int TrailingSilence(float[] x, int rate)
+    {
+        int frame = Math.Max(1, (int)(FrameSeconds * rate));
+        for (int f = 0; f < x.Length / frame; f++)
+            if (Rms(x, x.Length - (f + 1) * frame, frame) >= SoundRms)
+                return f * frame;
+        return 0;
+    }
+
+    /// <summary>
+    /// Silence at the start of a clip in samples: everything before the onset of the first word – the frames above
+    /// OnsetRms that run into the first frame above SoundRms. The weak "s" of "seven" stays, a breath before it goes.
+    /// Measured against word errors of a speech recognizer over every voice: cutting at SoundRms here too ate those
+    /// onsets ("seven" → "even"), this doesn't.
+    /// </summary>
+    private static int LeadingSilence(float[] x, int rate)
+    {
+        int frame = Math.Max(1, (int)(FrameSeconds * rate));
+        int frames = x.Length / frame, f = 0;
+        while (f < frames && Rms(x, f * frame, frame) < SoundRms)
+            f++;
+        if (f == frames)
+            return 0;
+        while (f > 0 && Rms(x, (f - 1) * frame, frame) >= OnsetRms)
+            f--;
+        return f * frame;
+    }
 
     private static float[] Mono(AudioClip c)
     {

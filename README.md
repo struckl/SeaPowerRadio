@@ -18,7 +18,8 @@ in on the Iowa group.
 - **Callsigns** – ships and shore units say their in-game short name ("Iowa", "Pargo"), aircraft their squadron
   callsign from the game ("Lancer 3-2"), everyone else a generated NATO callsign ("Viper two-one", "Sentinel").
   Every clip is cut from a whole spoken sentence, so callsign, phrase, bearings, track numbers, altitudes and counts
-  join like one person talking.
+  join like one person talking – without a pause before a number ("bearing two seven three") unless the sentence
+  has one ("track 7034, faded").
 - **Stock voices replaced** – the game's voice lines are muted and re-spoken by the unit that actually said them.
   Voice lines of other mods play as before.
 - **Brevity on the net** – a unit only says its name when it takes over the net from someone else; the same
@@ -127,7 +128,7 @@ edge-tts (`generate.py`) remains as a fallback engine.
 | `chatterbox_render.py` | renders the library into `mod/voices/<persona>/` on the GPU; phrase urgency → `exaggeration`/`cfg_weight`; hallucinated or unalignable takes are re-rolled; resumable |
 | `align.py` | CTC forced aligner (wav2vec2) giving word timestamps, since Chatterbox reports none |
 | `radio.py` | the radio sound, split into the *voice* half (baked per clip) and the *transmission* half (hiss, click, crackle, squelch – once per transmission, at runtime) |
-| `reel.py` | stitches clips into transmissions like the plugin will → `tools/voicegen/samples/` |
+| `reel.py` | stitches clips into transmissions like the plugin will, pauses at numbers closed up the same way → `tools/voicegen/samples/` (`--as-cut`: joins as cut, for comparison; `--library`: another checkout's voices) |
 | `names.py` | in-game names: ship/shore short names and squadron callsign words from the game's language files, each bound to a few voices → `mod/voices/names.txt` |
 | `check_sync.py` | checks callsign lists (Python vs. C#) and that every stock key is mapped – run before a render |
 | `check_library.py` | lists takes still missing from the rendered library |
@@ -162,7 +163,8 @@ src/SeaPowerRadio/        C# plugin (netstandard2.1, BepInEx 5 / HarmonyX via An
   Roster/                 player elements + hangar slots → callsign + voice
   Voices/                 callsign generator, voice assignment, voice library loader
   Radio/                  Catalog (catalog.txt / stockmap.txt), TransmissionBuilder (callsign + phrase + number
-                          pieces), ClipLibrary (on-demand loading, LRU), RadioFx (hiss, click, crackle, squelch),
+                          pieces, how much pause each join keeps), ClipLibrary (on-demand loading, LRU), RadioFx
+                          (joins the clips, hiss, click, crackle, squelch),
                           RadioPlayer (priority queue, one voice at a time), StockVoiceRouter (stock line → own voice)
   Contacts/               ContactReporter: new / lost / intermittent / hostile calls with hysteresis and cooldowns
   WhyNot/                 WhyNotMonitor (engage states, reload ETA, sonar-only, dropped orders → spoken + alert),

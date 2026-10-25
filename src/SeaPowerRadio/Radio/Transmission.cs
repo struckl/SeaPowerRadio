@@ -36,10 +36,34 @@ internal sealed class Transmission
 /// <summary>
 /// Turns "Viper 2-1 says EngageTrack 7034" into the clip sequence the voice library holds. Mirrors the assembly
 /// rules of tools/voicegen/reel.py: callsign word + flight-position, phrase part a, number pieces, phrase part b.
-/// Every clip carries its half of the natural pauses, so they are joined back to back.
+/// Every clip carries its half of the pause it was cut in, so they are joined back to back – with the pauses at
+/// a number closed up (<see cref="MaxPause"/>).
 /// </summary>
 internal static class TransmissionBuilder
 {
+    // Most silence left where two clips join. The takes speak a pause at every cut, so the cut falls into silence –
+    // also where nobody pauses ("bearing, | two seven three"): there the two halves added up to a quarter to half a
+    // second, which is what made the numbers sound read off a card.
+    private const float NumberPause = 0.05f;   // word ↔ number, no pause in the text: "bearing two seven three"
+    private const float GroupPause = 0.08f;    // between the digit groups: "seven zero, three four"
+    private const float SpokenPause = 0.25f;   // a pause the speaker makes anyway (after the callsign, at a comma)
+
+    /// <summary>Most silence allowed where <paramref name="next"/> follows <paramref name="previous"/>.</summary>
+    public static float MaxPause(string previous, string next)
+    {
+        bool a = IsNumberPiece(previous), b = IsNumberPiece(next);
+        if (a && b)
+            return GroupPause;
+        if (a || b)
+            return Catalog.PausesAtNumber(a ? next : previous) ? SpokenPause : NumberPause;
+        return SpokenPause;
+    }
+
+    private static bool IsNumberPiece(string key) =>
+        key.StartsWith("brg_", StringComparison.Ordinal) || key.StartsWith("pm_", StringComparison.Ordinal)
+        || key.StartsWith("pe_", StringComparison.Ordinal) || key.StartsWith("dm_", StringComparison.Ordinal)
+        || key.StartsWith("alt_", StringComparison.Ordinal) || key.StartsWith("cnt_", StringComparison.Ordinal);
+
     public static Transmission Build(RosterElement speaker, string phrase, int? number)
     {
         var t = Start(speaker);

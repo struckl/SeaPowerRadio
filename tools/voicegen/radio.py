@@ -15,9 +15,11 @@ use, so the listening sample sounds exactly like the game will.
 
 from __future__ import annotations
 
+import math
 import random
 import subprocess
 import sys
+from array import array
 from pathlib import Path
 
 SAMPLE_RATE = 24000
@@ -90,10 +92,64 @@ def voice_chain(src: Path, dest: Path, start: float | None = None, end: float | 
     part.replace(dest)
 
 
+# Silence at a join, in 10 ms frames -- the plugin's RadioFx.SoundRms / OnsetRms.
+SOUND_RMS = 0.01        # -40 dBFS: speech; breath and room tone sit below it, under the hiss bed
+ONSET_RMS = 0.0018      # -55 dBFS: the start of a digit ("s", "th", "f") after the band-limit
+FRAME_SECONDS = 0.010
+
+
+def quiet_edges(clip: Path) -> tuple[int, int, int]:
+    """(silent samples at the start, at the end, total samples) of a clip at OUT_SAMPLE_RATE.
+
+    End: frames below SOUND_RMS. Start: everything before the frames above ONSET_RMS that run into the first frame
+    above SOUND_RMS, so the weak "s" of "seven" stays and a breath before it goes (RadioFx.LeadingSilence).
+    """
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(clip), "-f", "f32le", "-ac", "1",
+                          "-ar", str(OUT_SAMPLE_RATE), "-"], capture_output=True, check=True).stdout
+    x = array("f")
+    x.frombytes(raw)
+    frame = int(FRAME_SECONDS * OUT_SAMPLE_RATE)
+    rms = [math.sqrt(sum(s * s for s in x[f * frame:(f + 1) * frame]) / frame) for f in range(len(x) // frame)]
+    first = next((f for f, r in enumerate(rms) if r >= SOUND_RMS), None)
+    if first is None:
+        return 0, 0, len(x)
+    while first > 0 and rms[first - 1] >= ONSET_RMS:
+        first -= 1
+    # Frames for the end are counted from the end of the clip, like the plugin does.
+    tail = [math.sqrt(sum(s * s for s in x[len(x) - (f + 1) * frame:len(x) - f * frame]) / frame)
+            for f in range(len(x) // frame)]
+    return first * frame, next((f for f, r in enumerate(tail) if r >= SOUND_RMS), 0) * frame, len(x)
+
+
+def close_up(parts: list[tuple[Path, float]]) -> list[tuple[int, int]]:
+    """The slice (start, end sample) of every clip once the silence at each join is cut back to what it allows.
+
+    parts: (clip, most silence in seconds where it joins the one before -- the plugin's TransmissionBuilder.MaxPause;
+    the first is ignored). Each side keeps up to half of it, the rest is cut from the middle of the pause, exactly
+    like the plugin's RadioFx.Build.
+    """
+    edges = [quiet_edges(clip) for clip, _ in parts]
+    slices = [[0, total] for _, _, total in edges]
+    for i in range(1, len(parts)):
+        if math.isinf(parts[i][1]):
+            continue
+        trailing = min(edges[i - 1][1], slices[i - 1][1] - slices[i - 1][0])
+        leading = edges[i][0]
+        keep = int(parts[i][1] * OUT_SAMPLE_RATE)
+        if trailing + leading <= keep:
+            continue
+        keep_end = min(trailing, keep // 2)
+        keep_start = min(leading, keep - keep_end)
+        keep_end = min(trailing, keep - keep_start)
+        slices[i - 1][1] -= trailing - keep_end
+        slices[i][0] = leading - keep_start
+    return [(a, b) for a, b in slices]
+
+
 def transmission(parts: list[tuple[Path, float]], dest: Path, profile: str, seed: str) -> None:
     """Stitch fragments into one transmission and add the transmission half.
 
-    parts: (clip, gap_before_seconds). The first gap is ignored.
+    parts: (clip, most silence where it joins the one before, see close_up; float("inf") = as cut).
     """
     rng = random.Random(seed)
     p = TRANSMISSION_PROFILES[profile]
@@ -101,12 +157,12 @@ def transmission(parts: list[tuple[Path, float]], dest: Path, profile: str, seed
     for clip, _ in parts:
         inputs += ["-i", str(clip)]
 
-    # Body: fragments with short natural gaps between them.
+    # Body: fragments back to back, the silence at every join closed up like the plugin does.
     labels = []
     graph = []
-    for i, (_, gap) in enumerate(parts):
-        lead = 0 if i == 0 else int(gap * 1000)
-        graph.append(f"[{i}:a]aresample={SAMPLE_RATE},adelay={lead}:all=1[p{i}]")
+    for i, (start, end) in enumerate(close_up(parts)):
+        graph.append(f"[{i}:a]aresample={OUT_SAMPLE_RATE},atrim=start_sample={start}:end_sample={end},"
+                     f"asetpts=PTS-STARTPTS,aresample={SAMPLE_RATE}[p{i}]")
         labels.append(f"[p{i}]")
     graph.append(f"{''.join(labels)}concat=n={len(parts)}:v=0:a=1[speech]")
 

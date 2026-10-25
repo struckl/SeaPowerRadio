@@ -35,6 +35,28 @@ the middle of a stitched sentence (callsign + phrase + number). So the chain is 
 The technique comes from Ratten Chatter (https://github.com/struckl/RattenChatter), a radio chatter mod for Nuclear
 Option.
 
+### Joining the pieces
+
+Every clip is cut out of a whole spoken sentence, and the takes speak a pause at each cut so it falls into silence
+(`tools/voicegen/phrases.py`). Each clip keeps its half of that pause – which also puts a pause where nobody makes
+one: "bearing, | two seven three" added up to 0.15–0.55 s of silence before the number (player feedback after 1.0.0:
+"long pauses between words and numbers"). So `RadioFx.Build` cuts the silence at every join back to what
+`TransmissionBuilder.MaxPause` allows, from the middle of the pause:
+
+| Join | Most silence left |
+| --- | --- |
+| word ↔ number, no pause in the text ("bearing 273", "make my depth 150 feet") | 0.05 s |
+| between digit groups ("seven zero · three four") | 0.08 s |
+| a pause the speaker makes anyway: after the callsign, at a comma of the text ("track 7034, faded", "climbing, angels twenty" – `catalog.txt` columns 8 and 9) | 0.25 s |
+
+Silence at the end of a clip: 10 ms frames below -40 dBFS (breath and room tone sit there, under the hiss bed). At
+the start of a clip only what lies before the onset of the first word: the run of frames above -55 dBFS that leads
+into speech is kept, because after the band-limit the "s" of "seven", the "th" of "three" and the "f" of "four"
+are that quiet. Cutting at -40 dBFS on both sides closed the pauses further but cost 10 % more word errors in a
+speech recognizer over all 43 voices ("seven" → "even"); the asymmetric cut leaves the word errors where they were
+and halves the silence at number joins (median 0.17 → 0.09 s, 90th percentile 0.31 → 0.16 s). `reel.py` joins the
+same way (`--as-cut` for the old joins).
+
 ## Stock voice system (what the mod replaces)
 
 Class `SeaPower.VoiceMessage : Singleton<VoiceMessage>` (`Seapower/VoiceMessage.cs`).

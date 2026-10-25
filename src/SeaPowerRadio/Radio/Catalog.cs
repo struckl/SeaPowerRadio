@@ -20,6 +20,8 @@ internal sealed class PhraseVariant
     public string Slot;      // null, "trk", "brg", "num", "alt", "count"
     public bool HasA;        // clip <Phrase>_<N>_a before the number
     public bool HasB;        // clip <Phrase>_<N>_b after the number
+    public bool PauseA;      // the text pauses between _a and the number ("climbing, | angels twenty")
+    public bool PauseB;      // the text pauses between the number and _b ("track 7034, | faded")
     public int Priority;
     public CallRole Role;
 }
@@ -66,6 +68,8 @@ internal static class Catalog
                 HasB = f[4] == "1",
                 Priority = int.Parse(f[5]),
                 Role = ParseRole(f.Length > 6 ? f[6] : null, int.Parse(f[5])),
+                PauseA = f.Length > 7 && f[7] == "1",
+                PauseB = f.Length > 8 && f[8] == "1",
             };
             if (!Phrases.TryGetValue(v.Phrase, out List<PhraseVariant> list))
                 Phrases[v.Phrase] = list = new List<PhraseVariant>();
@@ -153,6 +157,24 @@ internal static class Catalog
             return ClipLibrary.Exists(voice, $"{v.Phrase}_{v.N}");
         return (!v.HasA || ClipLibrary.Exists(voice, $"{v.Phrase}_{v.N}_a"))
                && (!v.HasB || ClipLibrary.Exists(voice, $"{v.Phrase}_{v.N}_b"));
+    }
+
+    /// <summary>
+    /// Does the text pause where this clip meets the number next to it? Only a phrase half (&lt;Phrase&gt;_&lt;N&gt;_a /
+    /// _b) can say no; anything else next to a number (a callsign) is followed by a pause anyway.
+    /// </summary>
+    public static bool PausesAtNumber(string clipKey)
+    {
+        bool a = clipKey.EndsWith("_a", StringComparison.Ordinal), b = clipKey.EndsWith("_b", StringComparison.Ordinal);
+        if (!a && !b)
+            return true;
+        string variant = clipKey.Substring(0, clipKey.Length - 2);
+        int cut = variant.LastIndexOf('_');
+        if (cut < 0 || !int.TryParse(variant.Substring(cut + 1), out int n)
+            || !Phrases.TryGetValue(variant.Substring(0, cut), out List<PhraseVariant> all))
+            return true;
+        PhraseVariant v = all.Find(x => x.N == n);
+        return v == null || (a ? v.PauseA : v.PauseB);
     }
 
     /// <summary>Can this voice say the phrase at all (any variant rendered)?</summary>

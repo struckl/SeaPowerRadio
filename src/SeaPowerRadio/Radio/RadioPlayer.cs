@@ -116,9 +116,16 @@ internal sealed class RadioPlayer
             yield break;
 
         var parts = new List<AudioClip>();
+        var pauses = new List<float>();    // most silence where each part joins the one before
+        string previous = null;
         for (int i = 0; i < clips.Length; i++)
-            if (clips[i] != null || t.Clips[i] == null)
-                parts.Add(clips[i]);
+        {
+            if (clips[i] == null && t.Clips[i] != null)
+                continue;
+            parts.Add(clips[i]);
+            pauses.Add(previous != null && t.Clips[i] != null ? TransmissionBuilder.MaxPause(previous, t.Clips[i]) : float.MaxValue);
+            previous = t.Clips[i];
+        }
         if (!parts.Any(c => c != null))
         {
             preparing = false;
@@ -130,7 +137,7 @@ internal sealed class RadioPlayer
         // The mix hierarchy: replies to the player clean and in front, alerts just as loud, reports behind them.
         float level = t.Role == CallRole.Report ? Settings.ReportVolume.Value : 1f;
         float noise = Settings.RadioNoise.Value * (t.Role == CallRole.Reply ? 0.6f : 1f);
-        currentClip = RadioFx.Build(parts, t.Profile, unchecked(++seed * 7919), noise, level);
+        currentClip = RadioFx.Build(parts, pauses, t.Profile, unchecked(++seed * 7919), noise, level);
         source.clip = currentClip;
         source.volume = Settings.Volume.Value;
         source.Play();

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- No more long pauses before numbers: "bearing two seven three", "track seven zero three four" run together the
+  way they are said. The silence at every join between clips is cut back – to 0.05 s between a word and its number,
+  0.08 s between digit groups; pauses the sentence has (after the callsign, "track 7034, faded") stay, up to 0.25 s.
+  Same voices, no re-render; `catalog.txt` gained two columns (does the text pause before / after the number).
+
 ## 1.0.0 – 2026-10-24 (first Workshop release)
 
 Tested on Sea Power 0.8.7.

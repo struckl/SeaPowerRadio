@@ -57,7 +57,7 @@ Sea Power: Rats Radio 1.0.1 – bearings and track numbers without the pause
 Rats Radio 1.0.1 – the update to the radio mod for Sea Power. After 1.0.0 players noticed a pause between a word and its number ("bearing … two seven three"). That pause is gone: bearings, track numbers and depths are now said in one breath, the way they sound on a real radio net. Pauses the sentence really has – after the callsign, "track 7034, faded" – stay.
 
 0:00 Before and after
-0:09 The radio net live: Dangerous Straits 1985, the Iowa group in the Aegean at 4× time
+0:10 The radio net live: Dangerous Straits 1985, the Iowa group in the Aegean at 4× time
 1:10 Yak-38s inbound: air contacts, birds away, we're hit, splash
 
 Same 43 voices, nothing re-rendered – the Workshop update is only 0.1 MB.
@@ -66,8 +66,25 @@ Also out, 1.0.2: ships give the right reason when they can't fire, and a sinking
 Workshop: https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579
 Needs Anchor Chain: https://steamcommunity.com/sharedfiles/filedetails/?id=3380210757
 Source (MIT): https://github.com/struckl/SeaPowerRadio
+All features in the first video (1.0.0): https://youtu.be/g7P1pg2J0Lk
 Voices based on speakers of the CSTR VCTK corpus (University of Edinburgh, CC BY 4.0), rendered with Chatterbox.
 ```
+
+Chapters need at least three timestamps from 0:00, each chapter 10 s or longer – hence 0:10, not 0:09.
+
+**The old video (https://youtu.be/g7P1pg2J0Lk)** – keep it (views, and the README and the 1.0.0 release link it).
+Its live title ends in a stray "radio net" ("…(mod, sound on)radio net"); new title:
+
+Rats Radio – a voice for every unit in Sea Power (mod, sound on)
+
+Description: these lines in front of the existing one (section 1 below), `NEW_VIDEO_LINK` = the new upload:
+
+```
+Update: Rats Radio 1.0.2 is out – bearings and track numbers without the pause, the right reason when a ship can't fire, and survivors and raids called once instead of per raft or aircraft. New video: NEW_VIDEO_LINK
+This video shows 1.0.0.
+```
+
+Optionally an end screen (Studio → Editor → End screen → Video) on the old video pointing to the new one.
 
 Afterwards: the new link on the Workshop page (Owner Controls → Add/edit images & videos, in front of the 1.0.0
 video), in the README and at the top of this file.

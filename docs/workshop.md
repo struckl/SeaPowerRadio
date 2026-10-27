@@ -47,7 +47,8 @@ changed, so a plugin-only update is small for players.
 makes for an existing item, through the running Steam client and the game's own Steamworks.NET – but only the
 content and the change note; title, description, tags, preview, visibility, dependencies and the compatibility
 metadata stay as they are. Steam must be running, signed in with the owner account (no password involved); the game
-can stay closed. 1.0.1 and 1.0.2 went up this way, and the 1.0.1 video replaced the 1.0.0 one on the page.
+can stay closed. 1.0.1 and 1.0.2 went up this way, the 1.0.1 video replaced the 1.0.0 one on the page, and the
+description with the language roadmap was set with it (2026-10-27).
 
 ```powershell
 dotnet build tools\workshop-upload -c Release
@@ -55,6 +56,7 @@ $up = 'tools\workshop-upload\bin\Release\net8.0\WorkshopUpload.exe'
 & $up check 3826433579                                   # title, owner, visibility, last update – changes nothing
 & $up upload 3826433579 dist\SeaPowerRadio <change note file>   # the staged folder from package.ps1
 & $up video 3826433579 https://youtu.be/<id>             # replaces the page's YouTube video in its place
+& $up description 3826433579 workshop\description.bbcode  # replaces the page's text (under 8,000 bytes)
 ```
 
 It refuses an item the signed-in account doesn't own and a folder without `_info.ini`, prints the upload progress

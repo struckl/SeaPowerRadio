@@ -11,8 +11,9 @@ Images: `workshop/screenshots/` – 01-radio-net, 02-unit-roles-rtb, 03-message-
 
 ## 0. Steam Workshop upload (Main menu → Mods → Create Mod)
 
-**Uploaded 2026-10-24 21:46 – item 3826433579.** Two fixes still to make, because the upload came seven minutes
-before the AI wording was taken out of the texts:
+**Uploaded 2026-10-24 21:46 – item 3826433579.** Both fixes below are done: the description since 2026-10-27
+(with the roadmap section, set through `tools/workshop-upload description`), CREDITS.txt with the 1.0.1 upload.
+They were needed because the upload came seven minutes before the AI wording was taken out of the texts:
 
 1. **Description:** on the Workshop page → Owner Controls → *Edit title & description* → replace the text with
    [description.bbcode](description.bbcode) as it is now (no "cloned", no "generated while you play").
@@ -126,6 +127,15 @@ Thanks for all the feedback on the first version of Rats Radio! The one I heard 
 
 The video: Dangerous Straits 1985, the Iowa group in the Aegean at 4× time – contact reports with bearings, hostile tracks, then the Yak-38s come in.
 
+**Coming next: the radio in your side's language**
+
+- Phase 1 – voice packs: the language follows your side; English stays as it is
+- Phase 2 – Русский: the Soviet navy and naval aviation, with Soviet callsigns
+- Phase 3 – Español: for the upcoming South Atlantic 1982 update – Argentina, plus Chile, Cuba and Spain
+- Phase 4 – 中文 / 日本語
+
+Each language comes as its own Workshop item that adds to Rats Radio.
+
 Workshop: https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579
 Source (MIT): https://github.com/struckl/SeaPowerRadio
 
@@ -139,6 +149,7 @@ Two updates, both on the Workshop (subscribers get them automatically):
 - **No more pause before numbers** – bearings, track numbers and depths are said in one breath, like a real net; the video starts with before/after
 - **The right reason** – a ship firing Harpoons out of range said "sonar contact only"; now "target outside envelope", like the game's status bar
 - **Fewer repeats** – one "survivors in the water" per sinking instead of one per raft, one call per raid instead of one per aircraft
+**Coming next – your side's language:** voice packs, then **Русский** (Soviet navy and naval aviation), then **Español** for the upcoming South Atlantic 1982 update (Argentina, Chile, Cuba, Spain), later 中文 / 日本語 – each as its own Workshop item.
 **Workshop:** https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579
 Thanks for the feedback – keep it coming!
 ```
@@ -147,7 +158,7 @@ Thanks for the feedback – keep it coming!
 
 ```
 Rats Radio update (1.0.2) 🔊 https://youtu.be/pGwOIPXckpY
-Bearings and track numbers are now said in one breath like on a real net, ships give the right reason when they can't fire, and survivors and raids are called once instead of per raft or per aircraft. On the Workshop – subscribers get it automatically: https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579
+Bearings and track numbers are now said in one breath like on a real net, ships give the right reason when they can't fire, and survivors and raids are called once instead of per raft or per aircraft. Coming next: the radio in your side's language – Russian first, then Spanish for the upcoming South Atlantic update. On the Workshop – subscribers get it automatically: https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579
 ```
 
 ---

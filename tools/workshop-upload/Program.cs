@@ -6,16 +6,18 @@
 //   dotnet run --project tools/workshop-upload -- check  <item id>                    (also lists the page's previews)
 //   dotnet run --project tools/workshop-upload -- upload <item id> <content folder> <change note file>
 //   dotnet run --project tools/workshop-upload -- video  <item id> <YouTube link or id>  (replaces the page's video)
+//   dotnet run --project tools/workshop-upload -- description <item id> <bbcode file>    (replaces the page's text)
+using System.Text;
 using System.Text.RegularExpressions;
 using Steamworks;
 
 const uint SeaPowerAppId = 1286220;
 
-if (args.Length < 2 || (args[0] == "upload" && args.Length < 4) || (args[0] == "video" && args.Length < 3)
+if (args.Length < 2 || (args[0] == "upload" && args.Length < 4) || ((args[0] == "video" || args[0] == "description") && args.Length < 3)
     || !ulong.TryParse(args[1], out ulong itemId))
 {
     Console.Error.WriteLine("usage: check <item id> | upload <item id> <content folder> <change note file> | " +
-                            "video <item id> <YouTube link or id>");
+                            "video <item id> <YouTube link or id> | description <item id> <bbcode file>");
     return 2;
 }
 
@@ -68,6 +70,26 @@ try
         }
         Console.WriteLine(at >= 0 ? $"Replacing preview {at} ({previews[at].what}) with {id} ..." : $"Adding {id} ...");
         return Submit(video, null, item) ? 0 : 1;
+    }
+
+    if (args[0] == "description")
+    {
+        // The page text (workshop/description.bbcode); title, tags and everything else stay. Steam takes 8,000 bytes.
+        string text = File.ReadAllText(args[2]).Replace("\r\n", "\n").Trim();
+        int bytes = Encoding.UTF8.GetByteCount(text);
+        if (bytes >= 8000)
+        {
+            Console.Error.WriteLine($"{bytes} bytes - Steam takes fewer than 8000.");
+            return 2;
+        }
+        UGCUpdateHandle_t page = SteamUGC.StartItemUpdate(new AppId_t(SeaPowerAppId), item);
+        if (!SteamUGC.SetItemDescription(page, text))
+        {
+            Console.Error.WriteLine("Steam refused the description.");
+            return 1;
+        }
+        Console.WriteLine($"Setting the description ({text.Length} characters, {bytes} bytes) ...");
+        return Submit(page, null, item) ? 0 : 1;
     }
 
     string folder = Path.GetFullPath(args[2]);

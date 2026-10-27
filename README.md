@@ -7,8 +7,8 @@ ordered.
 **[Get it on the Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579)** – requires
 [Anchor Chain](https://steamcommunity.com/sharedfiles/filedetails/?id=3380210757).
 
-**[Watch and listen on YouTube](https://youtu.be/g7P1pg2J0Lk)** (70 s, sound on) – the radio net while Yak-38s close
-in on the Iowa group.
+**[Watch and listen on YouTube](https://youtu.be/pGwOIPXckpY)** (1:49, sound on) – the same call before and after
+1.0.1, then the radio net while Yak-38s close in on the Iowa group. The 1.0.0 video: https://youtu.be/g7P1pg2J0Lk.
 
 ![The message log full of radio calls over the Aegean](workshop/screenshots/01-radio-net.jpg)
 
@@ -111,6 +111,7 @@ DLLs). Releases: [docs/workshop.md](docs/workshop.md) (`tools/package.ps1`), rel
 [docs/testing.md](docs/testing.md); the game systems the mod hooks into (stock voices, why a unit doesn't fire,
 mission lifecycle, contacts) and how to decompile the game: [docs/how-it-works.md](docs/how-it-works.md); the stock
 voice lines and where the game raises them: [docs/stock-voice-events.md](docs/stock-voice-events.md).
+Voices in other languages (Spanish, Russian, … as Workshop voice packs): [docs/languages-roadmap.md](docs/languages-roadmap.md).
 
 The rendered voice library (`mod/voices/<persona>/`, ~57,000 mp3 clips) is not in git: it comes with every release
 and can be rebuilt with the voice pipeline below.

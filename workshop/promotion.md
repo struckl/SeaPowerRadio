@@ -1,7 +1,8 @@
 # Rats Radio – release and promotion
 
 Workshop: https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579 (item 3826433579, uploaded 2026-10-24 21:46, public, tags Overhaul, Realism, Audio, Scripting, Effects)
-Video: https://youtu.be/g7P1pg2J0Lk (70 s, the radio net while Yak-38s close in on the Iowa group – `workshop/radio-net.mp4`, not in git)
+Video: https://youtu.be/pGwOIPXckpY (1.0.1, 1:49 – before/after, then the radio net in Dangerous Straits; `workshop/radio-net-1.0.1.mp4`, not in git) – on the Workshop page since 2026-10-27
+First video: https://youtu.be/g7P1pg2J0Lk (1.0.0, 70 s, unlisted since 2026-10-27; `workshop/radio-net.mp4`, not in git)
 Source: https://github.com/struckl/SeaPowerRadio · Release zip (manual install): GitHub release v1.0.0 (draft until
 published)
 Images: `workshop/screenshots/` – 01-radio-net, 02-unit-roles-rtb, 03-message-log, 04-unit-roles
@@ -37,7 +38,9 @@ images & videos): **the YouTube video first** (https://youtu.be/g7P1pg2J0Lk), th
 
 ---
 
-## 1.0.1 – YouTube video for the update (to upload)
+## 1.0.1 – YouTube video for the update (uploaded 2026-10-27: https://youtu.be/pGwOIPXckpY)
+
+The same video went up twice; the copy of 2026-10-25 (https://youtu.be/C4FX7CLvc4c) is the one to delete or unlist.
 
 File: `workshop/radio-net-1.0.1.mp4` (not in git; 1:48, 2560×1440, 30 fps, -15 LUFS) – before/after intro with the
 same call in 1.0.0 and 1.0.1, then the radio net live in *Dangerous Straits 1985* at 4× time (contact reports with
@@ -77,10 +80,10 @@ Its live title ends in a stray "radio net" ("…(mod, sound on)radio net"); new 
 
 Rats Radio – a voice for every unit in Sea Power (mod, sound on)
 
-Description: these lines in front of the existing one (section 1 below), `NEW_VIDEO_LINK` = the new upload:
+Description: these lines in front of the existing one (section 1 below):
 
 ```
-Update: Rats Radio 1.0.2 is out – bearings and track numbers without the pause, the right reason when a ship can't fire, and survivors and raids called once instead of per raft or aircraft. New video: NEW_VIDEO_LINK
+Update: Rats Radio 1.0.2 is out – bearings and track numbers without the pause, the right reason when a ship can't fire, and survivors and raids called once instead of per raft or aircraft. New video: https://youtu.be/pGwOIPXckpY
 This video shows 1.0.0.
 ```
 
@@ -93,10 +96,9 @@ video), in the README and at the top of this file.
 
 ## Update posts – 1.0.1 + 1.0.2 (2026-10-25)
 
-Both updates are live on the Workshop (subscribers get them automatically) and on GitHub. Post after the YouTube
-upload and replace `YOUTUBE_LINK` with the new link; until then the Discord posts can go out with
-`workshop/screenshots/01-radio-net.jpg` attached instead. The video itself is too big for Discord without Nitro
-(41 MB, the 1080p preview 28 MB – the free limit is 10 MB).
+Both updates are live on the Workshop (subscribers get them automatically) and on GitHub, the new video is on
+YouTube and on the Workshop page. The video file itself is too big for Discord without Nitro (41 MB, the 1080p
+preview 28 MB – the free limit is 10 MB); the YouTube link shows as a playable video there.
 
 ### Reddit – r/SeaPower_NCMA (video post, sound on)
 
@@ -132,7 +134,7 @@ Keep it coming – especially calls that sound wrong for the situation or come t
 ### Discord – BuOrd: Naval Modding Community, `#sp-mods`
 
 ```
-## Rats Radio 1.0.2 🔊 YOUTUBE_LINK
+## Rats Radio 1.0.2 🔊 https://youtu.be/pGwOIPXckpY
 Two updates, both on the Workshop (subscribers get them automatically):
 - **No more pause before numbers** – bearings, track numbers and depths are said in one breath, like a real net; the video starts with before/after
 - **The right reason** – a ship firing Harpoons out of range said "sonar contact only"; now "target outside envelope", like the game's status bar
@@ -144,7 +146,7 @@ Thanks for the feedback – keep it coming!
 ### Discord – MicroProse (Official), the same mods / showcase channel as the launch post
 
 ```
-Rats Radio update (1.0.2) 🔊 YOUTUBE_LINK
+Rats Radio update (1.0.2) 🔊 https://youtu.be/pGwOIPXckpY
 Bearings and track numbers are now said in one breath like on a real net, ships give the right reason when they can't fire, and survivors and raids are called once instead of per raft or per aircraft. On the Workshop – subscribers get it automatically: https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579
 ```
 

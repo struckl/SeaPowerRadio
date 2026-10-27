@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased – for the 3D globe build (game build 26223125, the 11 November release)
+
+Builds against the new game and hooks everything it hooked before; **not yet run in the game**. Checked by
+reflection against the new game assembly: all 20 hooked methods and the one internal field are still there with the
+same signatures, except the one below.
+
+- **Returning aircraft (RTB highlight)**: the game's map-symbol colour call now takes the map as a second argument
+  (`MapContactVisuals.Resolve(unit, map)`), and the global day/night theme is gone - every map has its own palette.
+  The hook follows the new signature and takes the yellow for day or night from the palette of the map being drawn;
+  the formation manager rows take it from the player's tactical map.
+
 ## 1.0.3 – 2026-10-27
 
 - Refusals no longer repeat while the ship closes the range: a unit gives the same reason about the same target

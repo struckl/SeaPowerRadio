@@ -6,6 +6,18 @@ Log: `<Sea Power>\BepInEx\LogOutput.log` (overwritten on every game start). Conf
 
 The checklists are in the order the features were built; each still applies.
 
+## Globe build (game build 26223125) - quick check
+
+Done 2026-10-28 without the game: builds against the new game; every Harmony hook and the `_unitsToRebase` field
+resolve in the new `Seapower-Scripts.dll`, the one changed hook (`MapContactVisuals.Resolve(IUnit, MapViewModel)`) is
+followed. In the game (his go, he drives the mouse):
+
+1. Log at the first mission: no `[Error  :SeaPowerRadio]`, no `not found (game updated?)`, all features listed as hooked.
+2. **RTB highlight on the map**: an own aircraft that goes bingo turns yellow on the map, light-map yellow
+   (dark gold) by day, bright yellow on the night map; a second map window / the editor map has its own colours.
+3. **Formation manager**: rows of returning groups yellow, groups sink to the bottom (as in the 2026-10-18 checklist).
+4. A radio call or two (contact, order, refusal) still voiced.
+
 ## Roster and the new voices (2026-10-17)
 
 The game's own voice lines are now replaced: every unit speaks with its own voice and callsign, through a radio

@@ -142,7 +142,9 @@ def main() -> None:
                         help="re-render only takes holding one of these clip keys (one per line), replacing them")
     parser.add_argument("--seed-offset", type=int, default=0,
                         help="retry pass: new seeds for takes that gave up in an earlier run")
+    parser.add_argument("--library", type=Path, help="voice library to render into (default: mod/voices)")
     args = parser.parse_args()
+    out_root = args.library or OUT_ROOT
 
     from chatterbox.tts import ChatterboxTTS
 
@@ -167,7 +169,7 @@ def main() -> None:
     tmp = REPO / "tools" / "voicegen" / "out"
     tmp.mkdir(parents=True, exist_ok=True)
     for p in personas:
-        out_dir = OUT_ROOT / p.id
+        out_dir = out_root / p.id
         out_dir.mkdir(parents=True, exist_ok=True)
         for leftover in out_dir.glob("*.part.mp3"):  # from a run that was stopped mid-write
             leftover.unlink()

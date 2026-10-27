@@ -130,15 +130,15 @@ edge-tts (`generate.py`) remains as a fallback engine.
 | `cast.py` | the 43 NATO/English personas, one VCTK speaker each (US, Canada, England, Scotland, Ireland, Northern Ireland, Australia, New Zealand; 30 m / 13 f); writes `mod/voices/personas.txt` |
 | `vctk_refs.py` | builds a ~12 s reference clip per persona from VCTK, reading single parquet row groups from Hugging Face instead of the 17.6 GB corpus (`vctk/index.json`, `vctk/speaker-info.txt`) |
 | `phrases.py` | phrase catalog (stock keys, why-not reasons, callouts, T3 identification causes) as *takes*: every clip is cut out of a whole sentence (phrases after a carrier callsign, callsign words / flight-position pairs / number pieces each in the slot they're used in), so stitched pieces keep the voice's own melody and pauses. `{trk}`/`{brg}`/`{num}`/`{alt}`/`{count}` slots split a phrase around a number. `STOCK_MAP` maps every stock voice key to its replacement |
-| `chatterbox_render.py` | renders the library into `mod/voices/<persona>/` on the GPU; phrase urgency → `exaggeration`/`cfg_weight`; hallucinated or unalignable takes are re-rolled; resumable |
+| `chatterbox_render.py` | renders the library into `mod/voices/<persona>/` on the GPU; phrase urgency → `exaggeration`/`cfg_weight`; hallucinated or unalignable takes are re-rolled; resumable; `--keys-file` re-renders single clips, `--library` renders into another checkout's library (a git worktree has none of its own) |
 | `align.py` | CTC forced aligner (wav2vec2) giving word timestamps, since Chatterbox reports none |
 | `radio.py` | the radio sound, split into the *voice* half (baked per clip) and the *transmission* half (hiss, click, crackle, squelch – once per transmission, at runtime) |
 | `reel.py` | stitches clips into transmissions like the plugin will, pauses at numbers closed up the same way → `tools/voicegen/samples/` (`--as-cut`: joins as cut, for comparison; `--library`: another checkout's voices) |
 | `names.py` | in-game names: ship/shore short names and squadron callsign words from the game's language files, each bound to a few voices → `mod/voices/names.txt` |
 | `check_sync.py` | checks callsign lists (Python vs. C#) and that every stock key is mapped – run before a render |
-| `check_library.py` | lists takes still missing from the rendered library |
+| `check_library.py` | lists takes still missing from the rendered library (`--library` for another one) |
 | `check_asr.py` | finds clips that are there but wrong (a cut that took the first sound off, a mumbled take) without listening: transcribes every clip inside a call joined like the plugin joins it (callsign + phrase + number) with a wav2vec2 recognizer – English `facebook/wav2vec2-base-960h`, Russian / Spanish `jonatasgrosman/wav2vec2-large-xlsr-53-*` – and compares the words with the text. Per key: in how many voices the first word is heard right (phrase keys: median 41/43); a key below 70 % (30/43) is a defect of its text or the cutter (exit code 1); garbled single clips with voice id, `--write-keys` for a re-render |
-| `full_render.ps1` | detached, game-aware full render (pauses while a game runs), verify, re-roll, deploy |
+| `full_render.ps1` | detached, game-aware full render (pauses while a game runs), verify, re-roll, deploy; `-Library` + `-NoDeploy` to render from a worktree into the main checkout's library |
 | `generate.py`, `edge_cast.py` | edge-tts fallback engine and its cast |
 
 ```bash

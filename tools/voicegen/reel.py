@@ -60,6 +60,8 @@ def pauses_at_number(key: str) -> bool:
 def max_pause(previous: str, key: str) -> float:
     if AS_CUT:
         return float("inf")
+    if previous.startswith(("cs_", "sq_")) and key.startswith(("fp_", "cn_")):  # "Viper six-two" in one go
+        return NUMBER_PAUSE
     a, b = previous.startswith(NUMBER_PIECES), key.startswith(NUMBER_PIECES)
     if a and b:
         return GROUP_PAUSE

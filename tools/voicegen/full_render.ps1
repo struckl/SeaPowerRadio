@@ -5,7 +5,9 @@
 #      no game for -ResumeAfter s   -> the render is started again and continues where it stopped
 #    Stopping is safe: clips are written to *.part.mp3 and renamed when complete.
 # 2. Checks the library (check_library.py). Takes that gave up get one more pass with new seeds.
-# 3. Deploys the mod incl. voices into the game (dotnet build -> StreamingAssets\SeaPowerRadio).
+# 3. Deploys the mod incl. voices into the game (dotnet build -> StreamingAssets\SeaPowerRadio), unless -NoDeploy.
+#    -Library renders into / checks another library: a git worktree has none of its own, so there use -NoDeploy too
+#    (the build would copy the worktree's mod\ into the game).
 # 4. With -ShutdownWhenDone: shuts the PC down after a warning (abort with: shutdown /a).
 #
 # Start it so it survives the terminal / app that launched it (WMI creates it outside the caller's job):
@@ -14,10 +16,12 @@
 # Rerun any time to resume. Log: tools\voicegen\out\full_render.log (warnings: full_render.err.log)
 
 param(
-    [string[]]$Games = @("HuntGame", "Sea Power", "NuclearOption", "cs2"),
+    [string[]]$Games = @("HuntGame", "Sea Power", "NuclearOption", "cs2", "STRAFTAT"),
     [int]$ResumeAfter = 120,
     [string]$Voices = "all",
     [string]$RenderArgs = "",          # extra chatterbox_render.py arguments, e.g. "--keys-file tools/voicegen/rerender_keys.txt"
+    [string]$Library = "",             # render into / check this library instead of mod\voices (e.g. from a worktree)
+    [switch]$NoDeploy,                 # don't build and deploy the mod into the game afterwards
     [switch]$ShutdownWhenDone,
     [int]$ShutdownDelay = 300
 )
@@ -28,6 +32,12 @@ New-Item -ItemType Directory -Force $out | Out-Null
 $log = Join-Path $out "full_render.log"
 $errLog = Join-Path $out "full_render.err.log"
 $python = Join-Path $repo ".venv-chatterbox\Scripts\python.exe"
+if (-not (Test-Path $python)) {
+    # A git worktree has no venv of its own: use the main checkout's.
+    $main = Split-Path (Resolve-Path (& git -C $repo rev-parse --git-common-dir)).Path
+    $python = Join-Path $main ".venv-chatterbox\Scripts\python.exe"
+}
+$libArg = if ($Library) { "--library `"$Library`"" } else { "" }
 
 function Write-Log($msg) { "[{0:yyyy-MM-dd HH:mm:ss}] {1}" -f (Get-Date), $msg | Add-Content -Path $log -Encoding utf8 }
 
@@ -79,7 +89,7 @@ function Invoke-SupervisedRender([string]$extra) {
         else {
             if (-not $quietSince) { $quietSince = Get-Date }
             if (-not $started -or ((Get-Date) - $quietSince).TotalSeconds -ge $ResumeAfter) {
-                $render = Start-Hidden "`"$python`" -u tools\voicegen\chatterbox_render.py --voices $Voices $extra"
+                $render = Start-Hidden "`"$python`" -u tools\voicegen\chatterbox_render.py --voices $Voices $libArg $extra"
                 $started = $true; $pausedFor = $null; $quietSince = $null
                 Write-Log "rendering $extra(cmd pid $($render.Id))"
             }
@@ -89,7 +99,7 @@ function Invoke-SupervisedRender([string]$extra) {
 }
 
 function Test-Library {
-    $p = Start-Hidden "`"$python`" tools\voicegen\check_library.py"
+    $p = Start-Hidden "`"$python`" tools\voicegen\check_library.py $libArg"
     $p.WaitForExit()
     return $p.ExitCode -eq 0
 }
@@ -105,7 +115,7 @@ if ($ok -and -not $complete) {
 }
 Write-Log ("render done: success=$ok, library complete=$complete")
 
-if ($ok) {
+if ($ok -and -not $NoDeploy) {
     while (Get-RunningGame) { Start-Sleep -Seconds 30 }   # the game would lock the plugin DLL
     $deploy = Start-Hidden "dotnet build src\SeaPowerRadio\SeaPowerRadio.csproj -c Release"
     $deploy.WaitForExit()

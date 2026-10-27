@@ -51,6 +51,10 @@ internal static class TransmissionBuilder
     /// <summary>Most silence allowed where <paramref name="next"/> follows <paramref name="previous"/>.</summary>
     public static float MaxPause(string previous, string next)
     {
+        // "Viper | six-two", "Lancer | three": the takes pause after the callsign word so the cut falls into silence,
+        // the callsign itself is said in one go.
+        if (IsCallsignWord(previous) && IsCallsignNumber(next))
+            return NumberPause;
         bool a = IsNumberPiece(previous), b = IsNumberPiece(next);
         if (a && b)
             return GroupPause;
@@ -63,6 +67,12 @@ internal static class TransmissionBuilder
         key.StartsWith("brg_", StringComparison.Ordinal) || key.StartsWith("pm_", StringComparison.Ordinal)
         || key.StartsWith("pe_", StringComparison.Ordinal) || key.StartsWith("dm_", StringComparison.Ordinal)
         || key.StartsWith("alt_", StringComparison.Ordinal) || key.StartsWith("cnt_", StringComparison.Ordinal);
+
+    private static bool IsCallsignWord(string key) =>
+        key.StartsWith("cs_", StringComparison.Ordinal) || key.StartsWith("sq_", StringComparison.Ordinal);
+
+    private static bool IsCallsignNumber(string key) =>
+        key.StartsWith("fp_", StringComparison.Ordinal) || key.StartsWith("cn_", StringComparison.Ordinal);
 
     public static Transmission Build(RosterElement speaker, string phrase, int? number, int variant = 0)
     {

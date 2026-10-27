@@ -453,14 +453,17 @@ def build_takes() -> list[Take]:
     for phrase in PHRASES:
         takes += phrase_takes(phrase)
 
-    # Aircraft callsigns: the word in "<word> two-one" position, the flight-position in "Viper <fp>" position.
+    # Aircraft callsigns: the word in "<word>, two-one" position, the flight-position in "Viper, <fp>" position.
+    # The comma is a spoken pause to cut in, like at every other cut; the plugin closes it up again
+    # (TransmissionBuilder.MaxPause). Without it the cut fell into running speech: the word kept the "t" of "two" and
+    # the number lost its first sound ("Viper-t 'ix-two").
     for word in AIR_WORDS:
-        takes.append(take(Segment(word, f"cs_{word.lower()}"), Segment("two-one,"), Segment(CALLSIGN_TAIL),
+        takes.append(take(Segment(f"{word},", f"cs_{word.lower()}"), Segment("two-one,"), Segment(CALLSIGN_TAIL),
                           jitter=1, sample=word in SAMPLE_WORDS))
     for flight in range(1, 10):
         for pos in range(1, 5):
             fp = f"{flight}{pos}"
-            takes.append(take(Segment("Viper"), Segment(f"{DIGIT_WORDS[flight]}-{DIGIT_WORDS[pos]},", f"fp_{fp}"),
+            takes.append(take(Segment("Viper,"), Segment(f"{DIGIT_WORDS[flight]}-{DIGIT_WORDS[pos]},", f"fp_{fp}"),
                               Segment(CALLSIGN_TAIL), jitter=1, sample=fp in SAMPLE_FLIGHTPOS))
     for word in SINGLE_WORDS:
         takes.append(take(Segment(f"{word},", f"cs_{word.lower()}"), Segment(CALLSIGN_TAIL),
@@ -498,7 +501,7 @@ def callsign_number_takes() -> list[Take]:
     """The number after an in-game callsign word ("Lancer | three"), in every voice."""
     words = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven",
              "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"]
-    return [take(Segment("Viper"), Segment(f"{words[n]},", f"cn_{n}"), Segment(CALLSIGN_TAIL), jitter=1)
+    return [take(Segment("Viper,"), Segment(f"{words[n]},", f"cn_{n}"), Segment(CALLSIGN_TAIL), jitter=1)
             for n in range(1, 21)]
 
 
@@ -516,7 +519,7 @@ def name_takes(persona_id: str) -> list[Take]:
         if n.kind == "unit":
             out.append(take(Segment(n.spoken + ",", n.key), Segment(CALLSIGN_TAIL), jitter=1, priority=6))
         else:
-            out.append(take(Segment(n.spoken, n.key), Segment("three,"), Segment(CALLSIGN_TAIL), jitter=1,
+            out.append(take(Segment(n.spoken + ",", n.key), Segment("three,"), Segment(CALLSIGN_TAIL), jitter=1,
                             priority=6))
     return out
 

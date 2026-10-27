@@ -18,8 +18,9 @@ against the clip after it. Per key: in how many voices the first word was right.
 now and then, more in some accents, so one voice says little; across the 43 English voices phrase keys reach a median
 of 41 (climbing 42, descending 39, making 41), and a key below --min-right (70 %: 30/43) is a defect of its text or the
 cutter for every voice: the old "speed {num} knots" was right in 17/43 (the cut took the "s"), the flight positions
-after an air callsign word in a median 16/43 (the word kept the "t" of "two-one" from its take). Such a defect needs
-a fix in phrases.py / chatterbox_render.py before its takes are rendered again; a re-render alone brings it back.
+after an air callsign word in a median 16/43 -- "Viper six-two, ready" has no pause to cut in, so "Viper" kept the
+"t" of "two" from its own take and "six" lost its "s". Such a defect needs a fix in phrases.py / chatterbox_render.py
+before its takes are rendered again; a re-render alone brings it back.
 Clips that open their take (callsign words, names) were never cut at the start, so their first word never fails a key. Single clips that came out garbled -- a word said twice,
 the next word of the take cut in -- stand out against the same key in the other voices (CER --cer-margin above its
 median) and are listed worst first with the voice id; --write-keys saves the listed keys for chatterbox_render.py
@@ -73,6 +74,7 @@ SOUNDS_LIKE: dict[str, dict[str, set[str]]] = {
     "en": {
         "knots": {"not", "nots", "notes", "knot", "nod", "nods", "note"},
         "two": {"to", "too", "tu"},
+        "four": {"for", "fore", "foor"},
         "cruise": {"crew", "cruw", "cru"},
         "max": {"mack", "mac", "mak"},
         "cease": {"seize", "seeze"},

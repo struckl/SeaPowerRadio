@@ -7,11 +7,14 @@
   together gets one call – the first ship to give a reason says it, the others only put up their message.
 - Speed orders say the right way and where to: 1/3 → 2/3 said "slowing down". Now "coming up to two thirds",
   "slowing to one third", "coming up to standard" …, "ahead full" and "ahead flank" as before. A speed set in knots
-  with the slider, which had no voice line at all, is said too: "speed one five knots" / "making one five knots".
+  with the slider, which had no voice line at all, is said too: "coming to one five knots" / "making one five knots".
 - Altitude orders too: a descent said "climbing, angels five" half the time. Now "climbing, …" below the new
   altitude, "descending, …" above it, "leveling off, …" at the altitude it already holds – always with the ordered
   altitude ("angels twenty", "five hundred feet"). Depth orders already name the depth.
 - New lines in all 43 voices: the six telegraph steps above, "descending, …" and the two knots lines.
+- No more clipped first sounds: "stand by, reloading …", "steady on …" and "splash one" lost their "s" in about
+  half the voices ("'tand by") – the clip was cut in the short silence between the s and the t / p. Those lines are
+  cut again in every voice.
 - Launch calls fit the weapon: a Tomahawk at a land target said "torpedo away" (the game's line for a ship's
   missile at a land target was taken for an anti-submarine missile), at a position "harpoon away". Now "harpoon
   away" only for Harpoons, "anti-ship away" for other missiles at a ship, "birds away" / "missile away" for land

@@ -25,6 +25,7 @@ Own venv (torch + CUDA):
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 import time
 import zlib
@@ -46,6 +47,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 MAX_TRIES = 3
 SECONDS_PER_WORD_MAX = 0.9  # a take longer than this per word (+1 s) is treated as a hallucination
+S_CLUSTER = re.compile(r"\W*s[ptkc]", re.IGNORECASE)
 
 def delivery(tk: Take) -> tuple[float, float]:
     """(exaggeration, cfg_weight) from the urgency of the phrase in this take."""
@@ -85,7 +87,7 @@ def cut_points(tk: Take, words: list[tuple[float, float]], audio=None, sr: int =
     assert sum(counts) == len(words), (tk.text, counts, len(words))
     cuts = []  # one cut between consecutive segments
     i = 0
-    for count in counts[:-1]:
+    for n, count in enumerate(counts[:-1]):
         i += count
         prev_end, next_start = words[i - 1][1], words[i][0]
         mid = (prev_end + next_start) / 2
@@ -93,6 +95,10 @@ def cut_points(tk: Take, words: list[tuple[float, float]], audio=None, sr: int =
             # Search a little beyond both word edges; never further than 150 ms from the midpoint.
             lo = max(prev_end - 0.03, mid - 0.15)
             hi = min(next_start + 0.06, mid + 0.15)
+            # A word opening with s + p/t/k ("stand by", "splash", "steady"): the aligner starts it at the stop, and
+            # the closure between the s and the stop is the quietest frame - the cut took the s off ("'tand by").
+            if S_CLUSTER.match(tk.segments[n + 1].text):
+                hi = min(hi, mid)
             mid = quietest(audio, sr, lo, hi, mid)
         cuts.append(mid)
     return [(None if n == 0 else cuts[n - 1], None if n == len(counts) - 1 else cuts[n]) for n in range(len(counts))]

@@ -256,8 +256,8 @@ Found while recording the 1.0.1 video in *Dangerous Straits 1985*:
    anything → full → "ahead full"; → flank → "ahead flank" / "flank speed"; the setting it already has → "copy". On a
    surface ship the same with the keyboard speed keys. Log: `[stock-voice] SetSpeed_Ahead_2_3 <- …` then `[radio]
    queued …: SpeedUpTwoThirds` / `SpeedDownOneThird` ….
-   **Speed in knots:** the speed slider (ship, submarine, aircraft) → "speed one five knots" / "making one five
-   knots" (aircraft: "speed four five zero knots"), slider at 0 → "all stop". Log: `[radio] queued …: SetSpeedKnots(15)`;
+   **Speed in knots:** the speed slider (ship, submarine, aircraft) → "coming to one five knots" / "making one five
+   knots" (aircraft: "coming to four five zero knots"), slider at 0 → "all stop". Log: `[radio] queued …: SetSpeedKnots(15)`;
    features line has `SpeedKnots`.
    **Altitude the same** (user, 2026-10-27): an aircraft at angels 20 ordered down to 5,000 ft (preset menu or
    slider) → "descending, angels five", never "climbing"; back up to 20,000 → "climbing, angels twenty"; the altitude
@@ -270,6 +270,10 @@ Found while recording the 1.0.1 video in *Dangerous Straits 1985*:
    submarine → "torpedo away" / "fish in the water". Log: `[stock-voice] ASUMFired <- …` (land target) or
    `ASHMFired` (ship, position), then `[radio] queued …: SamAway` / `AshmAway` / `AsumAway`. Features line has
    `LaunchLine` (not `(OFF)`).
+
+4. **No clipped "s"** (found in the QC of the new lines): the reload reason ("stand by, reloading, ready in four
+   minutes"), a course order answered "steady on two seven three" and "splash one" start with a clear "s" in every
+   voice – not "'tand by", "'teady", "'plash". Offline: `tools/voicegen/samples/qc_1.0.3_s_fix.mp3` (old, then fixed).
 
 ## 1.0.0 – release check (2026-10-24)
 

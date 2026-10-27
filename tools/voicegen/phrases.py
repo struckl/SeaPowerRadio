@@ -144,7 +144,8 @@ PHRASES: list[Phrase] = [
     P("SpeedDownTwoThirds", "slowing to two thirds.", priority=6, note="mod: telegraph down to 2/3"),
     P("SpeedUpStandard", "coming up to standard.", priority=6, note="mod: telegraph up to standard"),
     P("SpeedDownStandard", "slowing to standard.", priority=6, note="mod: telegraph down to standard"),
-    P("SetSpeedKnots", "speed {num} knots.", "making {num} knots.", priority=6,
+    # Not "speed {num} knots": the cut before it lands in the silence between "s" and "p" and leaves "peed".
+    P("SetSpeedKnots", "coming to {num} knots.", "making {num} knots.", priority=6,
       note="mod: speed set in knots (slider), which has no stock line"),
     P("AllStop", "all stop.", "all engines stop.", priority=6),
     P("BackFull", "all back full.", priority=6),

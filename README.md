@@ -21,7 +21,8 @@ ordered.
   join like one person talking – without a pause before a number ("bearing two seven three") unless the sentence
   has one ("track 7034, faded").
 - **Stock voices replaced** – the game's voice lines are muted and re-spoken by the unit that actually said them.
-  Speed and altitude orders say which way they go, launch calls name the weapon that is actually leaving ("harpoon
+  Speed and altitude orders say which way they go and where to ("coming up to two thirds", "descending, angels
+  five"; a speed set in knots too), launch calls name the weapon that is actually leaving ("harpoon
   away", "anti-ship away", "missile away", "torpedo away"). Voice lines of other mods play as before.
 - **Brevity on the net** – a unit only says its name when it takes over the net from someone else; the same
   unit again just goes on, a wingman of the same flight gives its number only ("two, fox three").

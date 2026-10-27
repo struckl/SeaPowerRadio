@@ -250,16 +250,20 @@ Found while recording the 1.0.1 video in *Dangerous Straits 1985*:
    – not every ship, not every 40 s. Each ship still puts up its own message bottom right. Log: one
    `[why-not] … state TargetTooFar …` line per ship, then nothing for that target for 5 minutes; a second order at
    another target out of range gets its own call.
-2. **Speed up says speeding up** (bubby): any ship or submarine (the reported case: a Soviet sub mission). Right-click
-   → speed: 1/3 → 2/3 → "increasing speed"; 2/3 → 1/3 → "slowing down" / "reducing speed"; standard → full → "ahead
-   full" or "increasing speed"; flank → full → "ahead full"; the setting it already has → "copy". On a surface ship
-   the same with the keyboard speed keys. Log: `[stock-voice] SetSpeed_Ahead_2_3 <- …` then `[radio] queued …:
-   SetSpeedFull` (faster) or `SetSpeedSlow` (slower).
+2. **Speed up says speeding up, and where to** (bubby; the user: say the speed): any ship or submarine (the
+   reported case: a Soviet sub mission). Right-click → speed: 1/3 → 2/3 → "coming up to two thirds"; 2/3 → 1/3 →
+   "slowing to one third"; 2/3 → standard → "coming up to standard"; full → standard → "slowing to standard";
+   anything → full → "ahead full"; → flank → "ahead flank" / "flank speed"; the setting it already has → "copy". On a
+   surface ship the same with the keyboard speed keys. Log: `[stock-voice] SetSpeed_Ahead_2_3 <- …` then `[radio]
+   queued …: SpeedUpTwoThirds` / `SpeedDownOneThird` ….
+   **Speed in knots:** the speed slider (ship, submarine, aircraft) → "speed one five knots" / "making one five
+   knots" (aircraft: "speed four five zero knots"), slider at 0 → "all stop". Log: `[radio] queued …: SetSpeedKnots(15)`;
+   features line has `SpeedKnots`.
    **Altitude the same** (user, 2026-10-27): an aircraft at angels 20 ordered down to 5,000 ft (preset menu or
-   slider) → "leveling off, angels five", never "climbing"; back up to 20,000 → "climbing, angels twenty"; a
-   helicopter stepped up / down with the keys → "climbing, … hundred feet" / "leveling off, … hundred feet". The
-   ordered altitude is in every call. A submarine's depth order names the depth ("make my depth, one five zero
-   feet"). Log: `[stock-voice] SetAltitude #5000 <- …`.
+   slider) → "descending, angels five", never "climbing"; back up to 20,000 → "climbing, angels twenty"; the altitude
+   it already holds → "leveling off, angels twenty"; a helicopter stepped up / down with the keys → "climbing, …
+   hundred feet" / "descending, … hundred feet". The ordered altitude is in every call. A submarine's depth order
+   names the depth ("make my depth, one five zero feet"). Log: `[stock-voice] SetAltitude #5000 <- …`.
 3. **Tomahawk is not a torpedo** (s1): an Iowa-class battleship (TLAM-C) at a land target or a position → "birds away" /
    "missile away", never "torpedo away" or "harpoon away"; Harpoons at a ship → "harpoon away" or "anti-ship away";
    TASM or another nation's anti-ship missile at a ship → "anti-ship away"; a torpedo or ASROC from a ship or

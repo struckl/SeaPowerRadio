@@ -101,15 +101,18 @@ The mod's phrases are worded differently from the stock clips, so a few keys nee
 (`Radio/StockVoiceRouter.cs`, `Refine`):
 
 - **Speed telegraph** – `SetSpeed_Ahead_1_3 / _2_3 / _Standard / _Full / _Flank` name the new setting ("ahead two
-  thirds"); the mod's lines say the direction ("increasing speed", "slowing down"), which comes from the setting
-  before. The context menu (`ObjectSpeed`) asks for the line *before* `setTelegraph`, so `getTelegraph()` is still
+  thirds"); the mod's lines say the direction with the step ("coming up to two thirds", "slowing to one third"),
+  and the direction comes from the setting before. The context menu (`ObjectSpeed`) asks for the line *before* `setTelegraph`, so `getTelegraph()` is still
   the old one; the keyboard (`Vessel.increase/decreaseTelegraph`) asks after it and leaves the old one in
   `_previousTelegraphSetting`. (On a submarine the keyboard path says nothing at all: `Submarine.setTelegraph`
   overwrites `_previousTelegraphSetting` before `ReportTelegraph` compares it.)
 - **Altitude** – `SetAltitude` (number = feet, rounded to thousands above 999) comes after `DesiredAltitude` is set
   (`ObjectAltitude`, the altitude slider, `Helicopter` preset keys); the direction is `transform.position.y` against
-  it. The mod's variants are "climbing, {alt}" and "leveling off, {alt}" – no "descending" line is rendered yet, so
-  a descent gets "leveling off". `MakeMyDepth` needs nothing: "make my depth, {num} feet" has no direction word.
+  it: "climbing, {alt}", "descending, {alt}", "leveling off, {alt}" at the altitude it holds. `MakeMyDepth` needs
+  nothing: "make my depth, {num} feet" has no direction word.
+- **Speed in knots** – the speed slider (`ObjectVesselVelocityViewModel`, `ObjectSubmarineVelocityViewModel`,
+  `ObjectAirVehicleVelocity` → `CommitSliderValue`) sets a constant speed and calls `ObjectSpeed.RaiseSpeedAlert`,
+  a message without any voice line. A postfix there (feature `SpeedKnots`) has the unit say "speed {num} knots".
 - **Launch lines** – `WeaponBase.LaunchVoiceover` picks a ship's or submarine's key from the target only: missile at
   an air target `SAMFired`, at a `LandUnit` `ASUMFired` (so a Tomahawk land attack, not an anti-submarine missile),
   at anything else or a position `ASHMFired`; every other weapon (torpedoes, `Type=ASROC`) `WeaponAway`. A prefix on

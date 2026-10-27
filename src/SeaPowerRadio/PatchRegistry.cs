@@ -61,6 +61,7 @@ internal static class PatchRegistry
     {
         Features.Add(Patches.StockVoicePatches.Declare());
         Features.Add(Patches.LaunchVoicePatches.Declare());
+        Features.Add(Patches.SpeedOrderPatches.Declare());
         Features.Add(Patches.MissionPatches.Declare());
         Features.Add(Patches.WhyNotPatches.Declare());
         Features.Add(Patches.AlertPatches.Declare());

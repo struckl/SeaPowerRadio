@@ -130,13 +130,22 @@ PHRASES: list[Phrase] = [
     P("OnStation", "on station.", "in position.", priority=6),
     P("ReturningToFormation", "returning to station.", "rejoining the formation.", priority=6),
     P("ReturningToFormationAir", "rejoining on lead.", "coming back to the flight.", priority=6),
-    P("SetAltitude", "climbing, {alt}.", "leveling off, {alt}.", priority=6),
+    P("SetAltitude", "climbing, {alt}.", "leveling off, {alt}.", "descending, {alt}.", priority=6),
     # Variant order of SetAltitude, SetSpeedFull and AshmAway matters: the plugin says one of them only where it fits
-    # (Radio/StockVoiceRouter.cs: "climbing" only below the new altitude, "increasing speed" for 1/3 -> 2/3,
-    # "anti-ship away" for a missile that isn't a Harpoon).
+    # (Radio/StockVoiceRouter.cs: "climbing" only below the new altitude, "descending" only above it, "increasing
+    # speed" for 1/3 -> 2/3 in a voice without the SpeedUp* lines, "anti-ship away" for a missile that isn't a Harpoon).
     P("SetSpeedSlow", "slowing down.", "reducing speed.", priority=6),
     P("SetSpeedFull", "ahead full.", "increasing speed.", priority=6),
     P("SetSpeedFlank", "ahead flank!", "flank speed.", priority=6),
+    # Telegraph steps with the way the speed goes: the game's key only names the new step (mod: StockVoiceRouter).
+    P("SpeedUpOneThird", "coming up to one third.", priority=6, note="mod: telegraph up to 1/3"),
+    P("SpeedDownOneThird", "slowing to one third.", priority=6, note="mod: telegraph down to 1/3"),
+    P("SpeedUpTwoThirds", "coming up to two thirds.", priority=6, note="mod: telegraph up to 2/3"),
+    P("SpeedDownTwoThirds", "slowing to two thirds.", priority=6, note="mod: telegraph down to 2/3"),
+    P("SpeedUpStandard", "coming up to standard.", priority=6, note="mod: telegraph up to standard"),
+    P("SpeedDownStandard", "slowing to standard.", priority=6, note="mod: telegraph down to standard"),
+    P("SetSpeedKnots", "speed {num} knots.", "making {num} knots.", priority=6,
+      note="mod: speed set in knots (slider), which has no stock line"),
     P("AllStop", "all stop.", "all engines stop.", priority=6),
     P("BackFull", "all back full.", priority=6),
     P("SpeedLoiter", "going to loiter speed.", priority=6),
@@ -629,6 +638,8 @@ STOCK_NUMBER: dict[str, str] = {
 # Default from priority (<=2 alert, 7 reply, else report), with these exceptions:
 REPLY_PHRASES = {
     "TurnToCourse", "TurnAircraft", "Moving", "SetAltitude", "SetSpeedSlow", "SetSpeedFull", "SetSpeedFlank",
+    "SpeedUpOneThird", "SpeedDownOneThird", "SpeedUpTwoThirds", "SpeedDownTwoThirds", "SpeedUpStandard",
+    "SpeedDownStandard", "SetSpeedKnots",
     "AllStop", "BackFull", "SpeedLoiter", "SpeedCruise", "SpeedMax", "Afterburner", "DropTanks", "DropTanksCombat",
     "RadarOn", "RadarOff", "SonarActiveOn", "SonarActiveOff", "TowedArrayOut", "TowedArrayIn", "Emcon",
     "DippingSonarDeploy", "DippingSonarRetract", "ReturningToFormation", "ReturningToFormationAir",

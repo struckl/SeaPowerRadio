@@ -137,6 +137,7 @@ edge-tts (`generate.py`) remains as a fallback engine.
 | `names.py` | in-game names: ship/shore short names and squadron callsign words from the game's language files, each bound to a few voices → `mod/voices/names.txt` |
 | `check_sync.py` | checks callsign lists (Python vs. C#) and that every stock key is mapped – run before a render |
 | `check_library.py` | lists takes still missing from the rendered library |
+| `check_asr.py` | finds clips that are there but wrong (a cut that took the first sound off, a mumbled take) without listening: transcribes every clip inside a call joined like the plugin joins it (callsign + phrase + number) with a wav2vec2 recognizer – English `facebook/wav2vec2-base-960h`, Russian / Spanish `jonatasgrosman/wav2vec2-large-xlsr-53-*` – and compares the words with the text. Per key: in how many voices the first word is heard right (phrase keys: median 41/43); a key below 70 % (30/43) is a defect of its text or the cutter (exit code 1); garbled single clips with voice id, `--write-keys` for a re-render |
 | `full_render.ps1` | detached, game-aware full render (pauses while a game runs), verify, re-roll, deploy |
 | `generate.py`, `edge_cast.py` | edge-tts fallback engine and its cast |
 
@@ -152,6 +153,8 @@ python -m venv .venv-chatterbox
 # and with -ShutdownWhenDone powers the PC off (abort: shutdown /a). Log: tools/voicegen/out/full_render.log.
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/voicegen/full_render.ps1 -ShutdownWhenDone
 .venv-chatterbox/Scripts/python tools/voicegen/check_library.py                  # what's still missing
+.venv-chatterbox/Scripts/python tools/voicegen/check_asr.py --voices all --all   # what's there but wrong (~18 min on the GPU)
+.venv-chatterbox/Scripts/python tools/voicegen/check_asr.py --voices all --keys-file tools/voicegen/rerender_keys.txt  # after a partial render
 
 python -m venv .venv && .venv/Scripts/python -m pip install -r tools/voicegen/requirements.txt
 .venv/Scripts/python tools/voicegen/reel.py --voices us_m_01,sc_m_04,us_f_01     # listening sample

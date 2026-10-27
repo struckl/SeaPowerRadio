@@ -10,7 +10,11 @@ owns the item. No SteamCMD needed.
 2. Check `mod/_info.ini`: Mod Manager name and description, and `[Compatibility]` (`ApproximateVersion` = the game
    version tested against; it accepts later patch versions of that minor version).
 3. New phrases since the last release? Render them (`tools/voicegen`, see the README), then
-   `.venv-chatterbox/Scripts/python tools/voicegen/check_library.py` – nothing may be missing.
+   `.venv-chatterbox/Scripts/python tools/voicegen/check_library.py` – nothing may be missing – and
+   `.venv-chatterbox/Scripts/python tools/voicegen/check_asr.py --voices all --keys-file <the keys you rendered>`
+   (`--all` after a full render) – exit code 0, i.e. no key heard right in fewer than 70 % of the voices. A key below
+   it is a defect of the text or the cutter for all voices; the garbled single clips it lists are worth a listen and a
+   re-render with a new `--seed-offset`.
 4. Run the checklists in [testing.md](testing.md) on the current game version.
 5. Close Sea Power, then stage and install the release folder:
 

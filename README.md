@@ -109,7 +109,19 @@ dotnet build src/SeaPowerRadio/SeaPowerRadio.csproj -c Release -p:GameDir="C:\Pr
 A successful build copies the DLL and `mod/` (voice library, `_info.ini`) into
 `<GameDir>/Sea Power_Data/StreamingAssets/SeaPowerRadio/`. `GameDir` can also be set as an environment variable.
 Pass `-p:Deploy=false` to build without touching the game folder – and do, while the game is running (it locks the
-DLLs). Releases: [docs/workshop.md](docs/workshop.md) (`tools/package.ps1`), release posts:
+DLLs).
+
+**Two game versions, two builds.** Sea Power exists in two versions with different map code: 0.8.7's flat map and the
+3D-globe build (the public beta of 26 October 2026), and a mod compiled against one fails on the other (the map-symbol
+hook, the night-colour switch and a field the game turned into a property differ). So the same sources are built twice:
+the default build is for the globe game (`SeaPowerRadio.dll`), `-p:GameBuild=Flat` compiles against a copy of 0.8.7's
+`Sea Power_Data\Managed` (`-p:FlatManagedDir=...`, default `..\_gamerefs\SeaPower-0.8.7-public\Managed` next to the mod
+folders in the workspace) into `SeaPowerRadioFlat.dll`. The package holds both; each looks at the game it runs on and
+stays off when it is not the one it was made for (the log says which runs). Anchor Chain skips a plugin whose GUID it
+has already seen, so the flat build registers as `dev.sewerlabs.seapowerradio.flatmap`. `tools/package.ps1` builds and
+checks both (`tools/compat-check` in the workspace).
+
+Releases: [docs/workshop.md](docs/workshop.md) (`tools/package.ps1`), release posts:
 [workshop/promotion.md](workshop/promotion.md); in-game test checklists:
 [docs/testing.md](docs/testing.md); the game systems the mod hooks into (stock voices, why a unit doesn't fire,
 mission lifecycle, contacts) and how to decompile the game: [docs/how-it-works.md](docs/how-it-works.md); the stock

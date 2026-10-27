@@ -1,10 +1,14 @@
 # Changelog
 
-## Unreleased – for the 3D globe build (game build 26223125, the 11 November release)
+## Unreleased – both game versions: 0.8.7 and the 3D globe build (game build 26223125, the 11 November release)
 
-Builds against the new game and hooks everything it hooked before; **not yet run in the game**. Checked by
-reflection against the new game assembly: all 20 hooked methods and the one internal field are still there with the
-same signatures, except the one below.
+Sea Power exists in two versions with different map code, and a mod compiled against one fails on the other (1.0.3
+would lose its RTB colours on the new build, and its roster seed reads a game field that is a property there). The
+package now carries **two builds of the same sources**: `SeaPowerRadio.dll` for the 3D-globe game and
+`SeaPowerRadioFlat.dll` for 0.8.7 (the code of 1.0.3 plus the entry check); each looks at the game it runs on and
+stays off on the other, and the log says which runs. Checked offline with `tools/compat-check`: every DLL has nothing
+missing on its own game, and its entry point nothing missing on either; all 20 hooked methods and the one internal
+field resolve in the new game assembly (except the one below, which differs by version). **Not yet run in the game.**
 
 - **Returning aircraft (RTB highlight)**: the game's map-symbol colour call now takes the map as a second argument
   (`MapContactVisuals.Resolve(unit, map)`), and the global day/night theme is gone - every map has its own palette.

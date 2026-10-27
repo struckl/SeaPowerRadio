@@ -6,13 +6,20 @@ Log: `<Sea Power>\BepInEx\LogOutput.log` (overwritten on every game start). Conf
 
 The checklists are in the order the features were built; each still applies.
 
-## Globe build (game build 26223125) - quick check
+## Both game versions (0.8.7 and the 3D-globe build 26223125) - quick check
 
-Done 2026-10-28 without the game: builds against the new game; every Harmony hook and the `_unitsToRebase` field
-resolve in the new `Seapower-Scripts.dll`, the one changed hook (`MapContactVisuals.Resolve(IUnit, MapViewModel)`) is
-followed. In the game (his go, he drives the mouse):
+Done 2026-10-28 without the game: both builds compile against their game; `python tools/modtool.py compat radio`
+(workspace) shows nothing missing on each DLL's own game and a clean entry point on the other; every Harmony hook and
+the `_unitsToRebase` field resolve in the new `Seapower-Scripts.dll`, the one hook that differs
+(`MapContactVisuals.Resolve(IUnit, MapViewModel)` on the globe build) is hooked per build. In the game (his go, he drives
+the mouse; the package holds **both DLLs**, the globe build needs Anchor Chain's dev shim - workspace `docs/both-versions.md`):
 
+0. **Which build runs.** Globe game: `SeaPowerRadioFlat.dll` logs `This game has the globe map: the globe build runs, the
+   flat-map build stays off.`, the globe DLL logs `Sea Power Radio 1.0.3 loaded. Features: …`. 0.8.7: the globe DLL logs
+   `This game has the flat map: …` and `Sea Power Radio (flat map) 1.0.3 loaded. Features: …` appears. No duplicate-plugin
+   warning. **On 0.8.7 run the rest as the 1.0.3 checklists above: the flat build is its code.**
 1. Log at the first mission: no `[Error  :SeaPowerRadio]`, no `not found (game updated?)`, all features listed as hooked.
+   The roster seed (reads the mission file path) works on both: roster lines, no `MissingFieldException`.
 2. **RTB highlight on the map**: an own aircraft that goes bingo turns yellow on the map, light-map yellow
    (dark gold) by day, bright yellow on the night map; a second map window / the editor map has its own colours.
 3. **Formation manager**: rows of returning groups yellow, groups sink to the bottom (as in the 2026-10-18 checklist).

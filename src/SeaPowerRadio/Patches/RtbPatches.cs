@@ -15,12 +15,21 @@ internal static class RtbPatches
     public const string FeatureName = "RtbHighlight";
 
     public static Feature Declare() => new Feature(FeatureName)
+#if FLATMAP
+        .Hook("SeapowerUI.MapContactVisuals", "Resolve", new[] { typeof(IUnit) }, typeof(RtbPatches),
+            postfix: nameof(ResolvePostfix))
+#else
         .Hook("SeapowerUI.MapContactVisuals", "Resolve", new[] { typeof(IUnit), typeof(MapViewModel) }, typeof(RtbPatches),
             postfix: nameof(ResolvePostfix))
+#endif
         .Hook("SeapowerUI.FormationManagerView", ".ctor", System.Type.EmptyTypes, typeof(RtbPatches),
             postfix: nameof(ViewPostfix));
 
+#if FLATMAP
+    private static void ResolvePostfix(IUnit unit, ref (MapVisualPosture Posture, Noesis.SolidColorBrush Brush) __result)
+#else
     private static void ResolvePostfix(IUnit unit, MapViewModel map, ref (MapVisualPosture Posture, Noesis.SolidColorBrush Brush) __result)
+#endif
     {
         if (!RtbMarker.Enabled)
             return;
@@ -29,7 +38,11 @@ internal static class RtbPatches
             ObjectBase o = unit?.BaseObject;
             if (o == null || o._taskforce != Globals._playerTaskforce || unit.IsDormant.Value || !RtbMarker.IsRtb(o))
                 return;
+#if FLATMAP
+            __result = (__result.Posture, RtbMarker.Brush());
+#else
             __result = (__result.Posture, RtbMarker.Brush(map?.PaletteOrDay));
+#endif
         }
         catch (System.Exception ex)
         {

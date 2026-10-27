@@ -255,6 +255,11 @@ Found while recording the 1.0.1 video in *Dangerous Straits 1985*:
    full" or "increasing speed"; flank → full → "ahead full"; the setting it already has → "copy". On a surface ship
    the same with the keyboard speed keys. Log: `[stock-voice] SetSpeed_Ahead_2_3 <- …` then `[radio] queued …:
    SetSpeedFull` (faster) or `SetSpeedSlow` (slower).
+   **Altitude the same** (user, 2026-10-27): an aircraft at angels 20 ordered down to 5,000 ft (preset menu or
+   slider) → "leveling off, angels five", never "climbing"; back up to 20,000 → "climbing, angels twenty"; a
+   helicopter stepped up / down with the keys → "climbing, … hundred feet" / "leveling off, … hundred feet". The
+   ordered altitude is in every call. A submarine's depth order names the depth ("make my depth, one five zero
+   feet"). Log: `[stock-voice] SetAltitude #5000 <- …`.
 3. **Tomahawk is not a torpedo** (s1): an Iowa-class battleship (TLAM-C) at a land target or a position → "birds away" /
    "missile away", never "torpedo away" or "harpoon away"; Harpoons at a ship → "harpoon away" or "anti-ship away";
    TASM or another nation's anti-ship missile at a ship → "anti-ship away"; a torpedo or ASROC from a ship or

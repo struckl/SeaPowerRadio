@@ -7,6 +7,9 @@
   together gets one call – the first ship to give a reason says it, the others only put up their message.
 - Speed orders say the right way: 1/3 → 2/3 said "slowing down"; now "increasing speed" when the new setting is
   faster than the old one, "slowing down" / "reducing speed" when it is slower, "ahead full" coming down from flank.
+- Altitude orders too: a descent said "climbing, angels five" half the time. Now "climbing, …" only when the
+  aircraft is below the new altitude, "leveling off, …" on the way down or at the altitude it already holds – with
+  the ordered altitude as before ("angels twenty", "five hundred feet"). Depth orders already name the depth.
 - Launch calls fit the weapon: a Tomahawk at a land target said "torpedo away" (the game's line for a ship's
   missile at a land target was taken for an anti-submarine missile), at a position "harpoon away". Now "harpoon
   away" only for Harpoons, "anti-ship away" for other missiles at a ship, "birds away" / "missile away" for land

@@ -56,6 +56,10 @@ internal static class StockVoiceRouter
     private const int AheadFull = 1;        // SetSpeedFull: "ahead full."
     private const int IncreasingSpeed = 2;  // SetSpeedFull: "increasing speed."
     private const int AntiShip = 2;         // AshmAway: "anti-ship away!" (1 = "harpoon away!")
+    private const int Climbing = 1;         // SetAltitude: "climbing, {alt}."
+    private const int LevelingOff = 2;      // SetAltitude: "leveling off, {alt}."
+
+    private const float FeetPerUnit = 220.47266f; // the game's own conversion (ObjectAltitude)
 
     private static WeaponBase launching;
     private static int launchingFrame = -1;
@@ -70,7 +74,7 @@ internal static class StockVoiceRouter
     /// <summary>
     /// Say what is actually going to happen instead of the stock acknowledgement:
     /// <list type="bullet">
-    /// <item>A speed order: which way the speed goes (<see cref="SpeedPhrase"/>).</item>
+    /// <item>A speed or altitude order: which way it goes (<see cref="SpeedPhrase"/>, <see cref="AltitudePhrase"/>).</item>
     /// <item>A launch: the line that fits the weapon (<see cref="LaunchPhrase"/>).</item>
     /// <item>An attack order stacked behind earlier ones: "copy, queued, number three in line" (the stock line is
     /// played before the order joins the queue, so the queue holds the earlier ones).</item>
@@ -87,6 +91,8 @@ internal static class StockVoiceRouter
             return phrase;
         if (request.Key.StartsWith("SetSpeed_Ahead_", StringComparison.Ordinal))
             return SpeedPhrase(phrase, request.Key, unit, ref variant);
+        if (request.Key == "SetAltitude")
+            return AltitudePhrase(phrase, unit, ref variant);
         if (request.Key == "ASHMFired" || request.Key == "ASUMFired" || request.Key == "WeaponAway")
             return LaunchPhrase(phrase, request, ref variant);
         if (!Settings.WhyNot.Value)
@@ -151,6 +157,19 @@ internal static class StockVoiceRouter
                 variant = IncreasingSpeed;
                 return "SetSpeedFull";
         }
+    }
+
+    /// <summary>
+    /// "SetAltitude" comes once the new altitude is set (<c>DesiredAltitude</c>: preset menu, slider, helicopter
+    /// keys), so the direction is where the aircraft is now against where it is told to go. "Climbing, angels
+    /// twenty" only when it is below; a descent – there is no "descending" line yet – or the altitude it already
+    /// holds gets "leveling off, angels five". Picked at random, a descent said "climbing" half the time.
+    /// </summary>
+    private static string AltitudePhrase(string phrase, ObjectBase unit, ref int variant)
+    {
+        float climbFeet = (unit.DesiredAltitude.Value - unit.transform.position.y) * FeetPerUnit;
+        variant = climbFeet > 100f ? Climbing : LevelingOff;
+        return phrase;
     }
 
     /// <summary>

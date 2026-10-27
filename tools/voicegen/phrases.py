@@ -131,8 +131,9 @@ PHRASES: list[Phrase] = [
     P("ReturningToFormation", "returning to station.", "rejoining the formation.", priority=6),
     P("ReturningToFormationAir", "rejoining on lead.", "coming back to the flight.", priority=6),
     P("SetAltitude", "climbing, {alt}.", "leveling off, {alt}.", priority=6),
-    # Variant order of SetSpeedFull and AshmAway matters: the plugin says one of them only where it fits
-    # (Radio/StockVoiceRouter.cs: "increasing speed" for 1/3 -> 2/3, "anti-ship away" for a missile that isn't a Harpoon).
+    # Variant order of SetAltitude, SetSpeedFull and AshmAway matters: the plugin says one of them only where it fits
+    # (Radio/StockVoiceRouter.cs: "climbing" only below the new altitude, "increasing speed" for 1/3 -> 2/3,
+    # "anti-ship away" for a missile that isn't a Harpoon).
     P("SetSpeedSlow", "slowing down.", "reducing speed.", priority=6),
     P("SetSpeedFull", "ahead full.", "increasing speed.", priority=6),
     P("SetSpeedFlank", "ahead flank!", "flank speed.", priority=6),

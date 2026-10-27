@@ -20,11 +20,13 @@ of 41 (climbing 42, descending 39, making 41), and a key below --min-right (70 %
 cutter for every voice: the old "speed {num} knots" was right in 17/43 (the cut took the "s"), the flight positions
 after an air callsign word in a median 16/43 -- "Viper six-two, ready" has no pause to cut in, so "Viper" kept the
 "t" of "two" from its own take and "six" lost its "s". Such a defect needs a fix in phrases.py / chatterbox_render.py
-before its takes are rendered again; a re-render alone brings it back.
-Clips that open their take (callsign words, names) were never cut at the start, so their first word never fails a key. Single clips that came out garbled -- a word said twice,
-the next word of the take cut in -- stand out against the same key in the other voices (CER --cer-margin above its
-median) and are listed worst first with the voice id; --write-keys saves the listed keys for chatterbox_render.py
---keys-file, which needs a new --seed-offset (the same seed renders the same take again).
+before its takes are rendered again; a re-render alone brings it back. Clips that open their take (callsign words,
+names) were never cut at the start, so their first word never fails a key.
+
+Single clips that came out garbled -- a word said twice, the next word of the take cut in -- stand out against the
+same key in the other voices (CER --cer-margin above its median) and are listed worst first with the voice id;
+--write-keys saves the listed keys for chatterbox_render.py --keys-file, which needs a new --seed-offset (the same
+seed renders the same take again).
 
 Recognizers, greedy CTC decoding (a language model would correct exactly the errors this looks for), picked by the
 voice's language in <library>/personas.txt; --model overrides:

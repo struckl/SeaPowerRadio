@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using SeaPower;
+using SeapowerUI.ViewModels;
 using SeaPowerRadio.Core;
 using SeaPowerRadio.Roster;
 
@@ -41,8 +42,9 @@ internal static class StockVoiceRouter
             return true; // an enemy or neutral unit "talking": the player's net doesn't hear it
 
         int? number = numberKind != null && request.Number >= 0 ? request.Number : (int?)null;
-        phrase = Refine(phrase, request, ref number);
-        Transmission t = TransmissionBuilder.Build(speaker, phrase, number);
+        int variant = 0;
+        phrase = Refine(phrase, request, ref number, ref variant);
+        Transmission t = TransmissionBuilder.Build(speaker, phrase, number, variant);
         if (t == null)
             return true;
         t.Alerts.AddRange(AlertLink.TakeFor(request.Speaker));
@@ -50,9 +52,26 @@ internal static class StockVoiceRouter
         return true;
     }
 
+    // Variants of tools/voicegen/phrases.py that are only said where they fit.
+    private const int AheadFull = 1;        // SetSpeedFull: "ahead full."
+    private const int IncreasingSpeed = 2;  // SetSpeedFull: "increasing speed."
+    private const int AntiShip = 2;         // AshmAway: "anti-ship away!" (1 = "harpoon away!")
+
+    private static WeaponBase launching;
+    private static int launchingFrame = -1;
+
+    /// <summary>The weapon whose launch the game is about to announce (Patches/LaunchVoicePatches).</summary>
+    public static void NoteLaunch(WeaponBase weapon)
+    {
+        launching = weapon;
+        launchingFrame = UnityEngine.Time.frameCount;
+    }
+
     /// <summary>
     /// Say what is actually going to happen instead of the stock acknowledgement:
     /// <list type="bullet">
+    /// <item>A speed order: which way the speed goes (<see cref="SpeedPhrase"/>).</item>
+    /// <item>A launch: the line that fits the weapon (<see cref="LaunchPhrase"/>).</item>
     /// <item>An attack order stacked behind earlier ones: "copy, queued, number three in line" (the stock line is
     /// played before the order joins the queue, so the queue holds the earlier ones).</item>
     /// <item>A VID order to a wingman flying in formation: "unable, holding formation on lead". The aircraft state
@@ -61,10 +80,16 @@ internal static class StockVoiceRouter
     /// formation and the VID goes ahead instead.</item>
     /// </list>
     /// </summary>
-    private static string Refine(string phrase, StockVoiceRequest request, ref int? number)
+    private static string Refine(string phrase, StockVoiceRequest request, ref int? number, ref int variant)
     {
         ObjectBase unit = request.Speaker;
-        if (unit == null || !Settings.WhyNot.Value)
+        if (unit == null)
+            return phrase;
+        if (request.Key.StartsWith("SetSpeed_Ahead_", StringComparison.Ordinal))
+            return SpeedPhrase(phrase, request.Key, unit, ref variant);
+        if (request.Key == "ASHMFired" || request.Key == "ASUMFired" || request.Key == "WeaponAway")
+            return LaunchPhrase(phrase, request, ref variant);
+        if (!Settings.WhyNot.Value)
             return phrase;
 
         if (phrase == "EngageTrack" && !(unit is Aircraft))
@@ -94,5 +119,66 @@ internal static class StockVoiceRouter
             return "WhyNot_HoldingFormation";
         }
         return phrase;
+    }
+
+    /// <summary>
+    /// The stock telegraph lines name the new setting ("ahead two thirds"); ours say where the speed goes
+    /// ("increasing speed", "slowing down"), so the direction comes from the setting before. Picked in the menu, the
+    /// line is asked for before the new setting is applied (<c>getTelegraph()</c> is still the old one); by keyboard,
+    /// after it (the old one is in <c>_previousTelegraphSetting</c>). Without this, 1/3 → 2/3 said "slowing down".
+    /// </summary>
+    private static string SpeedPhrase(string phrase, string key, ObjectBase unit, ref int variant)
+    {
+        if (!Enum.TryParse(key.Substring("SetSpeed_".Length), out ObjectSpeed.SpeedSettings setting))
+            return phrase;
+        int ordered = (int)setting;
+        int current = unit.getTelegraph();
+        int before = current != ordered ? current : unit._previousTelegraphSetting;
+        if (before == ordered)
+            return "Confirmed"; // the setting it already has
+        bool faster = ordered > before;
+        switch (setting)
+        {
+            case ObjectSpeed.SpeedSettings.Ahead_Flank:
+                return phrase;
+            case ObjectSpeed.SpeedSettings.Ahead_Full:
+                if (!faster)
+                    variant = AheadFull; // down from flank
+                return "SetSpeedFull";
+            default: // 1/3, 2/3, standard
+                if (!faster)
+                    return "SetSpeedSlow";
+                variant = IncreasingSpeed;
+                return "SetSpeedFull";
+        }
+    }
+
+    /// <summary>
+    /// <c>WeaponBase.LaunchVoiceover</c> picks a ship's or submarine's launch line from the target alone: a missile
+    /// at a land unit is "ASUMFired", at a ship or a position "ASHMFired", anything else (torpedoes, ASROC)
+    /// "WeaponAway". Our lines name the weapon, so they follow the weapon instead: a Tomahawk at a land target said
+    /// "torpedo away", at a position "harpoon away".
+    /// </summary>
+    private static string LaunchPhrase(string phrase, StockVoiceRequest request, ref int variant)
+    {
+        WeaponBase w = launching;
+        if (w == null || launchingFrame != request.Frame || w._launchPlatform != request.Speaker || request.Speaker.IsAirUnit)
+            return phrase;
+        AmmunitionParameters ap = w._ap;
+        if (ap == null)
+            return phrase;
+        if (ap._type == Ammunition.Type.Torpedo && ap._subType != Ammunition.Type.MOSS
+            || ap._submunitionType == Ammunition.Type.Torpedo)
+            return "AsumAway"; // a torpedo, or a missile carrying one (ASROC, Ikara, SS-N-14): "torpedo away"
+        if (ap._type != Ammunition.Type.Missile)
+            return phrase;
+        if (ap._ammunitionFileName?.IndexOf("gm-84", StringComparison.OrdinalIgnoreCase) >= 0)
+            return "AshmAway"; // RGM/UGM-84 Harpoon
+        if (w.CurrentIntendedTargetObject is Vessel || w.CurrentIntendedTargetObject is Submarine)
+        {
+            variant = AntiShip;
+            return "AshmAway";
+        }
+        return "SamAway"; // land attack, a position: "birds away", "missile away"
     }
 }

@@ -64,10 +64,10 @@ internal static class TransmissionBuilder
         || key.StartsWith("pe_", StringComparison.Ordinal) || key.StartsWith("dm_", StringComparison.Ordinal)
         || key.StartsWith("alt_", StringComparison.Ordinal) || key.StartsWith("cnt_", StringComparison.Ordinal);
 
-    public static Transmission Build(RosterElement speaker, string phrase, int? number)
+    public static Transmission Build(RosterElement speaker, string phrase, int? number, int variant = 0)
     {
         var t = Start(speaker);
-        return Append(t, phrase, number) ? t : null;
+        return Append(t, phrase, number, variant) ? t : null;
     }
 
     public static Transmission Start(RosterElement speaker)
@@ -121,12 +121,15 @@ internal static class TransmissionBuilder
         return new List<string>(Callsign(e.Callsign));
     }
 
-    /// <summary>Add a phrase (with an optional number) to the transmission. False if it can't be spoken.</summary>
-    public static bool Append(Transmission t, string phrase, int? number)
+    /// <summary>
+    /// Add a phrase (with an optional number) to the transmission, <paramref name="variant"/> &gt; 0 = only that
+    /// variant. False if it can't be spoken.
+    /// </summary>
+    public static bool Append(Transmission t, string phrase, int? number, int variant = 0)
     {
         if (t.Voice == null)
             return false;
-        PhraseVariant v = Catalog.Pick(phrase, t.Voice, number.HasValue);
+        PhraseVariant v = Catalog.Pick(phrase, t.Voice, number.HasValue, variant);
         if (v == null)
             return false;
 

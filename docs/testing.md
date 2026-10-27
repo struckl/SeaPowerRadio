@@ -242,6 +242,26 @@ Found while recording the 1.0.1 video in *Dangerous Straits 1985*:
 4. **A raid once:** when the Yak-38s come in one by one, one "new air contact, bearing …", then one "multiple
    contacts, bearing …"; the rest only as messages (`[contact] new: … (same group as an earlier call, not spoken)`).
 
+## Workshop reports after 1.0.2 (2026-10-27)
+
+1. **Out of envelope once, one call per formation** (bubby): select a formation of several ships with anti-ship
+   missiles and order the whole formation to fire at a hostile ship beyond range (*Dangerous Straits 1985*: the
+   Krivak, track 7020). Expected: **one** "unable, target outside envelope" for the formation, then quiet while they close
+   – not every ship, not every 40 s. Each ship still puts up its own message bottom right. Log: one
+   `[why-not] … state TargetTooFar …` line per ship, then nothing for that target for 5 minutes; a second order at
+   another target out of range gets its own call.
+2. **Speed up says speeding up** (bubby): any ship or submarine (the reported case: a Soviet sub mission). Right-click
+   → speed: 1/3 → 2/3 → "increasing speed"; 2/3 → 1/3 → "slowing down" / "reducing speed"; standard → full → "ahead
+   full" or "increasing speed"; flank → full → "ahead full"; the setting it already has → "copy". On a surface ship
+   the same with the keyboard speed keys. Log: `[stock-voice] SetSpeed_Ahead_2_3 <- …` then `[radio] queued …:
+   SetSpeedFull` (faster) or `SetSpeedSlow` (slower).
+3. **Tomahawk is not a torpedo** (s1): an Iowa-class battleship (TLAM-C) at a land target or a position → "birds away" /
+   "missile away", never "torpedo away" or "harpoon away"; Harpoons at a ship → "harpoon away" or "anti-ship away";
+   TASM or another nation's anti-ship missile at a ship → "anti-ship away"; a torpedo or ASROC from a ship or
+   submarine → "torpedo away" / "fish in the water". Log: `[stock-voice] ASUMFired <- …` (land target) or
+   `ASHMFired` (ship, position), then `[radio] queued …: SamAway` / `AshmAway` / `AsumAway`. Features line has
+   `LaunchLine` (not `(OFF)`).
+
 ## 1.0.0 – release check (2026-10-24)
 
 The build that goes to the Workshop, installed with `tools/package.ps1 -Install` (game closed).

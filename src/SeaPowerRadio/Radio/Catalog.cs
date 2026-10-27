@@ -131,13 +131,14 @@ internal static class Catalog
     /// <summary>
     /// A variant to speak. Variants that need a number are only used when there is one, and only variants whose
     /// clips exist in this voice (a library can be partly rendered); the variant this voice used last time is
-    /// avoided, so nobody says the identical line twice in a row.
+    /// avoided, so nobody says the identical line twice in a row. <paramref name="only"/> &gt; 0 = that variant or none
+    /// (a phrase whose variants don't all fit the situation: "ahead full." / "increasing speed.").
     /// </summary>
-    public static PhraseVariant Pick(string phrase, string voice, bool haveNumber)
+    public static PhraseVariant Pick(string phrase, string voice, bool haveNumber, int only = 0)
     {
         if (!Phrases.TryGetValue(phrase, out List<PhraseVariant> all))
             return null;
-        var usable = all.FindAll(v => (haveNumber || v.Slot == null) && Rendered(v, voice));
+        var usable = all.FindAll(v => (only == 0 || v.N == only) && (haveNumber || v.Slot == null) && Rendered(v, voice));
         if (usable.Count == 0)
             return null;
         string memo = voice + "|" + phrase;
@@ -177,7 +178,8 @@ internal static class Catalog
         return v == null || (a ? v.PauseA : v.PauseB);
     }
 
-    /// <summary>Can this voice say the phrase at all (any variant rendered)?</summary>
-    public static bool CanSay(string phrase, string voice, bool haveNumber = false) =>
-        Phrases.TryGetValue(phrase, out List<PhraseVariant> all) && all.Exists(v => (haveNumber || v.Slot == null) && Rendered(v, voice));
+    /// <summary>Can this voice say the phrase at all (any variant rendered, or variant <paramref name="only"/>)?</summary>
+    public static bool CanSay(string phrase, string voice, bool haveNumber = false, int only = 0) =>
+        Phrases.TryGetValue(phrase, out List<PhraseVariant> all)
+        && all.Exists(v => (only == 0 || v.N == only) && (haveNumber || v.Slot == null) && Rendered(v, voice));
 }

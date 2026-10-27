@@ -21,7 +21,8 @@ ordered.
   join like one person talking – without a pause before a number ("bearing two seven three") unless the sentence
   has one ("track 7034, faded").
 - **Stock voices replaced** – the game's voice lines are muted and re-spoken by the unit that actually said them.
-  Voice lines of other mods play as before.
+  Speed orders say which way the speed goes, launch calls name the weapon that is actually leaving ("harpoon
+  away", "anti-ship away", "missile away", "torpedo away"). Voice lines of other mods play as before.
 - **Brevity on the net** – a unit only says its name when it takes over the net from someone else; the same
   unit again just goes on, a wingman of the same flight gives its number only ("two, fox three").
 - **A real net** – one voice at a time: urgent calls (missile inbound, we're hit, bingo) cut in, replies to your
@@ -33,7 +34,8 @@ ordered.
   sensor track, sonar contact only, below the radar horizon, no line of sight, too low / too high, not in the firing
   arc, seeker can't see the target, wrong speed, not cleared, reloading (with the time left), nothing left to fire,
   defending against a missile, order dropped by the game, and a wingman holding formation instead of flying a VID
-  (optionally released from formation so the VID happens). Who identified a contact and with what sensor.
+  (optionally released from formation so the VID happens). Who identified a contact and with what sensor. A
+  reason about a target is said once, not again while the ship closes the range, and once for a whole formation.
 - **No contact spam** – faded/regained contacts with hysteresis, cooldowns and flicker detection; a raid found
   aircraft by aircraft is called once (and once more as "multiple contacts"), not per aircraft; contact messages
   bottom right link the track number, so a click jumps to the contact.
@@ -161,7 +163,7 @@ src/SeaPowerRadio/        C# plugin (netstandard2.1, BepInEx 5 / HarmonyX via An
   Plugin.cs               Anchor Chain entry point
   PatchRegistry.cs        every game hook, grouped by feature; a missing target disables only that feature
   Core/EventBus.cs        normalized game events (stock voice requests, mission start/end, launches)
-  Patches/                Harmony patches (stock voice capture, mission lifecycle)
+  Patches/                Harmony patches (stock voice capture, launching weapon, mission lifecycle)
   Roster/                 player elements + hangar slots → callsign + voice
   Voices/                 callsign generator, voice assignment, voice library loader
   Radio/                  Catalog (catalog.txt / stockmap.txt), TransmissionBuilder (callsign + phrase + number

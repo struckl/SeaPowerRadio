@@ -21,7 +21,10 @@ namespace SeaPowerRadio.WhyNot;
 /// <item>A fighter told to shoot is busy defending against a missile.</item>
 /// </list>
 /// Each reason is spoken by the unit itself (as a reply, so it is in front of the net), raised as a game alert and
-/// logged; the same reason from the same unit at most once per <c>Cooldown</c> s.
+/// logged; the same reason from the same unit at most once per <c>Cooldown</c> s, about the same target at most
+/// once per <c>TargetCooldown</c> s - an order waiting until the ship closes the range keeps its reason for minutes.
+/// A formation ordered to attack together gets one call: the first member to give a reason about a target says it,
+/// the others only raise their message.
 /// </summary>
 internal sealed class WhyNotMonitor
 {
@@ -39,10 +42,13 @@ internal sealed class WhyNotMonitor
     private const float StateHold = 2.0f;
     private const float PendingHold = 3.0f;
     private const float Cooldown = 40f;
+    private const float TargetCooldown = 300f;
     private const float UnitGap = 6f;
 
     private readonly RadioPlayer player;
     private readonly Dictionary<int, UnitTrack> units = new Dictionary<int, UnitTrack>();
+    private readonly Dictionary<(object group, string phrase, int target), float> groupSaid =
+        new Dictionary<(object, string, int), float>();
     private float nextScan;
 
     // Units whose orders the player just cleared (cease fire, the queue overlay): a vanished order there is the
@@ -57,7 +63,11 @@ internal sealed class WhyNotMonitor
 
     public WhyNotMonitor(RadioPlayer player) => this.player = player;
 
-    public void Clear() => units.Clear();
+    public void Clear()
+    {
+        units.Clear();
+        groupSaid.Clear();
+    }
 
     public void Tick()
     {
@@ -279,11 +289,16 @@ internal sealed class WhyNotMonitor
     private void Report(RosterElement e, ObjectBase unit, UnitTrack track, string phrase, EngageTask task, string detail)
     {
         float now = Time.unscaledTime;
+        int targetId = task?._targetObject != null ? task._targetObject.GetInstanceID() : 0;
+        string about = phrase + "@" + targetId;
         if (track.LastSaid.TryGetValue(phrase, out float last) && now - last < Cooldown)
+            return;
+        if (track.LastSaid.TryGetValue(about, out last) && now - last < TargetCooldown)
             return;
         if (now - track.LastAny < UnitGap)
             return;
         track.LastSaid[phrase] = now;
+        track.LastSaid[about] = now;
         track.LastAny = now;
 
         string weapon = AmmoName(unit, task);
@@ -293,12 +308,24 @@ internal sealed class WhyNotMonitor
         try { Globals._mainGameViewModel?.RaiseAlert(unit, text); }
         catch (Exception ex) { ModLog.Debug($"[why-not] alert failed: {ex.Message}"); }
 
+        var said = (GroupOf(unit), phrase, targetId);
+        if (groupSaid.TryGetValue(said, out last) && now - last < TargetCooldown)
+            return; // another unit of the formation already said it
+        groupSaid[said] = now;
+
         Transmission t = TransmissionBuilder.Build(e, phrase, null);
         if (t != null)
         {
             t.Alerts.AddRange(AlertLink.TakeFor(unit));
             player.Submit(t);
         }
+    }
+
+    /// <summary>The formation a unit sails or flies in, or the unit itself.</summary>
+    private static object GroupOf(ObjectBase unit)
+    {
+        UnitFormation formation = unit.Formation;
+        return formation != null && formation.Stations.Count > 1 ? formation : (object)unit;
     }
 
     private static string AmmoName(ObjectBase unit, EngageTask task)

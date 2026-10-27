@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.3 – 2026-10-27
+
+- Refusals no longer repeat while the ship closes the range: a unit gives the same reason about the same target
+  once (again after 5 minutes at the earliest) instead of every 40 seconds, and a formation ordered to attack
+  together gets one call – the first ship to give a reason says it, the others only put up their message.
+- Speed orders say the right way: 1/3 → 2/3 said "slowing down"; now "increasing speed" when the new setting is
+  faster than the old one, "slowing down" / "reducing speed" when it is slower, "ahead full" coming down from flank.
+- Launch calls fit the weapon: a Tomahawk at a land target said "torpedo away" (the game's line for a ship's
+  missile at a land target was taken for an anti-submarine missile), at a position "harpoon away". Now "harpoon
+  away" only for Harpoons, "anti-ship away" for other missiles at a ship, "birds away" / "missile away" for land
+  attack, and "torpedo away" / "fish in the water" for torpedoes and ASROC (they said "weapon away").
+
 ## 1.0.2 – 2026-10-25
 
 - Refusals: a ship ordered to fire a fixed-launcher missile (Harpoon) out of range said "negative, sonar contact

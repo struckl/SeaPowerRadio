@@ -4,7 +4,7 @@ AAM_IR_Fired|AAM_IR_Fired|-
 AAM_SARH_Fired|AAM_SARH_Fired|-
 ARMFiredAir|Magnum|-
 ASHMFired|AshmAway|-
-ASUMFired|AsumAway|-
+ASUMFired|SamAway|-
 AbandonShip|AbandonShip|-
 ActiveContact|-|-
 ActiveSonarOff|SonarActiveOff|-

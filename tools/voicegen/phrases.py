@@ -131,6 +131,8 @@ PHRASES: list[Phrase] = [
     P("ReturningToFormation", "returning to station.", "rejoining the formation.", priority=6),
     P("ReturningToFormationAir", "rejoining on lead.", "coming back to the flight.", priority=6),
     P("SetAltitude", "climbing, {alt}.", "leveling off, {alt}.", priority=6),
+    # Variant order of SetSpeedFull and AshmAway matters: the plugin says one of them only where it fits
+    # (Radio/StockVoiceRouter.cs: "increasing speed" for 1/3 -> 2/3, "anti-ship away" for a missile that isn't a Harpoon).
     P("SetSpeedSlow", "slowing down.", "reducing speed.", priority=6),
     P("SetSpeedFull", "ahead full.", "increasing speed.", priority=6),
     P("SetSpeedFlank", "ahead flank!", "flank speed.", priority=6),
@@ -567,7 +569,8 @@ STOCK_MAP: dict[str, str | None] = {
     "VisualContact": None, "RadarEmission": "RadarEmission", "LaunchTransient": "LaunchTransient",
     "BouyContact": "BuoyContact", "MADContact": "MadContact",
     "EngageTrack": "EngageTrack", "HoldFireTrack": "HoldFireTrack", "CeaseFire": "CeaseFire",
-    "SAMReady": "SamReady", "SAMFired": "SamAway", "ASHMFired": "AshmAway", "ASUMFired": "AsumAway",
+    # ASUMFired is the game's line for a ship's missile at a land target (Tomahawk), not an anti-submarine missile.
+    "SAMReady": "SamReady", "SAMFired": "SamAway", "ASHMFired": "AshmAway", "ASUMFired": "SamAway",
     "SalvoFire": "SalvoFire", "LaunchAtTarget": "EngageTrack", "ChaffOut": "ChaffOut", "DecoyOut": "DecoyOut",
     "TargetRequired": "WhyNot_TargetRequired", "WrongTarget": "WhyNot_WrongTarget",
     "Jam": "Jamming", "StopJam": "StopJamming", "DesignateWithLaser": "Lasing", "StopLaser": "StopLasing",

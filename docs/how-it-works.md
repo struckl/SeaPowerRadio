@@ -95,6 +95,24 @@ override in voice.ini doesn't work – the track number digits still play. The m
 callouts (`Taskforce.CheckNewContactMessage`, `CheckContactClassifiedMessage`, `CheckContactFadedMessage`) and keeps
 its own book per contact (`Contacts/ContactReporter.cs`): hysteresis, cooldowns, flicker detection.
 
+### Keys that don't say what the mod's lines say
+
+The mod's phrases are worded differently from the stock clips, so a few keys need the situation, not just the key
+(`Radio/StockVoiceRouter.cs`, `Refine`):
+
+- **Speed telegraph** – `SetSpeed_Ahead_1_3 / _2_3 / _Standard / _Full / _Flank` name the new setting ("ahead two
+  thirds"); the mod's lines say the direction ("increasing speed", "slowing down"), which comes from the setting
+  before. The context menu (`ObjectSpeed`) asks for the line *before* `setTelegraph`, so `getTelegraph()` is still
+  the old one; the keyboard (`Vessel.increase/decreaseTelegraph`) asks after it and leaves the old one in
+  `_previousTelegraphSetting`. (On a submarine the keyboard path says nothing at all: `Submarine.setTelegraph`
+  overwrites `_previousTelegraphSetting` before `ReportTelegraph` compares it.)
+- **Launch lines** – `WeaponBase.LaunchVoiceover` picks a ship's or submarine's key from the target only: missile at
+  an air target `SAMFired`, at a `LandUnit` `ASUMFired` (so a Tomahawk land attack, not an anti-submarine missile),
+  at anything else or a position `ASHMFired`; every other weapon (torpedoes, `Type=ASROC`) `WeaponAway`. A prefix on
+  `LaunchVoiceover` (feature `LaunchLine`) notes the weapon, and the line follows its ammunition: torpedo or torpedo
+  payload → "torpedo away", `*gm-84*` → "harpoon away", other missile at a ship → "anti-ship away", the rest →
+  "missile away". Aircraft keep the game's choice (fox one/two/three, magnum, bombs away…).
+
 ## Why not – the game has the reasons, it just doesn't say them
 
 ### Order-time refusals

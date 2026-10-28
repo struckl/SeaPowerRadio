@@ -13,10 +13,13 @@ internal static class GameApi
 {
     private const BindingFlags Any = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 
-    private static readonly Func<MapPalette, bool> PaletteDark = Getter<MapPalette, bool>("IsDark");
+    // Held as a plain Delegate on purpose: Unity's ECS start-up loads every type of every loaded assembly, and a field of
+    // type Func<MapPalette, bool> makes this class unloadable on 0.8.7 (no MapPalette there) - ECS then fails and no
+    // mission loads, although this globe DLL stays off on 0.8.7. tools/compat-check --classload guards this.
+    private static readonly Delegate PaletteDark = Getter<MapPalette, bool>("IsDark");
 
     /// <summary>Whether a map shows its night colours (in Auto: at the centre of the view); false if the palette is unknown.</summary>
-    public static bool IsDark(MapPalette palette) => palette != null && PaletteDark != null && PaletteDark(palette);
+    public static bool IsDark(MapPalette palette) => palette != null && PaletteDark != null && ((Func<MapPalette, bool>)PaletteDark)(palette);
 
     private static Func<T, TResult> Getter<T, TResult>(string property)
     {

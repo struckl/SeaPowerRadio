@@ -1,6 +1,24 @@
 # Changelog
 
+## 1.0.5 – 2026-10-28 – fix: no mission could be started on 0.8.7 with 1.0.4
+
+**1.0.4 must not be used on 0.8.7.** Its globe DLL stays off there, but Unity's ECS start-up loads every type of every
+loaded assembly, and one internal class of the globe DLL (`GameApi`) held a field of a type that exists only in the globe
+game (`Func<MapPalette, bool>`). On 0.8.7 that threw a `TypeLoadException` at start-up, ECS failed, and every mission failed to
+load with a `NullReferenceException` in `PlottingTableSerializer.RecreateWorldUsingTemp`. The globe build was not affected.
+Found by running 1.0.4 on 0.8.7 in the game; the offline compat check looked only at the entry point, not at the types'
+fields. Fixed: the field is a plain `Delegate`. `tools/compat-check --classload` (run by `tools/package.ps1`) now checks the
+base types, interfaces and fields of every type of each DLL against the other game, so the package cannot be staged with it.
+**Run in the game on 0.8.7 (2026-10-28, Dangerous Straits 1985, mouse-free):** the mission loads; the flat build runs and the globe
+build stays off; all ten features hooked; roster seed, contact calls and the order call are spoken; returning aircraft (RTB) are
+dark gold on the map and in the formation manager; the unit roles show in the formation manager; borders, cities and the
+topographic overlay (the other two mods) work next to it. Not run: spoken refusals ("unable, target outside envelope"), SAR calls.
+The globe build was last run in the game before this change (2026-10-28); the change only touches how one field is typed
+(the day/night lookup now goes through a cast), and the globe build is not re-run with it yet.
+
 ## 1.0.4 – 2026-10-28 – both game versions: 0.8.7 and the 3D globe build (game build 26223125, the 11 November release)
+
+**Known problem: on 0.8.7 no mission loads with this version - use 1.0.5.**
 
 Sea Power exists in two versions with different map code, and a mod compiled against one fails on the other (1.0.3
 would lose its RTB colours on the new build, and its roster seed reads a game field that is a property there). The

@@ -25,6 +25,18 @@ the mouse; the package holds **both DLLs**, the globe build needs Anchor Chain's
 3. **Formation manager**: rows of returning groups yellow, groups sink to the bottom (as in the 2026-10-18 checklist).
 4. A radio call or two (contact, order, refusal) still voiced.
 
+### Result 2026-10-28 (Claude, on his go; globe build, Trollfjorden 1985, Shot Director + Anchor Chain dev shim, mouse-free)
+
+- Step 0: both DLLs loaded as assemblies, both plugins registered (`dev.sewerlabs.seapowerradio` and `….flatmap`); the globe build
+  logged `Sea Power Radio 1.0.3 loaded. Features: StockVoice, LaunchLine, SpeedKnots, Mission, WhyNot, AlertLink, ContactAlerts,
+  RtbHighlight, SarCalls, UnitRoles`, the flat one `This game has the globe map: the globe build runs, the flat-map build stays off.`
+- Step 1: `Roster for mission 'missions/nato/trollfjorden.ini': 14 elements, voice pool 43` (the roster seed that reads the
+  mission file path works on the globe build); no `[Error  :SeaPowerRadio]`, no `MissingMethodException`.
+- Step 4 (25 s of mission at x4): `[stock-voice]` hooks fired, `[contact] new: 7001 … reported by Valiant`, radio calls
+  queued and played (`queued p5 gb_m_09: Falk, NewContactsMultiple`, `>> gb_m_06: Kaura, NewContactSurface`), the fuel watch
+  logged its reasons for the F-4Es without a home base.
+- Not seen: the RTB yellow (no aircraft went bingo in that time), refusals, SAR calls. Not run: 0.8.7 with the flat build.
+
 ## Roster and the new voices (2026-10-17)
 
 The game's own voice lines are now replaced: every unit speaks with its own voice and callsign, through a radio

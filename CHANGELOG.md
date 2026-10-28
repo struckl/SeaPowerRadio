@@ -8,7 +8,10 @@ package now carries **two builds of the same sources**: `SeaPowerRadio.dll` for 
 `SeaPowerRadioFlat.dll` for 0.8.7 (the code of 1.0.3 plus the entry check); each looks at the game it runs on and
 stays off on the other, and the log says which runs. Checked offline with `tools/compat-check`: every DLL has nothing
 missing on its own game, and its entry point nothing missing on either; all 20 hooked methods and the one internal
-field resolve in the new game assembly (except the one below, which differs by version). **Not yet run in the game.**
+field resolve in the new game assembly (except the one below, which differs by version). **Run in the game on the globe build
+(2026-10-28, Trollfjorden 1985, mouse-free):** both builds load, the globe build runs and the flat one stays off, all ten
+features are hooked, the roster seed works, calls are queued and played with no error; the RTB colours are not seen yet (no
+aircraft went bingo). 0.8.7 with the flat build is not yet run.
 
 - **Returning aircraft (RTB highlight)**: the game's map-symbol colour call now takes the map as a second argument
   (`MapContactVisuals.Resolve(unit, map)`), and the global day/night theme is gone - every map has its own palette.

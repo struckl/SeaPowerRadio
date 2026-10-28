@@ -12,7 +12,8 @@ base types, interfaces and fields of every type of each DLL against the other ga
 **Run in the game on 0.8.7 (2026-10-28, Dangerous Straits 1985, mouse-free):** the mission loads; the flat build runs and the globe
 build stays off; all ten features hooked; roster seed, contact calls and the order call are spoken; returning aircraft (RTB) are
 dark gold on the map and in the formation manager; the unit roles show in the formation manager; borders, cities and the
-topographic overlay (the other two mods) work next to it. Not run: spoken refusals ("unable, target outside envelope"), SAR calls.
+topographic overlay (the other two mods) work next to it. Spoken refusals ("unable, target outside envelope") and SAR calls
+were tested in the game on 0.8.7 afterwards (2026-10-28).
 The globe build was last run in the game before this change (2026-10-28); the change only touches how one field is typed
 (the day/night lookup now goes through a cast), and the globe build is not re-run with it yet.
 

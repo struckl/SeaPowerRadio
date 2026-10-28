@@ -15,8 +15,8 @@ the `_unitsToRebase` field resolve in the new `Seapower-Scripts.dll`, the one ho
 the mouse; the package holds **both DLLs**, the globe build needs Anchor Chain's dev shim - workspace `docs/both-versions.md`):
 
 0. **Which build runs.** Globe game: `SeaPowerRadioFlat.dll` logs `This game has the globe map: the globe build runs, the
-   flat-map build stays off.`, the globe DLL logs `Sea Power Radio 1.0.3 loaded. Features: …`. 0.8.7: the globe DLL logs
-   `This game has the flat map: …` and `Sea Power Radio (flat map) 1.0.3 loaded. Features: …` appears. No duplicate-plugin
+   flat-map build stays off.`, the globe DLL logs `Sea Power Radio 1.0.4 loaded. Features: …`. 0.8.7: the globe DLL logs
+   `This game has the flat map: …` and `Sea Power Radio (flat map) 1.0.4 loaded. Features: …` appears. No duplicate-plugin
    warning. **On 0.8.7 run the rest as the 1.0.3 checklists above: the flat build is its code.**
 1. Log at the first mission: no `[Error  :SeaPowerRadio]`, no `not found (game updated?)`, all features listed as hooked.
    The roster seed (reads the mission file path) works on both: roster lines, no `MissingFieldException`.

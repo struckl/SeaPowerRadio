@@ -48,7 +48,9 @@ makes for an existing item, through the running Steam client and the game's own 
 content and the change note; title, description, tags, preview, visibility, dependencies and the compatibility
 metadata stay as they are. Steam must be running, signed in with the owner account (no password involved); the game
 can stay closed. 1.0.1 and 1.0.2 went up this way, the 1.0.1 video replaced the 1.0.0 one on the page, and the
-description with the language roadmap was set with it (2026-10-27).
+description with the language roadmap was set with it (2026-10-27). 1.0.4 (the package with both DLLs, globe build
+and 0.8.7) went up the same way on 2026-10-28; its change note says it was run in the game on the globe build only
+and that the 0.8.7 build is checked offline.
 
 ```powershell
 dotnet build tools\workshop-upload -c Release

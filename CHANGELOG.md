@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased – both game versions: 0.8.7 and the 3D globe build (game build 26223125, the 11 November release)
+## 1.0.4 – 2026-10-28 – both game versions: 0.8.7 and the 3D globe build (game build 26223125, the 11 November release)
 
 Sea Power exists in two versions with different map code, and a mod compiled against one fails on the other (1.0.3
 would lose its RTB colours on the new build, and its roster seed reads a game field that is a property there). The

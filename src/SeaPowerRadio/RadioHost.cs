@@ -33,6 +33,7 @@ internal sealed class RadioHost : MonoBehaviour
         gameObject.AddComponent<QueueOverlay>();
         StockVoiceRouter.Player = player;
         EventBus.MissionStarted += OnMissionStarted;
+        Settings.FemaleVoices.SettingChanged += OnFemaleVoicesChanged;
         EventBus.MissionEnded += OnMissionEnded;
     }
 
@@ -44,6 +45,14 @@ internal sealed class RadioHost : MonoBehaviour
         sar.Clear();
         RtbMarker.Clear();
         contacts.Attach();
+    }
+
+    private static void OnFemaleVoicesChanged(object sender, EventArgs args)
+    {
+        if (Settings.FemaleVoices.Value)
+            return;                                   // back on: voices already chosen stay, new missions use the whole pool
+        int changed = Roster.RosterService.Current?.Revoice() ?? 0;
+        ModLog.Info($"Female voices off: {changed} speaker(s) moved to a male voice.");
     }
 
     private void OnMissionEnded()
@@ -65,6 +74,7 @@ internal sealed class RadioHost : MonoBehaviour
             fuel.Tick();
             sar.Tick();
             RtbMarker.Tick();
+            Settings.FlushIfDue();
             AlertLink.Tick();
         }
         catch (Exception ex)
@@ -77,6 +87,7 @@ internal sealed class RadioHost : MonoBehaviour
     {
         EventBus.MissionStarted -= OnMissionStarted;
         EventBus.MissionEnded -= OnMissionEnded;
+        Settings.FemaleVoices.SettingChanged -= OnFemaleVoicesChanged;
         if (Instance == this)
             Instance = null;
     }

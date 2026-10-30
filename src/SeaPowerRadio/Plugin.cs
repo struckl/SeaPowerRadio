@@ -19,7 +19,7 @@ namespace SeaPowerRadio;
 public class Plugin : IAnchorChainMod
 {
     public const string Guid = "dev.sewerlabs.seapowerradio";
-    public const string Version = "1.0.5";
+    public const string Version = "1.1.0";
 
 #if FLATMAP
     // Anchor Chain skips a plugin whose GUID it has already seen, so the two builds register under different ones.

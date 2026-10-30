@@ -26,10 +26,20 @@ ordered.
   away", "anti-ship away", "missile away", "torpedo away"). Voice lines of other mods play as before.
 - **Brevity on the net** – a unit only says its name when it takes over the net from someone else; the same
   unit again just goes on, a wingman of the same flight gives its number only ("two, fox three").
-- **A real net** – one voice at a time: urgent calls (missile inbound, we're hit, bingo) cut in, replies to your
+- **A real net** – urgent calls (missile inbound, we're hit, bingo) cut in, replies to your
   orders go before routine reports and are mixed louder and cleaner, stale calls are dropped (a late "copy" is worse
   than none), the same phrase from a whole flight is said at most twice. Radio sound per transmission: carrier hiss,
   mic click, crackle, squelch tail; plays through the game's voice channel, so its volume slider applies.
+- **Overlapping voices** (on by default) – like a busy net, several stations can talk over each other: a new call
+  starts a second or so after the last one began, while it is still playing (up to 3 at once, panned a little left and
+  right, never the same unit twice at once). Off: one voice at a time, the rest wait in the queue.
+- **Settings in the Options menu** – Options > Audio has a group **Rats Radio**: female voices on/off, overlapping
+  voices on/off, radio volume, radio static (0 = clean voice, 100 % = the default amount) and a volume for each kind
+  of call: contact and track calls, combat calls, warning calls (inbound missile, we're hit, bingo...), replies to
+  orders, other calls - for example to make "new contact" and "track identified" stand out. Changes apply at once and
+  are saved in the config file.
+- **Female voices** – the voice library has male and female voices; switch the female ones off and units speak with
+  male voices only (a unit whose name was rendered only in a female voice keeps it).
 - **Why-not diagnostics** – the reasons the game knows but never says, spoken by the unit, as a message and in
   the log: not in rear aspect, outside the launch envelope, can't reach, inside minimum range, no radar lock, no
   sensor track, sonar contact only, below the radar horizon, no line of sight, too low / too high, not in the firing
@@ -83,8 +93,9 @@ everything works offline.
 Manual install instead of the Workshop: unzip the release into `<Sea Power>\Sea Power_Data\StreamingAssets\
 SeaPowerRadio\` (`SeaPowerRadio.dll`, `_info.ini`, `voices\`).
 
-Config: `<Sea Power>\BepInEx\config\dev.sewerlabs.seapowerradio.cfg` (volumes, which calls are spoken, the order
-queue key, …).
+Settings: in the game, Options > Audio > **Rats Radio** (see above). The same values are in
+`<Sea Power>\BepInEx\config\dev.sewerlabs.seapowerradio.cfg` (volumes, static, voices, which calls are spoken, the order
+queue key, how many voices may overlap, …).
 
 Interim fix for "contact faded" spam without any mod: Options → Audio → **Report Faded Contacts** → off.
 
@@ -189,10 +200,12 @@ src/SeaPowerRadio/        C# plugin (netstandard2.1, BepInEx 5 / HarmonyX via An
   Radio/                  Catalog (catalog.txt / stockmap.txt), TransmissionBuilder (callsign + phrase + number
                           pieces, how much pause each join keeps), ClipLibrary (on-demand loading, LRU), RadioFx
                           (joins the clips, hiss, click, crackle, squelch),
-                          RadioPlayer (priority queue, one voice at a time), StockVoiceRouter (stock line → own voice)
+                          RadioPlayer (priority queue, up to 4 channels for overlapping voices), CallCategory (call kind → volume),
+                          StockVoiceRouter (stock line → own voice)
   Contacts/               ContactReporter: new / lost / intermittent / hostile calls with hysteresis and cooldowns
   WhyNot/                 WhyNotMonitor (engage states, reload ETA, sonar-only, dropped orders → spoken + alert),
                           QueueOverlay (selected unit's stacked attack orders with delete buttons, F8)
+  Ui/                     OptionsPage: the "Rats Radio" group in the Options menu's Audio tab (code-built Noesis controls)
   Air/                    FuelMonitor (joker / bingo calls), RtbMarker (RTB yellow + sorting), SarReporter
   Formation/              UnitRole (ship type / aircraft mission / helicopter type), RoleLine (adds the role line
                           to the formation manager's row templates when the view is built)

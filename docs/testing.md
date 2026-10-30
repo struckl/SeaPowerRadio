@@ -15,8 +15,8 @@ the `_unitsToRebase` field resolve in the new `Seapower-Scripts.dll`, the one ho
 the mouse; the package holds **both DLLs**, the globe build needs Anchor Chain's dev shim - workspace `docs/both-versions.md`):
 
 0. **Which build runs.** Globe game: `SeaPowerRadioFlat.dll` logs `This game has the globe map: the globe build runs, the
-   flat-map build stays off.`, the globe DLL logs `Sea Power Radio 1.0.5 loaded. Features: …`. 0.8.7: the globe DLL logs
-   `This game has the flat map: …` and `Sea Power Radio (flat map) 1.0.5 loaded. Features: …` appears. No duplicate-plugin
+   flat-map build stays off.`, the globe DLL logs `Sea Power Radio 1.1.0 loaded. Features: …`. 0.8.7: the globe DLL logs
+   `This game has the flat map: …` and `Sea Power Radio (flat map) 1.1.0 loaded. Features: …` appears. No duplicate-plugin
    warning. **On 0.8.7 run the rest as the 1.0.3 checklists above: the flat build is its code.**
 1. Log at the first mission: no `[Error  :SeaPowerRadio]`, no `not found (game updated?)`, all features listed as hooked.
    The roster seed (reads the mission file path) works on both: roster lines, no `MissingFieldException`.
@@ -318,3 +318,22 @@ The build that goes to the Workshop, installed with `tools/package.ps1 -Install`
 4. `<Sea Power>\Sea Power_Data\StreamingAssets\SeaPowerRadio\` contains `SeaPowerRadio.dll`, `_info.ini`,
    `LICENSE.txt`, `CREDITS.txt`, `preview.jpg` and `voices\` (43 voice folders and the four .txt files) – and no
    `.pdb`.
+
+## 1.1.0 - settings page, female voices, static, call volumes, overlapping voices (not yet run in the game)
+
+1. Main menu > Options > Audio: below "Mute Sound In Pause" a group **Rats Radio** (heading + rule): two check boxes (Female
+   voices, Overlapping voices) and sliders Radio volume, Radio static, Contact / Combat / Warning calls, Order replies, Other
+   calls. Log: `[options] radio settings added to the Audio tab`. The same page opened from the pause menu has it too; after
+   Revert (page is rebuilt) it is there again. Check the look (label width, slider, value box) against the game's rows.
+2. Move a slider, leave the page, look at `BepInEx\config\dev.sewerlabs.seapowerradio.cfg` (written about a second after the
+   last change) and reopen Options: the value is kept.
+3. Mission with contacts (any with a search radar or a sensor contact): "new contact" / "track hostile" calls. Set Contact calls
+   to 0 %: silent (the messages still appear); 200 %: clearly louder than the rest. Warnings (SAM/missile inbound, "we're hit")
+   follow their slider, replies to orders (give a speed order) follow Order replies. Radio volume changes a call that is
+   playing right now.
+4. Radio static to 0 %: clean voice (from the next call), 150 %: more hiss.
+5. Overlapping voices on: with several units talking (order several units, or a raid with many contacts) calls start while others
+   still play, on both sides of the stereo image, never the same unit twice; the log shows `[radio] >> ... [Category, channel n]`
+   with channel 2 / 3. Off: back to one at a time. An urgent call (missile inbound) cuts in when all channels are busy.
+6. Female voices off: restart the mission; roster lines in the log show only `_m_` voices (except a unit whose name exists only in
+   a female voice). Switched off in a running mission: log `Female voices off: N speaker(s) moved to a male voice.`

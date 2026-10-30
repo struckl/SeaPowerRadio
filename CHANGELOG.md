@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.1.0 – settings in the Options menu, female voices, static, call volumes, overlapping voices
+
+Player requests. **Not yet run in the game** (built and checked offline for both game versions: `modtool compat radio`).
+
+- **Settings page**: Options > Audio has a new group **Rats Radio** under the game's own audio settings. It is added when the
+  Options page loads (same kind of hook as the formation manager's role line), with the game's own styles; changes apply at
+  once and are saved to the BepInEx config (`dev.sewerlabs.seapowerradio.cfg`), which stays the backing store, so existing
+  config entries keep working. Accept / Revert on that page do not affect these settings. If the game's page ever changes so
+  that the Audio tab cannot be found, the mod logs one line and the settings stay in the config file.
+- **Female voices** (default on): off = units get male voices only (new config entry `Female voices`). Applies to the next
+  mission; switched off during a mission, the speakers that have a female voice move to a male one at once. A unit whose name
+  was rendered only in a female voice keeps it, because saying the right name matters more.
+- **Radio static**: the slider is the existing `Radio noise` entry (0 = clean voice, 100 % = the default amount, up to 150 %
+  on the page; the config file accepts up to 3). Applies from the next call.
+- **Volumes**: `Volume` is now the master radio volume (values above 1 are made louder in the clip, as an audio source cannot go
+  above 1) and applies to the call that is playing. New volume per kind of call, in config section `8. Call volumes`:
+  contacts and tracks (new / lost / identified), weapons and combat, warnings and damage (inbound missile or torpedo, we're
+  hit, flooding, bingo, emergencies), replies to orders (incl. refusals), other (air ops, fuel, search and rescue, mission
+  messages). 0-200 %, default 100 % = as before; the existing `Reports volume` (background traffic is half as loud as replies
+  and alerts) still applies underneath.
+- **Overlapping voices** (default on; `Voices at once`, default 3, in the config): a new call can start 0.6-1.4 s after the
+  last one began while another is still playing, on its own audio channel panned a little left or right; never the same unit
+  (or roster entry) twice at once. Urgent calls cut into the oldest routine call when all channels are busy. Off = the old
+  behaviour, one call at a time.
+
 ## 1.0.5 – 2026-10-28 – fix: no mission could be started on 0.8.7 with 1.0.4
 
 **1.0.4 must not be used on 0.8.7.** Its globe DLL stays off there, but Unity's ECS start-up loads every type of every

@@ -9,29 +9,47 @@ using UnityEngine.Audio;
 namespace SeaPowerRadio.Radio;
 
 /// <summary>
-/// The radio net: one voice at a time, highest priority first.
+/// The radio net: highest priority first, one voice at a time - or, with "Overlapping voices", up to a few stations
+/// talking over each other like a busy net.
 /// <list type="bullet">
-/// <item>Urgent calls (priority ≤ 2: missile inbound, we're hit, bingo) cut into a routine call.</item>
+/// <item>Urgent calls (priority ≤ 2: missile inbound, we're hit, bingo) cut into a routine call (when every channel is busy).</item>
 /// <item>Replies to the player's orders go before routine reports – and are mixed louder and cleaner.</item>
 /// <item>Calls go stale: replies after 6 s, contact reports after 8 s, the rest after 15 s – a late "copy" is worse than none.</item>
 /// <item>The same phrase from several units at once (a whole flight acknowledging) is said at most twice.</item>
-/// <item>A short, varying gap between calls, like a real net.</item>
+/// <item>A short, varying gap between calls, like a real net. Overlapping: a new call starts 0.6–1.4 s after the
+/// last start, on its own channel (panned a little left / right), never for a unit that is already talking.</item>
+/// <item>Every call has a category (<see cref="CallCategory"/>) with its own volume; the master volume and the
+/// category volume of the options page apply to the playing call at once, the noise level from the next call.</item>
 /// </list>
 /// Plays on the game's "Voice" mixer group, so the game's voice volume slider still applies.
 /// </summary>
 internal sealed class RadioPlayer
 {
     private const int MaxQueue = 24;
+    private const int MaxChannels = 4;
     private const float SamePhraseWindow = 2.5f;
+    private static readonly float[] Pans = { 0f, -0.35f, 0.35f, 0f };
+
+    /// <summary>One voice on the net: its own audio source and the call it is playing.</summary>
+    private sealed class Channel
+    {
+        public int Index;
+        public AudioSource Source;
+        public Transmission Current;
+        public AudioClip Clip;
+        public bool Preparing;
+        public int Version;
+        public float Boost = 1f;            // gain baked into the clip above 1 (an audio source cannot go louder than 1)
+        public CallCategory Category;
+        public float StartedAt;
+
+        public bool Busy => Current != null && (Preparing || Source.isPlaying);
+    }
 
     private readonly MonoBehaviour host;
     private readonly List<Transmission> queue = new List<Transmission>();
-    private AudioSource source;
-    private Transmission current;
+    private readonly List<Channel> channels = new List<Channel>();
     private RosterElement lastSpeaker;      // who was on the net last: the callsign is only said on a change
-    private AudioClip currentClip;
-    private bool preparing;
-    private int prepareVersion;
     private float nextAllowed;
     private int seed;
 
@@ -43,7 +61,7 @@ internal sealed class RadioPlayer
             return;
         float now = Time.unscaledTime;
         int same = queue.Count(q => q.Phrase == t.Phrase && now - q.SubmittedAt < SamePhraseWindow)
-                   + (current != null && current.Phrase == t.Phrase && now - current.SubmittedAt < SamePhraseWindow ? 1 : 0);
+                   + channels.Count(c => c.Current != null && c.Current.Phrase == t.Phrase && now - c.Current.SubmittedAt < SamePhraseWindow);
         if (same >= 2)
         {
             ModLog.Debug($"[radio] drop duplicate {t.Text}");
@@ -64,7 +82,8 @@ internal sealed class RadioPlayer
 
     public void Clear()
     {
-        Stop();
+        foreach (Channel c in channels)
+            Stop(c);
         lastSpeaker = null;
         foreach (Transmission q in queue)
             AlertLink.Release(q);
@@ -73,8 +92,7 @@ internal sealed class RadioPlayer
 
     public void Tick()
     {
-        if (!EnsureSource())
-            return;
+        EnsureChannel(0);
         float now = Time.unscaledTime;
         foreach (Transmission stale in queue.Where(q => !q.Urgent && now - q.SubmittedAt > (q.Role == CallRole.Reply ? 6f : q.Priority >= 5 ? 8f : 15f)).ToList())
         {
@@ -82,37 +100,103 @@ internal sealed class RadioPlayer
             AlertLink.Release(stale);
         }
 
-        bool playing = current != null && (preparing || source.isPlaying);
-        if (playing)
+        int active = 0;
+        foreach (Channel c in channels)
+        {
+            if (c.Current != null && !c.Busy)
+                Finish(c);
+            if (c.Current != null)
+            {
+                active++;
+                ApplyVolume(c);
+            }
+        }
+
+        int max = Settings.OverlapVoices.Value ? Mathf.Clamp(Settings.MaxOverlap.Value, 2, MaxChannels) : 1;
+        bool urgentWaiting = queue.Any(q => q.Urgent);
+        if (active >= max && urgentWaiting)
         {
             // An urgent call cuts into a routine one.
-            if (!current.Urgent && queue.Any(q => q.Urgent))
-                Stop();
-            else
+            Channel victim = channels.Where(c => c.Current != null && !c.Current.Urgent).OrderBy(c => c.StartedAt).FirstOrDefault();
+            if (victim == null)
                 return;
+            Stop(victim);
+            active--;
         }
-        else if (current != null)
-        {
-            Finish();
-        }
-
-        if (queue.Count == 0 || (now < nextAllowed && !queue.Any(q => q.Urgent)))
+        if (active >= max || queue.Count == 0 || (now < nextAllowed && !urgentWaiting))
             return;
 
-        Transmission next = queue.OrderBy(q => q.Rank).ThenBy(q => q.SubmittedAt).First();
+        Transmission next = null;
+        foreach (Transmission t in queue.OrderBy(q => q.Rank).ThenBy(q => q.SubmittedAt))
+        {
+            if (active == 0 || !SpeakerBusy(t))
+            {
+                next = t;
+                break;
+            }
+        }
+        if (next == null)
+            return;
+
+        Channel channel = FreeChannel();
+        if (channel == null)
+            return;
         queue.Remove(next);
         Abbreviate(next);
         lastSpeaker = next.Speaker;
-        current = next;
-        preparing = true;
-        host.StartCoroutine(Prepare(next, ++prepareVersion));
+        channel.Current = next;
+        channel.Preparing = true;
+        channel.StartedAt = now;
+        channel.Category = CallCategories.Of(next.Phrase, next.Role);
+        if (max > 1)
+            nextAllowed = now + Random.Range(0.6f, 1.4f);
+        host.StartCoroutine(Prepare(channel, next, ++channel.Version));
     }
 
-    private IEnumerator Prepare(Transmission t, int version)
+    /// <summary>True if the unit (or roster element) of this call is already talking on another channel.</summary>
+    private bool SpeakerBusy(Transmission t)
+    {
+        foreach (Channel c in channels)
+        {
+            Transmission o = c.Current;
+            if (o == null || o.Speaker == null || t.Speaker == null)
+                continue;
+            if (o.Speaker == t.Speaker)
+                return true;
+            ObjectBase a = o.Speaker.Unit, b = t.Speaker.Unit;
+            if (a != null && b != null && a == b)
+                return true;
+        }
+        return false;
+    }
+
+    private Channel FreeChannel()
+    {
+        foreach (Channel c in channels)
+            if (c.Current == null)
+                return c;
+        if (channels.Count < MaxChannels)
+        {
+            EnsureChannel(channels.Count);
+            return channels[channels.Count - 1];
+        }
+        return null;
+    }
+
+    /// <summary>Master volume x category volume; above 1 the clip carries the extra gain (<see cref="Channel.Boost"/>).</summary>
+    private static float TotalGain(Channel c) => Settings.Volume.Value * CallCategories.Volume(c.Category);
+
+    private static void ApplyVolume(Channel c)
+    {
+        if (c.Source != null)
+            c.Source.volume = Mathf.Clamp01(TotalGain(c) / c.Boost);
+    }
+
+    private IEnumerator Prepare(Channel ch, Transmission t, int version)
     {
         var clips = new AudioClip[t.Clips.Count];
         yield return ClipLibrary.LoadAll(t.Voice, t.Clips, clips);
-        if (version != prepareVersion || current != t)
+        if (version != ch.Version || ch.Current != t)
             yield break;
 
         var parts = new List<AudioClip>();
@@ -128,23 +212,26 @@ internal sealed class RadioPlayer
         }
         if (!parts.Any(c => c != null))
         {
-            preparing = false;
+            ch.Preparing = false;
             AlertLink.Release(t);   // nothing to say after all: its messages fade normally instead of staying pinned
-            current = null;
+            ch.Current = null;
             yield break;
         }
 
         // The mix hierarchy: replies to the player clean and in front, alerts just as loud, reports behind them.
-        float level = t.Role == CallRole.Report ? Settings.ReportVolume.Value : 1f;
+        // On top: the master radio volume and the volume of the call's category (options page).
+        ch.Boost = Mathf.Max(1f, TotalGain(ch));
+        float level = (t.Role == CallRole.Report ? Settings.ReportVolume.Value : 1f) * ch.Boost;
         float noise = Settings.RadioNoise.Value * (t.Role == CallRole.Reply ? 0.6f : 1f);
-        currentClip = RadioFx.Build(parts, pauses, t.Profile, unchecked(++seed * 7919), noise, level);
-        source.clip = currentClip;
-        source.volume = Settings.Volume.Value;
-        source.Play();
+        ch.Clip = RadioFx.Build(parts, pauses, t.Profile, unchecked(++seed * 7919), noise, level);
+        ch.Source.clip = ch.Clip;
+        ch.Source.panStereo = Settings.OverlapVoices.Value ? Pans[ch.Index] : 0f;
+        ApplyVolume(ch);
+        ch.Source.Play();
         AlertLink.StartSpeaking(t);
-        preparing = false;
+        ch.Preparing = false;
         if (Settings.LogRadio.Value)
-            ModLog.Info($"[radio] >> {t.Voice}: {t.Text}");
+            ModLog.Info($"[radio] >> {t.Voice}: {t.Text} [{ch.Category}, channel {ch.Index + 1}]");
     }
 
     /// <summary>
@@ -178,49 +265,53 @@ internal sealed class RadioPlayer
         }
     }
 
-    private void Finish()
+    private void Finish(Channel c)
     {
-        nextAllowed = Time.unscaledTime + Random.Range(0.35f, 0.9f);
-        AlertLink.Release(current);
-        ReleaseClip();
-        current = null;
+        if (!channels.Any(o => o != c && o.Current != null))
+            nextAllowed = Mathf.Max(nextAllowed, Time.unscaledTime + Random.Range(0.35f, 0.9f));
+        AlertLink.Release(c.Current);
+        ReleaseClip(c);
+        c.Current = null;
     }
 
-    private void Stop()
+    private void Stop(Channel c)
     {
-        prepareVersion++;
-        preparing = false;
-        AlertLink.Release(current);
-        if (source != null)
-            source.Stop();
-        ReleaseClip();
-        current = null;
+        c.Version++;
+        c.Preparing = false;
+        if (c.Current != null)
+            AlertLink.Release(c.Current);
+        if (c.Source != null)
+            c.Source.Stop();
+        ReleaseClip(c);
+        c.Current = null;
     }
 
-    private void ReleaseClip()
+    private static void ReleaseClip(Channel c)
     {
-        if (source != null)
-            source.clip = null;
-        if (currentClip != null)
-            Object.Destroy(currentClip);
-        currentClip = null;
+        if (c.Source != null)
+            c.Source.clip = null;
+        if (c.Clip != null)
+            Object.Destroy(c.Clip);
+        c.Clip = null;
     }
 
-    private bool EnsureSource()
+    /// <summary>Makes sure channel <paramref name="index"/> exists (one audio source each).</summary>
+    private void EnsureChannel(int index)
     {
-        if (source != null)
-            return true;
-        source = host.gameObject.AddComponent<AudioSource>();
-        source.playOnAwake = false;
-        source.loop = false;
-        source.spatialBlend = 0f;
-        source.ignoreListenerPause = true;
-        AudioMixer mixer = Resources.Load<AudioMixer>("audio/Master");
-        AudioMixerGroup[] groups = mixer != null ? mixer.FindMatchingGroups("Voice") : null;
-        if (groups != null && groups.Length > 0)
-            source.outputAudioMixerGroup = groups[0];
-        else
-            ModLog.Warn("Voice mixer group not found; radio plays on the master bus.");
-        return true;
+        while (channels.Count <= index)
+        {
+            var source = host.gameObject.AddComponent<AudioSource>();
+            source.playOnAwake = false;
+            source.loop = false;
+            source.spatialBlend = 0f;
+            source.ignoreListenerPause = true;
+            AudioMixer mixer = Resources.Load<AudioMixer>("audio/Master");
+            AudioMixerGroup[] groups = mixer != null ? mixer.FindMatchingGroups("Voice") : null;
+            if (groups != null && groups.Length > 0)
+                source.outputAudioMixerGroup = groups[0];
+            else if (channels.Count == 0)
+                ModLog.Warn("Voice mixer group not found; radio plays on the master bus.");
+            channels.Add(new Channel { Index = channels.Count, Source = source });
+        }
     }
 }

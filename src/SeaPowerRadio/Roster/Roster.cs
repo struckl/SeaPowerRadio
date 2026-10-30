@@ -96,6 +96,25 @@ internal sealed class Roster
             e.Voice = voices.For(e.Key);
     }
 
+    /// <summary>
+    /// "Female voices" was switched off during the mission: every element with a woman's voice gets a man's (a unit
+    /// whose name exists only in women's voices keeps it). Returns how many changed.
+    /// </summary>
+    public int Revoice()
+    {
+        int changed = 0;
+        foreach (RosterElement e in elements)
+        {
+            if (e.Voice == null || VoiceAssignment.IsAllowed(e.Voice))
+                continue;
+            VoicePersona before = e.Voice;
+            e.Voice = voices.Rebind(e.Key, e.BoundName?.Voices);
+            if (e.Voice != before)
+                changed++;
+        }
+        return changed;
+    }
+
     /// <summary>The in-game name a unit says: a ship's short name, or an aircraft's squadron callsign word.</summary>
     public static GameName NameOf(ObjectBase unit)
     {

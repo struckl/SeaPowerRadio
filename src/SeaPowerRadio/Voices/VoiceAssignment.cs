@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using SeaPowerRadio.Core;
@@ -37,6 +38,12 @@ internal sealed class VoiceAssignment
 
     public int PoolSize => order.Count;
 
+    /// <summary>"Female voices" off: women's voices are skipped while a male voice is still available.</summary>
+    private static bool Allowed(VoicePersona p) => p.Gender != "f" || Settings.FemaleVoices == null || Settings.FemaleVoices.Value;
+
+    /// <summary>Whether this persona may speak with the current settings.</summary>
+    public static bool IsAllowed(VoicePersona p) => p == null || Allowed(p);
+
     /// <summary>Next unused voice for an element (stable key: unit id, or carrier + air-wing slot).</summary>
     public VoicePersona For(string elementKey)
     {
@@ -48,10 +55,11 @@ internal sealed class VoiceAssignment
         for (int i = 0; i < order.Count && persona == null; i++)
         {
             VoicePersona candidate = order[(next + i) % order.Count];
-            if (!used.Contains(candidate.Id))
+            if (!used.Contains(candidate.Id) && Allowed(candidate))
                 persona = candidate;
         }
-        persona ??= order[next % order.Count]; // everyone is taken: share
+        // Everyone is taken: share (a man, if women are switched off).
+        persona ??= order.Where(Allowed).Skip(next % Math.Max(1, order.Count(Allowed))).FirstOrDefault() ?? order[next % order.Count];
         next++;
         return Bind(elementKey, persona);
     }
@@ -66,8 +74,18 @@ internal sealed class VoiceAssignment
         var known = candidates?.Where(byId.ContainsKey).ToList();
         if (known == null || known.Count == 0)
             return For(elementKey);
+        var men = known.Where(c => Allowed(byId[c])).ToList();
+        if (men.Count > 0)
+            known = men;                 // none of the voices the name exists in is a man: the name matters more
         string id = known.FirstOrDefault(c => !used.Contains(c)) ?? known[0];
         return Bind(elementKey, byId[id]);
+    }
+
+    /// <summary>A new voice for an element that already has one (the settings changed): forgets the old binding.</summary>
+    public VoicePersona Rebind(string elementKey, IEnumerable<string> candidates)
+    {
+        byElement.Remove(elementKey);
+        return candidates != null ? Prefer(elementKey, candidates) : For(elementKey);
     }
 
     public bool IsAmong(VoicePersona persona, IEnumerable<string> candidates) =>

@@ -1,0 +1,7 @@
+1.1.0: settings in the game's Options menu.
+Options > Audio > Rats Radio now has:
+- Female voices: switch the women's voices off and units speak with male voices only.
+- Radio static: from clean voice (0) to a bit more than before. The default is the old amount.
+- Radio volume, and a separate volume for contact and track calls, combat calls, warning calls, replies to orders and everything else, so new contacts and identified tracks can stand out.
+- Overlapping voices (on by default): several stations can talk over each other, up to three at once, never the same unit twice. Off gives the old one voice at a time.
+Changes apply at once and are saved in the config file.

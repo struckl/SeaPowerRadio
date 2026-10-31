@@ -1,8 +1,14 @@
 # Changelog
 
-## 1.1.0 – settings in the Options menu, female voices, static, call volumes, overlapping voices
+## 1.1.0 – 2026-10-31 – settings in the Options menu, female voices, static, call volumes, overlapping voices
 
-Player requests. **Not yet run in the game** (built and checked offline for both game versions: `modtool compat radio`).
+Player requests. **Run in the game on 0.8.7 (2026-10-31):** the Rats Radio group shows in Options > Audio from the main menu
+and from the pause menu; slider changes are saved to the config within about a second and kept across menus; the call
+categories show in the log (Contacts, Warnings, Combat, Orders); overlapping voices seen (a ship on channel 2 while an
+aircraft spoke on channel 1, never the same unit twice); Female voices switched off during a mission moved two speakers to
+male voices and the next call used one. Loudness and static were not judged by ear. **The globe build is checked offline
+only** (built, `modtool compat radio`); its Options page XAML could not be compared, so if the group is missing there the log
+says so and the settings stay in the config file.
 
 - **Settings page**: Options > Audio has a new group **Rats Radio** under the game's own audio settings. It is added when the
   Options page loads (same kind of hook as the formation manager's role line), with the game's own styles; changes apply at
@@ -42,7 +48,7 @@ were tested in the game on 0.8.7 afterwards (2026-10-28).
 The globe build was last run in the game before this change (2026-10-28); the change only touches how one field is typed
 (the day/night lookup now goes through a cast), and the globe build is not re-run with it yet.
 
-## 1.0.4 – 2026-10-28 – both game versions: 0.8.7 and the 3D globe build (game build 26223125, the 11 November release)
+## 1.0.4 – 2026-10-28 – meant for 0.8.7 and the 3D globe build (game build 26223125, the 11 November release); checked offline with compat-check only, and it broke 0.8.7
 
 **Known problem: on 0.8.7 no mission loads with this version - use 1.0.5.**
 

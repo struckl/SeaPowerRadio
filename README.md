@@ -37,7 +37,7 @@ ordered.
   voices on/off, radio volume, radio static (0 = clean voice, 100 % = the default amount) and a volume for each kind
   of call: contact and track calls, combat calls, warning calls (inbound missile, we're hit, bingo...), replies to
   orders, other calls - for example to make "new contact" and "track identified" stand out. Changes apply at once and
-  are saved in the config file.
+  are saved in the config file. Tested in the game on 0.8.7; on the 3D-globe build checked offline only.
 - **Female voices** – the voice library has male and female voices; switch the female ones off and units speak with
   male voices only (a unit whose name was rendered only in a female voice keeps it).
 - **Why-not diagnostics** – the reasons the game knows but never says, spoken by the unit, as a message and in

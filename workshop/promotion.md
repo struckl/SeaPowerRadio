@@ -16,7 +16,7 @@ Images: `workshop/screenshots/` – 01-radio-net, 02-unit-roles-rtb, 03-message-
 They were needed because the upload came seven minutes before the AI wording was taken out of the texts:
 
 1. **Description:** on the Workshop page → Owner Controls → *Edit title & description* → replace the text with
-   [description.bbcode](description.bbcode) as it is now (no "cloned", no "generated while you play").
+   [description.bbcode](description.bbcode) as it is now (the AI wording is gone from it).
 2. **CREDITS.txt in the package:** Create Mod again → *Existing item: Sea Power: Rats Radio* → same folder
    (`StreamingAssets\SeaPowerRadio` already has the new CREDITS.txt) → change note "Credits text". Steam only
    sends the changed file, so this upload is small. Leave name, description, preview and tags as they are.

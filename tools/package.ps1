@@ -16,6 +16,10 @@
     -Install mirrors the staged folder into <GameDir>\Sea Power_Data\StreamingAssets\SeaPowerRadio\, the folder to
     pick in the game's Create Mod screen (Sea Power must be closed). -Zip also writes dist\SeaPowerRadio-<version>.zip
     for a GitHub release.
+    -Pack <id> stages a voice pack instead of the base: the folder with that voicepack.ini Id (looked up in mod\voices and
+    in packs\*, e.g. a pack under work) goes to dist\pack-<id>\ as it is (voicepack.ini, personas.txt, catalog.txt, names.txt, clips;
+    plus the pack's own _info.ini and CREDITS if it has them) – the folder to upload to that pack's Workshop item. No
+    build, no DLL: packs never carry code. -Zip also writes dist\SeaPowerRadio-pack-<id>-<version>.zip.
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File tools\package.ps1 -Install
@@ -27,7 +31,8 @@ param(
     [string]$GlobeManagedDir = $env:GlobeManagedDir,
     [switch]$NoFlat,
     [switch]$Install,
-    [switch]$Zip
+    [switch]$Zip,
+    [string]$Pack
 )
 
 $ErrorActionPreference = 'Stop'
@@ -36,11 +41,38 @@ $project = Join-Path $root 'src\SeaPowerRadio\SeaPowerRadio.csproj'
 $dist = Join-Path $root 'dist\SeaPowerRadio'
 $voices = Join-Path $root 'mod\voices'
 
+# -Pack <id>: stage one voice pack and stop (no build: a pack has no DLL).
+if ($Pack) {
+    $source = @((Join-Path $root 'mod\voices')) + @(Get-ChildItem -Directory (Join-Path $root 'packs') -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName }) |
+        Where-Object { (Test-Path (Join-Path $_ 'voicepack.ini')) -and ((Get-Content (Join-Path $_ 'voicepack.ini')) -match "^\s*Id\s*=\s*$([regex]::Escape($Pack))\s*(;.*)?$") } |
+        Select-Object -First 1
+    if (-not $source) { throw "No voice pack with Id '$Pack' (looked for voicepack.ini in mod\voices and packs\*)." }
+    $ini = Get-Content (Join-Path $source 'voicepack.ini')
+    $packVersion = ($ini | Where-Object { $_ -match '^\s*Version\s*=' } | Select-Object -First 1) -replace '^\s*Version\s*=\s*([^\s;]+).*$', '$1'
+    $ids = Get-Content (Join-Path $source 'personas.txt') | Where-Object { $_ -and -not $_.StartsWith('#') } | ForEach-Object { ($_ -split '[\s|,;=]+')[0] }
+    $lacking = $ids | Where-Object { -not (Test-Path (Join-Path $source $_)) }
+    if ($lacking) { throw "Rendered voices missing for: $($lacking -join ', ')." }
+    $target = Join-Path $root "dist\pack-$Pack"
+    if (Test-Path $target) { Remove-Item -Recurse -Force $target }
+    robocopy $source $target /E /XF *.part.mp3 /NFL /NDL /NJH /NJS /NP | Out-Null
+    if ($LASTEXITCODE -ge 8) { throw "Copying the pack failed (robocopy $LASTEXITCODE)." }
+    $n = (Get-ChildItem -Recurse -File -Filter *.mp3 $target).Count
+    Write-Host "Staged voice pack '$Pack' $packVersion in $target ($($ids.Count) voices, $n clips)"
+    if ($Zip) {
+        $archive = Join-Path $root "dist\SeaPowerRadio-pack-$Pack-$packVersion.zip"
+        if (Test-Path $archive) { Remove-Item -Force $archive }
+        Compress-Archive -Path $target -DestinationPath $archive -CompressionLevel Fastest
+        Write-Host "Pack zip: $archive"
+    }
+    return
+}
+
 # Every persona in personas.txt needs its rendered folder.
 $personas = Get-Content (Join-Path $voices 'personas.txt') | Where-Object { $_ -and -not $_.StartsWith('#') } |
     ForEach-Object { ($_ -split '[\s|,;=]+')[0] }
 $missing = $personas | Where-Object { -not (Test-Path (Join-Path $voices $_)) }
 if ($missing) { throw "Rendered voices missing for: $($missing -join ', ') - render them (tools\voicegen) first." }
+if (-not (Test-Path (Join-Path $voices 'voicepack.ini'))) { throw 'mod\voices\voicepack.ini is missing: the base''s voices are the NATO pack.' }
 
 $globeManaged = if ($GlobeManagedDir) { $GlobeManagedDir } else { Join-Path $GameDir 'Sea Power_Data\Managed' }
 

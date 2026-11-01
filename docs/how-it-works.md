@@ -57,6 +57,16 @@ speech recognizer over all 43 voices ("seven" → "even"); the asymmetric cut le
 and halves the silence at number joins (median 0.17 → 0.09 s, 90th percentile 0.31 → 0.16 s). `reel.py` joins the
 same way (`--as-cut` for the old joins).
 
+## Nations
+
+- **Nation ids** are the keys of `[Nations]` in `language_en/nations.ini` (`US`, `UK`, `Soviet`, `DDR`, `Czech`, `North_Korea`,
+  `NewZealand`, …; also `Civilian`, `Pirates`, `Terrorists`, `All`, `Undefined`, which are no countries). The table is a virtual
+  file merged from mods (`LocalizationLoader.OpenVirtualLocalizationFile("language_xx", "nations", "nations")`,
+  `IniHandler.GetSectionKeyValues("Nations")`), so it is there outside a mission; the mod lists it on the options page.
+- A unit's nation is `ObjectBase.getNation()` (`Nation.Value`, set from the unit ini's `Nation` or a mission override). That is
+  what picks its voice pack. `getVoiceoverNation()` is something else: the stock *voice profile* (`us_male_1`, `wp_male_1`…), looked
+  up from `[VoiceProfiles]`; the stock calls carry that string as `nation` for task force reports.
+
 ## Stock voice system (what the mod replaces)
 
 Class `SeaPower.VoiceMessage : Singleton<VoiceMessage>` (`Seapower/VoiceMessage.cs`).

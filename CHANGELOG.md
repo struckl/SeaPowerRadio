@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.2.0 – unreleased – voice packs: every country picks its own voice pack
+
+**Not run in the game yet.** Built for both versions (default and `-p:GameBuild=Flat`), `python tools/modtool.py compat`
+passes, and the discovery, per-country choice, catalog and voice-assignment code was run offline against a dummy pack
+(`docs/voice-packs.md`, section "Offline test"). The Options page, the stock-voice fallback and everything that needs a
+mission have not been seen in the game.
+
+**What players of non-NATO sides will notice: they now hear the game's own voice by default** (the Soviets: the game's
+Russian voice), not the English radio voices of 1.1.x. Reason: the 43 voices are English and the base ships them as the
+**NATO (English)** pack, which lists only US, UK, Australia, New Zealand and Canada. Anyone who wants the old behaviour
+for another country picks *NATO (English)* for it in Options > Audio > Rats Radio > Voice packs (or sets the country to
+`nato-en` in the config). English-speaking NATO players notice nothing: their voices, callsigns and the seed per mission are
+unchanged.
+
+- **Voice packs.** The base's `voices/` folder is now a pack (`voicepack.ini`: Id, Name, Language, Nations, Version,
+  MinBaseVersion) and goes through the same code as packs from other mod folders. At start the mod scans every mod folder
+  of the game (Steam Workshop items and `StreamingAssets/<folder>`) for a `voicepack.ini` at the top level or in `voices/`.
+  Two packs with the same Id: the higher Version wins. A pack that needs a newer base is skipped with a log line. Personas,
+  phrase catalog, in-game names and clips are per pack; a voice is `packId/personaId`. Packs are data only, no DLL.
+- **Per unit, by its own nation.** Each player unit speaks with the pack set for *its own* country, so a mixed task force
+  works. The setting per country is `Auto` (the installed pack that lists the country, else the game's voice), `Game voice`
+  or a pack. With **Game voice** the mod stays silent for those units: the game's own line plays as without the mod, mod-only
+  calls (why not, fuel, search and rescue, contact reports) are not spoken (their text messages stay), and the unit gets no
+  mod callsign. A line the pack has no clip for also falls back to the game's own line.
+- **Settings.** Config section `10. Voice packs`, one entry per country (key = the game's nation id, default `Auto`).
+  Options > Audio > Rats Radio has a **Voice packs** part: the installed packs, then the countries in collapsible groups
+  (NATO, Warsaw Pact, Other), one drop-down per country. The country list is the game's own (`nations.ini`), the groups come
+  from `voices/nations.txt`; a nation that is not listed lands in Other. A changed choice applies from the next mission.
+- Number and callsign rules are selected by a pack's `Language` (only `en` exists; an unknown language falls back to it with
+  a warning).
+- `tools/package.ps1 -Pack <id>` stages a pack folder (`dist/pack-<id>`) for its own Workshop item.
+
 ## 1.1.0 – 2026-10-31 – settings in the Options menu, female voices, static, call volumes, overlapping voices
 
 Player requests. **Run in the game on 0.8.7 (2026-10-31):** the Rats Radio group shows in Options > Audio from the main menu

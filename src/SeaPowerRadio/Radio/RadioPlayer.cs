@@ -207,7 +207,7 @@ internal sealed class RadioPlayer
             if (clips[i] == null && t.Clips[i] != null)
                 continue;
             parts.Add(clips[i]);
-            pauses.Add(previous != null && t.Clips[i] != null ? TransmissionBuilder.MaxPause(previous, t.Clips[i]) : float.MaxValue);
+            pauses.Add(previous != null && t.Clips[i] != null ? TransmissionBuilder.MaxPause(t.Voice, previous, t.Clips[i]) : float.MaxValue);
             previous = t.Clips[i];
         }
         if (!parts.Any(c => c != null))

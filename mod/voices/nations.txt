@@ -1,0 +1,26 @@
+# nationId|group -- the groups of the voice pack settings on the Audio page of the Options.
+# Ids are the game's nation ids (language_en/nations.ini). A nation not listed here goes to "Other".
+US|NATO
+UK|NATO
+Canada|NATO
+Australia|NATO
+NewZealand|NATO
+France|NATO
+Germany|NATO
+Italy|NATO
+Netherlands|NATO
+Belgium|NATO
+Denmark|NATO
+Norway|NATO
+Iceland|NATO
+Portugal|NATO
+Greece|NATO
+Turkey|NATO
+Spain|NATO
+Soviet|Warsaw Pact
+Poland|Warsaw Pact
+DDR|Warsaw Pact
+Czech|Warsaw Pact
+Hungary|Warsaw Pact
+Romania|Warsaw Pact
+Bulgaria|Warsaw Pact

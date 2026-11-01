@@ -25,7 +25,9 @@ Which nations speak which language, from the game's own `voice.ini` `[VoiceProfi
 | Chinese | China | cn_male_1 |
 | Japanese | Japan | ja_male_1 |
 
-## Phase 1 – base mod 1.1.0: voice packs (≈ 2 days, no new voices)
+## Phase 1 – base mod 1.2.0: voice packs (no new voices)
+
+**Replaced by [voice-packs.md](voice-packs.md)** (decided 2026-11-01: per-country choice, the game's own voice for a country without a pack). The text below is the original plan.
 
 - Packs found in every mod folder the game scans (Workshop items and `StreamingAssets/<folder>`), by a
   `voicepack.ini`: language, nations, pack version, lowest base version it needs.

@@ -49,13 +49,13 @@ internal static class TransmissionBuilder
     private const float SpokenPause = 0.25f;   // a pause the speaker makes anyway (after the callsign, at a comma)
 
     /// <summary>Most silence allowed where <paramref name="next"/> follows <paramref name="previous"/>.</summary>
-    public static float MaxPause(string previous, string next)
+    public static float MaxPause(string voice, string previous, string next)
     {
         bool a = IsNumberPiece(previous), b = IsNumberPiece(next);
         if (a && b)
             return GroupPause;
         if (a || b)
-            return Catalog.PausesAtNumber(a ? next : previous) ? SpokenPause : NumberPause;
+            return (Catalog.Of(voice)?.PausesAtNumber(a ? next : previous) ?? true) ? SpokenPause : NumberPause;
         return SpokenPause;
     }
 
@@ -75,7 +75,7 @@ internal static class TransmissionBuilder
         var t = new Transmission
         {
             Speaker = speaker,
-            Voice = speaker.Voice?.Id,
+            Voice = speaker.Voice?.FullId,
             SubmittedAt = Time.unscaledTime,
             Priority = 7,
         };
@@ -94,10 +94,15 @@ internal static class TransmissionBuilder
     public static List<string> CallsignFor(RosterElement e, out string said)
     {
         ObjectBase unit = e.Unit;
-        string voice = e.Voice?.Id;
-        if (unit != null && voice != null)
+        string voice = e.Voice?.FullId;
+        if (voice == null)
         {
-            GameName name = Roster.Roster.NameOf(unit);
+            said = null;               // the game's own voice: no mod callsign
+            return new List<string>();
+        }
+        if (unit != null)
+        {
+            GameName name = Roster.Roster.NameOf(unit, e.Voice.Pack);
             if (name != null && ClipLibrary.Exists(voice, name.Key))
             {
                 if (!name.Squadron)
@@ -129,8 +134,12 @@ internal static class TransmissionBuilder
     {
         if (t.Voice == null)
             return false;
-        PhraseVariant v = Catalog.Pick(phrase, t.Voice, number.HasValue, variant);
+        PhraseVariant v = Catalog.Of(t.Voice)?.Pick(phrase, t.Voice, number.HasValue, variant);
         if (v == null)
+            return false;
+        // A number the pack lacks pieces for would be spoken with holes: let the game say the line instead.
+        List<string> numberClips = v.Slot != null ? new List<string>(Number(v.Slot, number.Value, t.Voice)) : null;
+        if (numberClips != null && numberClips.Exists(c => !ClipLibrary.Exists(t.Voice, c)))
             return false;
 
         if (t.Phrase != null)
@@ -152,7 +161,7 @@ internal static class TransmissionBuilder
         else
         {
             if (v.HasA) t.Clips.Add($"{phrase}_{v.N}_a");
-            t.Clips.AddRange(Number(v.Slot, number.Value, t.Voice));
+            t.Clips.AddRange(numberClips);
             if (v.HasB) t.Clips.Add($"{phrase}_{v.N}_b");
             t.Text += $" {phrase}({number.Value})";
         }
@@ -176,6 +185,12 @@ internal static class TransmissionBuilder
     /// pair). Libraries rendered before whole bearings existed fall back to dm + pe.
     /// </summary>
     public static IEnumerable<string> Number(string kind, int value, string voice = null)
+    {
+        // Rules per language: only the English ones exist so far (LanguageRules falls back to them).
+        return NumberEnglish(kind, value, voice);
+    }
+
+    private static IEnumerable<string> NumberEnglish(string kind, int value, string voice)
     {
         switch (kind)
         {

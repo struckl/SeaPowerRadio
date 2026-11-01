@@ -19,7 +19,7 @@ namespace SeaPowerRadio;
 public class Plugin : IAnchorChainMod
 {
     public const string Guid = "dev.sewerlabs.seapowerradio";
-    public const string Version = "1.1.0";
+    public const string Version = "1.2.0";
 
 #if FLATMAP
     // Anchor Chain skips a plugin whose GUID it has already seen, so the two builds register under different ones.
@@ -76,8 +76,7 @@ public class Plugin : IAnchorChainMod
                 return;
             }
 
-            Radio.Catalog.Load(Voices.VoiceLibrary.VoicesDirectory);
-            Radio.Names.Load(Voices.VoiceLibrary.VoicesDirectory);
+            Voices.VoicePacks.Discover(System.Version.Parse(Version));
 
             Harmony = new Harmony(Guid);
             PatchRegistry.ApplyAll(Harmony);

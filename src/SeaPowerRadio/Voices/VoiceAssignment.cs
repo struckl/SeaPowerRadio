@@ -8,8 +8,11 @@ namespace SeaPowerRadio.Voices;
 /// <summary>One rendered voice in the library: a base TTS voice plus fixed rate/pitch/radio quirks.</summary>
 internal sealed class VoicePersona
 {
-    public string Id;          // folder name in the voice library, e.g. "us_m_03"
-    public string Language;    // "en" in v1; Warsaw Pact voices plug in as another language
+    public VoicePack Pack;     // the pack this voice belongs to
+    public string Id;          // folder name in the pack, e.g. "us_m_03" (unique inside the pack)
+    public string Language;    // language column of personas.txt
+    /// <summary>Unique across packs: <c>packId/personaId</c>, what the transmissions and logs carry.</summary>
+    public string FullId => Pack.Id + "/" + Id;
     public string Gender;      // "m" / "f"
     public string Accent;      // "us", "gb", "ca", "au", "nz", "ie", "sc", "ni"
 }
@@ -28,11 +31,12 @@ internal sealed class VoiceAssignment
     private readonly HashSet<string> used = new HashSet<string>();
     private int next;
 
-    public VoiceAssignment(IEnumerable<VoicePersona> pool, string missionSeed, string language = "en")
+    public VoiceAssignment(VoicePack pack, string missionSeed)
     {
-        var rng = new StableRandom("voices|" + missionSeed);
+        // The NATO pack keeps the 1.1.0 seed, so its voices per mission are the ones players already know.
+        var rng = new StableRandom(pack.Id == VoicePacks.NatoId ? "voices|" + missionSeed : "voices|" + missionSeed + "|" + pack.Id);
         // Sort first so the shuffle does not depend on the order the library happened to be read from disk.
-        order = rng.Shuffled(pool.Where(p => p.Language == language).OrderBy(p => p.Id));
+        order = rng.Shuffled(pack.Personas.OrderBy(p => p.Id, StringComparer.Ordinal));
         byId = order.ToDictionary(p => p.Id);
     }
 
@@ -90,6 +94,20 @@ internal sealed class VoiceAssignment
 
     public bool IsAmong(VoicePersona persona, IEnumerable<string> candidates) =>
         persona != null && candidates != null && candidates.Contains(persona.Id);
+
+    /// <summary>Keeps a voice that is remembered for a unit (campaign) for that unit: new units avoid it while the pool lasts.</summary>
+    public void Reserve(string personaId)
+    {
+        if (byId.ContainsKey(personaId))
+            used.Add(personaId);
+    }
+
+    /// <summary>Gives an element the voice it had before (campaign memory).</summary>
+    public VoicePersona Claim(string elementKey, VoicePersona persona)
+    {
+        byElement.Remove(elementKey);
+        return Bind(elementKey, persona);
+    }
 
     private VoicePersona Bind(string elementKey, VoicePersona persona)
     {

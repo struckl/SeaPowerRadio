@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using BepInEx.Configuration;
 using SeapowerUI;
+using SeaPowerRadio.Voices;
 
 namespace SeaPowerRadio.Ui;
 
@@ -92,6 +94,94 @@ internal static class OptionsPage
         panel.Children.Add(Slider(look, "Warning calls", "Missile or torpedo inbound, radar lock, we are hit, flooding, bingo, emergencies.", Settings.VolumeWarnings, 2f));
         panel.Children.Add(Slider(look, "Order replies", "Acknowledgements, status replies and the reasons why an order is refused.", Settings.VolumeOrders, 2f));
         panel.Children.Add(Slider(look, "Other calls", "Launch and recovery, fuel, search and rescue, mission messages and everything else.", Settings.VolumeOther, 2f));
+
+        BuildVoicePacks(look, panel);
+    }
+
+    /// <summary>
+    /// "Voice packs": which pack speaks for the units of each country. Countries come from the game's own nation list,
+    /// in collapsible groups (NATO, Warsaw Pact, Other; nations.txt), one row per country with a drop-down:
+    /// Auto (what it resolves to), Game voice, or an installed pack. Applies at the next mission start.
+    /// </summary>
+    private static void BuildVoicePacks(Look look, Noesis.StackPanel panel)
+    {
+        var header = new Noesis.TextBlock { Text = "Voice packs", Margin = new Noesis.Thickness(0, 12, 0, 4) };
+        if (look.Header != null)
+            header.Style = look.Header;
+        panel.Children.Add(header);
+        var rule = new Noesis.Border { Height = 1, Opacity = 0.35f, Margin = new Noesis.Thickness(0, 0, 0, 12) };
+        if (look.Rule != null)
+            rule.Style = look.Rule;
+        else if (look.Highlight != null)
+            rule.Background = look.Highlight;
+        panel.Children.Add(rule);
+
+        var packs = VoicePacks.Installed;
+        panel.Children.Add(Note(look, "Installed: " + (packs.Count == 0 ? "none" : string.Join(", ", packs.Select(p => $"{p.Name} {p.Version}")))
+            + ". Every unit speaks with the pack of its own country; a country without a pack keeps the game's own voice. Applies from the next mission."));
+
+        var nations = Nations.All();
+        foreach (var group in nations.GroupBy(n => n.Group))
+        {
+            var rows = new Noesis.StackPanel { Orientation = Noesis.Orientation.Vertical, Margin = new Noesis.Thickness(12, 4, 0, 4) };
+            foreach (NationInfo nation in group)
+                rows.Children.Add(PackRow(look, nation));
+            var expander = new Noesis.Expander
+            {
+                Header = $"{group.Key} ({group.Count()})",
+                IsExpanded = false,
+                Content = rows,
+                Margin = new Noesis.Thickness(0, 0, 0, 8),
+            };
+            if (look.Highlight != null)
+                expander.Foreground = look.Highlight;
+            panel.Children.Add(expander);
+        }
+    }
+
+    private static Noesis.Grid PackRow(Look look, NationInfo nation)
+    {
+        var row = new Noesis.Grid { Margin = new Noesis.Thickness(0, 0, 0, 10) };
+        row.ColumnDefinitions.Add(new Noesis.ColumnDefinition { Width = new Noesis.GridLength(1, Noesis.GridUnitType.Star) });
+        row.ColumnDefinitions.Add(new Noesis.ColumnDefinition { Width = new Noesis.GridLength(1, Noesis.GridUnitType.Auto) });
+
+        var label = new Noesis.TextBlock { Text = nation.Name, VerticalAlignment = Noesis.VerticalAlignment.Center, MinWidth = 150 };
+        if (look.Label != null)
+            label.Style = look.Label;
+        Noesis.Grid.SetColumn(label, 0);
+
+        var entry = Settings.NationEntry(nation.Id);
+        var packs = VoicePacks.Installed;
+        var combo = new Noesis.ComboBox { MinWidth = 240, ToolTip = $"Voice pack for the units of {nation.Name}. Applies at the next mission start." };
+        VoicePack auto = VoicePacks.AutoPack(nation.Id);
+        combo.Items.Add($"Auto ({auto?.Name ?? VoicePacks.GameVoice})");
+        combo.Items.Add(VoicePacks.GameVoice);
+        foreach (VoicePack pack in packs)
+            combo.Items.Add(pack.Name);
+
+        string current = Settings.NationChoice(nation.Id);
+        int selected = 0;                                               // Auto, also for a pack that is not installed any more
+        if (string.Equals(current, VoicePacks.GameVoice, StringComparison.OrdinalIgnoreCase))
+            selected = 1;
+        else
+            for (int i = 0; i < packs.Count; i++)
+                if (string.Equals(packs[i].Id, current, StringComparison.OrdinalIgnoreCase))
+                    selected = i + 2;
+        combo.SelectedIndex = selected;
+        combo.SelectionChanged += (sender, args) =>
+        {
+            int index = combo.SelectedIndex;
+            if (index < 0) return;
+            string value = index == 0 ? VoicePacks.Auto : index == 1 ? VoicePacks.GameVoice : packs[index - 2].Id;
+            if (string.Equals(entry.Value, value, StringComparison.Ordinal)) return;
+            entry.Value = value;
+            Settings.SaveSoon();
+        };
+        Noesis.Grid.SetColumn(combo, 1);
+
+        row.Children.Add(label);
+        row.Children.Add(combo);
+        return row;
     }
 
     /// <summary>The page's own styles and brushes (null where a resource is missing: the control keeps its default).</summary>

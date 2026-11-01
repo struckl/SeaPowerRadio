@@ -38,6 +38,12 @@ ordered.
   of call: contact and track calls, combat calls, warning calls (inbound missile, we're hit, bingo...), replies to
   orders, other calls - for example to make "new contact" and "track identified" stand out. Changes apply at once and
   are saved in the config file. Tested in the game on 0.8.7; on the 3D-globe build checked offline only.
+- **Voice packs** – the 43 voices are the **NATO (English)** pack; other languages come later as separate Workshop
+  items (no DLL needed). Options > Audio > Rats Radio > **Voice packs** lists every country (NATO, Warsaw Pact, Other)
+  with a drop-down: *Auto* (the installed pack for that country, else the game's voice), *Game voice* or a pack. A
+  country without a pack keeps the **game's own voice** – so playing the Soviets at 1.2.0 means the game's Russian voice;
+  choose *NATO (English)* for that country to get the old English radio net. A pack lacking a line also leaves it to the
+  game. Applies from the next mission. Pack format: [docs/voice-packs.md](docs/voice-packs.md).
 - **Female voices** – the voice library has male and female voices; switch the female ones off and units speak with
   male voices only (a unit whose name was rendered only in a female voice keeps it).
 - **Why-not diagnostics** – the reasons the game knows but never says, spoken by the unit, as a message and in
@@ -87,8 +93,8 @@ everything works offline.
    copy its preloader into the game folder).
 2. Subscribe to **[Sea Power: R.A.T.S. Radio](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579)** on the Steam Workshop. About 390 MB: the
    43 rendered voices.
-3. Start a mission. The log `<Sea Power>\BepInEx\LogOutput.log` lists the roster: every unit with its callsign and
-   voice.
+3. Start a mission. The log `<Sea Power>\BepInEx\LogOutput.log` lists the installed voice packs and the roster: every
+   unit with its callsign, voice (`packId/personaId`) and nation.
 
 Manual install instead of the Workshop: unzip the release into `<Sea Power>\Sea Power_Data\StreamingAssets\
 SeaPowerRadio\` (`SeaPowerRadio.dll`, `_info.ini`, `voices\`).
@@ -137,7 +143,9 @@ Releases: [docs/workshop.md](docs/workshop.md) (`tools/package.ps1`), release po
 [docs/testing.md](docs/testing.md); the game systems the mod hooks into (stock voices, why a unit doesn't fire,
 mission lifecycle, contacts) and how to decompile the game: [docs/how-it-works.md](docs/how-it-works.md); the stock
 voice lines and where the game raises them: [docs/stock-voice-events.md](docs/stock-voice-events.md).
-Voices in other languages (Spanish, Russian, … as Workshop voice packs): [docs/languages-roadmap.md](docs/languages-roadmap.md).
+Voice packs (format, discovery, per-country choice): [docs/voice-packs.md](docs/voice-packs.md); the languages planned
+for them (Russian, Spanish, …): [docs/languages-roadmap.md](docs/languages-roadmap.md). `tools/package.ps1 -Pack <id>`
+stages a pack folder for upload.
 
 The rendered voice library (`mod/voices/<persona>/`, ~57,000 mp3 clips) is not in git: it comes with every release
 and can be rebuilt with the voice pipeline below.

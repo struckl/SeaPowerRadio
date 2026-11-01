@@ -92,3 +92,114 @@ in both builds' Noesis.
 Base 1.2.0 with NATO only. English-only players notice nothing, but **players of non-NATO sides now hear the
 game's voice instead of English** by default. Say this in the CHANGELOG and the change note. They can pick NATO
 for that country to get the old behaviour. `package.ps1 -Pack <id>` stages a pack folder for upload later.
+
+## Campaigns: a unit keeps its voice and callsign
+
+Added 2026-11-01 (Lukas): in a campaign every unit keeps the same voice and callsign for the whole campaign.
+
+- **Why a seed is not enough.** `RosterService.MissionSeed()` and `Roster.Build()` shuffle per mission file, and the pool order
+  shifts whenever the set of units changes. So a campaign has a **voice memory**, a small file
+  `BepInEx/config/SeaPowerRadio/campaigns/<campaign id>.txt`, one line per unit: `key|packId/personaId|callsign`
+  (`Roster/CampaignMemory.cs`). Delete a line to give that unit a new voice.
+- **Is this a campaign?** `SceneCreator._isLinearCampaign` (public in 0.8.7 and the globe build; true when a linear campaign is
+  playing a mission). Single missions, instant action and dynamic campaigns (`CampaignMain`) get no memory: their units carry no
+  stable id in the decompiled sources (no `_campaignTag` is written for them), and a ship's name alone would be shared by
+  unrelated missions. Nothing changes there.
+- **Campaign id** = the folder of the mission file (the seed `RosterService` already builds, which for a save is the base
+  mission file), lower-cased and sanitised; never the save file, so a new playthrough of the same campaign gets the same voices.
+  The game itself names the runtime save from the same folder (`linear_campaign_<folder>.sav`).
+- **Unit key.** `ObjectBase._campaignTag` (mission ini key `CampaignTag`; the game's stable per-unit id across the missions of a
+  linear campaign; aircraft get theirs from `FlightDeck._campaignUnitsOnBoard` when they launch), else a ship's or shore
+  unit's name. Aircraft without a tag are not remembered (formations rename them).
+- **Flow.** At roster build: first every element gets the voice and callsign remembered for its key, then the named units, then the
+  rest from the pool (remembered voices and callsigns are reserved, so new units avoid them while the pool lasts), then the memory is
+  written (new units added). A hangar slot is bound to its memory entry when the aircraft launches and its tag is known. Late units
+  are handled the same way.
+- **When the memory is not used (the unit is reassigned and the file updated):** the pack of the unit's country is not the remembered
+  one (setting changed, pack uninstalled), the persona no longer exists, Female voices is off and it is a woman's voice (as today,
+  also live during the mission), or the unit's in-game name does not exist in that voice.
+- **Not verified in the game:** that `_campaignTag` is set when the roster is built and that decks hand it over at launch. In the
+  roster log (`[campaign] '<id>': N units remembered`) the second mission of a campaign shows it.
+
+## Implementation notes (1.2.0, found while building it)
+
+- **Where the nation comes from.** Player units: `ObjectBase.getNation()` (`Nation.Value`), the raw id (`US`, `Soviet`,
+  `North_Korea`). The stock voice profile (`getVoiceoverNation()`, `us_male_1`…) is *not* used. The nation list of the game is the
+  `[Nations]` section of `language_<lang>/nations.ini` (merged virtual file: `LocalizationLoader.OpenVirtualLocalizationFile(
+  "language_xx", "nations", "nations")?.GetSectionKeyValues("Nations")`), identical in `decomp-0.8.7` and `decomp-beta`. The mod
+  drops `Undefined`, `All`, `Civilian`, `Pirates`, `Terrorists` (no countries) and shows the rest, 73 ids in the 0.8.7 game
+  (full list in `how-it-works.md`, section Nations). **Not confirmed in the game:** that a player unit's `getNation()` equals these
+  ids (the decompiled `ObjectBase.setNation` and the `[VoiceProfiles]` keys use the same strings, so it should).
+- **Discovery reads the disk, not `FileManager`.** `FileManager.Directories` differs between 0.8.7 and the globe build (the globe
+  one has layers and mount points), so the mod lists `Application.streamingAssetsPath` sub folders (not `original`, `user`,
+  `EntityScenes`), the Steam Workshop folder of the game (`<steamapps>/workshop/content/1286220/*`, found from `Application.dataPath`)
+  and the base mod's own folder. It does not check whether a folder is ticked in the game's mod list.
+- **Stock map.** A pack needs `catalog.txt`, `personas.txt`; `names.txt` and `stockmap.txt` are optional (without its own
+  `stockmap.txt` a pack takes the base's, since the stock keys are the game's and language-independent).
+- **Fallback to the game.** `StockVoiceRouter.Handle` returns false (the stock line plays) when the unit's country has no pack or
+  the pack cannot say the line (no variant rendered, or a number piece missing). The pieces the game appends to that same call
+  (`AppendMessage`) then also play (`passAppended`). A line the router swallows on purpose (mod-only building blocks) is still
+  swallowed. Speed in knots and the mod's own calls (why not, fuel, SAR, contacts) build no transmission for a Game voice unit.
+  Contact reports of a Game voice side: the mod's contact book is silent; the game's three contact callouts stay muted for the
+  text part by `ContactAlertPatches` (the mod still raises its own linked messages) and the stock voice line plays.
+- **Seeds.** The NATO pack keeps the 1.1.0 seeds (`voices|<mission>`, `callsigns|<mission>`), so a NATO mission gets the same
+  voices and callsigns as before. Other packs shuffle with `voices|<mission>|<packId>`; callsign words are shared per *language*.
+- **Settings binding.** The per-country entries are bound on first use; `nations.txt` ids and the keys of an earlier run's
+  `10. Voice packs` section are bound at start so that BepInEx's save never drops a choice.
+- **Not in 1.2.0:** a changed choice does not rebind a running mission (next mission start), and Language rules other than `en`.
+- **Group `NATO`** (`nations.txt`) holds the NATO members of the period plus Australia and New Zealand, and the pack's `Nations=`
+  lists exactly that group, so every NATO country gets the English voices under `Auto` (Lukas, 2026-11-01: "yes for now"). Keep
+  `voicepack.ini` and the NATO lines of `nations.txt` in step; a country dropped from `Nations=` falls back to the game's voice.
+
+## Offline test (what was run, 2026-11-01)
+
+A scratch folder outside the repo built like the game's Workshop folder: the built `SeaPowerRadio.dll` with `voices/` (the real
+catalog files and four real persona folders) as item `3826433579`, a dummy pack `test-dummy` (Nations=Soviet, three English
+voices relabelled `test_m_01..03`, no `stockmap.txt`, version 1.1.0), a lower-version duplicate of it, and a pack whose
+`MinBaseVersion=9.0.0`. A small console harness loads the DLL and drives it by reflection (BepInEx config in the scratch folder).
+Result (all passing): both packs found, duplicate keeps 1.1.0, newer-base pack skipped with a warning; `US`/`UK` Auto → `nato-en`,
+`Soviet` Auto → `test-dummy`, `Poland` Auto → game voice, `Game voice`, an explicit pack, and an uninstalled pack id (acts as Auto,
+logs once); the dummy voice finds a phrase and its number clips, a phrase the pack lacks gives no variant (so the router leaves it to
+the game), the pack without `stockmap.txt` uses the base's; voice assignment has one pool per pack (`test-dummy/test_m_02`, …).
+The dummy's audio was never committed or staged anywhere but the scratch folder. **Not testable offline:** the roster (needs game
+objects), `StockVoiceRouter.Handle` end to end, the options page and playback.
+
+## To test in the game (with Lukas's OK, `game-testing.md`)
+
+1. 1.1.0 checklist on 0.8.7 and on the globe build; a NATO mission sounds unchanged (same voices and callsigns as 1.1.x).
+2. A Soviet mission: the game's Russian voice speaks every line; no mod voices, callsigns or radio noise; contact reports and
+   why-not calls silent (their messages still show); the roster log lists the units as `(game voice)`.
+3. Soviet set to *NATO (English)* in the options: from the next mission the old behaviour; the choice survives a restart.
+4. The dummy pack (a scratch copy in `StreamingAssets/<folder>`, never published) set for Soviet: its voices speak, a line it lacks
+   plays the game's own line (check the numbers: pieces and appended parts).
+5. Options > Audio: the Voice packs part builds on both versions (Expander and ComboBox in both Noesis versions); groups start
+   collapsed, expand/collapse works, drop-downs open, change and persist; installed packs line; the list of countries is complete
+   and in the right groups; nothing breaks the rest of the Audio page.
+6. A mixed task force (US ship with a Soviet unit, if a mission has one): each unit its own country's voice.
+7. **Voice stays across two campaign missions:** play two missions of one linear campaign; the units that appear in both have the same
+   voice and callsign (roster log + `BepInEx/config/SeaPowerRadio/campaigns/<id>.txt`), including after a save/load and in a new
+   playthrough; a unit new in mission 2 gets a voice nobody remembered used; switching a country's pack or Female voices off changes
+   the affected units and updates the file.
+8. `getNation()` equals the nation ids of `nations.ini` for player units (the roster log prints the nation next to each voice).
+
+## In-game test (2026-11-01, 0.8.7 flat map, flat DLL)
+
+Run with Lukas's OK. The 1.2.0 DLLs and pack files were laid over both installed copies (StreamingAssets and the Workshop item),
+plus a dummy pack (`test-dummy`, three relabelled English voices) in `StreamingAssets/RadioTestDummy`. Afterwards everything went
+back to 1.1.0 and the dummy and its campaign memory were deleted.
+
+- **Discovery:** both packs found; the base pack found in both copies, the StreamingAssets one kept (`found twice` info line).
+- **NATO mission** (Intro 01 Red Sea Breakout): nation id `US`, three elements on `nato-en`, contact calls spoken. Not compared
+  voice by voice with 1.1.0.
+- **Soviet side, Auto** (Warsaw Pact > Breakthrough): all 64 elements `(game voice)`. `NewTaskReceived` and `NewContactMultiple`
+  go to the game, and the mod queues nothing. Note: the task-force nation came as `soviet` once and as `Soviet` once.
+- **Options page:** the Voice packs section with Installed line and NATO (17) / Warsaw Pact (7) / Other (53) groups that expand and
+  collapse. The country is shown as `USSR` (id `Soviet`). The dropdown offers Auto (Game voice) / Game voice / NATO (English) /
+  Test dummy (English). Choosing Test dummy for USSR wrote `Soviet = test-dummy` to the config at once.
+- **Soviet side, test-dummy:** after reloading the mission, the roster used `test-dummy` voices, and `NewTasking` was spoken in a
+  dummy voice.
+- **Campaign** (Strike Group Molniya, mission 1): `[campaign] ... 4 units remembered`. The memory file holds `t:p1`..`t:p4`
+  (the four ships' `CampaignTag`). Missions 2–5 use the same tags `p1`..`p4`, so the ships keep their voices there. **Not run:**
+  mission 2 itself (needs mission 1 finished). Aircraft without a tag (the Yak-38 and Ka-25 placed in the mission) are not
+  remembered, as designed. Left with Accept: no campaign save was written.
+- No Radio exception in the log. **Not run:** the globe build, a dropdown change surviving a restart.

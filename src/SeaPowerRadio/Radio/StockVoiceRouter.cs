@@ -4,6 +4,7 @@ using SeaPower;
 using SeapowerUI.ViewModels;
 using SeaPowerRadio.Core;
 using SeaPowerRadio.Roster;
+using SeaPowerRadio.Voices;
 using UnityEngine;
 
 namespace SeaPowerRadio.Radio;
@@ -24,33 +25,55 @@ internal static class StockVoiceRouter
 
     public static bool Handle(StockVoiceRequest request)
     {
-        if (!Settings.ReplaceStockVoices.Value || !Catalog.Loaded || Player == null)
+        if (!Settings.ReplaceStockVoices.Value || Player == null)
             return false;
         Roster.Roster roster = RosterService.Current;
         if (roster == null)
             return false; // menus, editor: no mission roster to speak with
-        if (!Catalog.TryStock(request.Key, out string phrase, out string numberKind))
+
+        // Whose line is it, and which pack speaks for that unit's country? No pack: the game's own voice plays.
+        RosterElement speaker = request.Speaker != null ? roster.Resolve(request.Speaker) : roster.CommandVoice();
+        if (speaker != null && speaker.Voice == null)
+            return StockPlays(request);
+        Catalog catalog = speaker != null ? speaker.Voice.Pack.Catalog : VoicePacks.StockCatalog;
+        if (catalog == null)
+            return false;
+
+        if (!catalog.TryStock(request.Key, out string phrase, out string numberKind))
             // Unknown key. A piece appended to a task force report is one of the game's contact building blocks
             // built at runtime – swallow it with the rest of that report. Anything else (other mods' lines) plays.
-            return request.Appended && request.Speaker == null;
+            return request.Appended && request.Speaker == null && !passAppended;
         if (request.Appended && request.Key != "SplashedTrack")
-            return true;
+            return !passAppended;
         if (phrase == null)
+        {
+            passAppended = false;
             return true;
-
-        RosterElement speaker = request.Speaker != null ? roster.Resolve(request.Speaker) : roster.CommandVoice();
+        }
         if (speaker == null)
             return true; // an enemy or neutral unit "talking": the player's net doesn't hear it
 
         int? number = numberKind != null && request.Number >= 0 ? request.Number : (int?)null;
         int variant = 0;
-        phrase = Refine(phrase, request, speaker.Voice?.Id, ref number, ref variant);
+        phrase = Refine(phrase, request, speaker.Voice.FullId, ref number, ref variant);
         Transmission t = TransmissionBuilder.Build(speaker, phrase, number, variant);
         if (t == null)
-            return true;
+            return StockPlays(request); // the pack has no clip for this line: the game's own line plays
+        passAppended = false;
         t.Alerts.AddRange(AlertLink.TakeFor(request.Speaker));
         Player.Submit(t);
         return true;
+    }
+
+    // True while the pieces the game appends to a call belong to a line that was left to the game: they play too.
+    private static bool passAppended;
+
+    /// <summary>The game's own line plays (Game voice, or a line the pack lacks), together with what the game appends to it.</summary>
+    private static bool StockPlays(StockVoiceRequest request)
+    {
+        if (!request.Appended)
+            passAppended = true;
+        return false;
     }
 
     /// <summary>
@@ -59,11 +82,11 @@ internal static class StockVoiceRouter
     /// </summary>
     public static void SpeedInKnots(ObjectBase unit, float knots)
     {
-        if (!Settings.ReplaceStockVoices.Value || !Catalog.Loaded || Player == null || unit == null || knots < 0f)
+        if (!Settings.ReplaceStockVoices.Value || Player == null || unit == null || knots < 0f)
             return;
         RosterElement speaker = RosterService.Current?.Resolve(unit);
-        if (speaker == null)
-            return;
+        if (speaker == null || speaker.Voice == null)
+            return;      // Game voice: the game has no line for the knots slider, so nothing is said
         int value = Mathf.RoundToInt(knots);
         Transmission t = value == 0
             ? TransmissionBuilder.Build(speaker, "AllStop", null)
@@ -125,7 +148,7 @@ internal static class StockVoiceRouter
         {
             int ahead = unit._currentEngageTasks.Count(t => !t._isAutoAttack);
             string queued = "Queued_" + Math.Min(ahead + 1, 5);
-            if (ahead >= 1 && Catalog.CanSay(queued, voice))
+            if (ahead >= 1 && Catalog.Of(voice).CanSay(queued, voice))
             {
                 number = null;
                 return queued;
@@ -178,7 +201,7 @@ internal static class StockVoiceRouter
                 string step = setting == ObjectSpeed.SpeedSettings.Ahead_1_3 ? "OneThird"
                     : setting == ObjectSpeed.SpeedSettings.Ahead_2_3 ? "TwoThirds" : "Standard";
                 string named = (faster ? "SpeedUp" : "SpeedDown") + step;
-                if (Catalog.CanSay(named, voice))
+                if (Catalog.Of(voice).CanSay(named, voice))
                     return named;
                 if (!faster)
                     return "SetSpeedSlow";
@@ -198,7 +221,7 @@ internal static class StockVoiceRouter
     {
         float climbFeet = (unit.DesiredAltitude.Value - unit.transform.position.y) * FeetPerUnit;
         variant = climbFeet > 100f ? Climbing
-            : climbFeet < -100f && Catalog.CanSay(phrase, voice, haveNumber: true, only: Descending) ? Descending
+            : climbFeet < -100f && Catalog.Of(voice).CanSay(phrase, voice, haveNumber: true, only: Descending) ? Descending
             : LevelingOff;
         return phrase;
     }

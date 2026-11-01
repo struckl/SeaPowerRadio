@@ -10,7 +10,7 @@ using UnityEngine.Networking;
 namespace SeaPowerRadio.Radio;
 
 /// <summary>
-/// Loads voice clips (mod/voices/&lt;voice&gt;/&lt;key&gt;.mp3) on demand and keeps recently used ones decoded. The
+/// Loads voice clips (&lt;pack&gt;/&lt;persona&gt;/&lt;key&gt;.mp3, voice = packId/personaId) on demand and keeps recently used ones decoded. The
 /// library is ~27k clips; a mission only ever touches a few hundred, so nothing is preloaded.
 /// </summary>
 internal static class ClipLibrary
@@ -24,13 +24,21 @@ internal static class ClipLibrary
 
     private const long CacheLimitBytes = 96L * 1024 * 1024;
     private static readonly Dictionary<string, Entry> Cache = new Dictionary<string, Entry>();
+    private static readonly Dictionary<string, bool> Known = new Dictionary<string, bool>();   // file checks, per session
     private static long cachedBytes;
     private static long tick;
 
+    /// <summary>File of a clip. <paramref name="voice"/> is <c>packId/personaId</c>; null when the pack is not installed.</summary>
     public static string PathOf(string voice, string key) =>
-        System.IO.Path.Combine(VoiceLibrary.VoicesDirectory, voice, key + ".mp3");
+        VoicePacks.OfVoice(voice)?.PathOf(VoicePacks.PersonaOf(voice), key);
 
-    public static bool Exists(string voice, string key) => File.Exists(PathOf(voice, key));
+    public static bool Exists(string voice, string key)
+    {
+        string path = PathOf(voice, key);
+        if (path == null) return false;
+        string id = voice + "/" + key;
+        return Known.TryGetValue(id, out bool yes) ? yes : Known[id] = File.Exists(path);
+    }
 
     /// <summary>Load every clip of a transmission; missing clips come back null and are skipped by the caller.</summary>
     public static IEnumerator LoadAll(string voice, IList<string> keys, AudioClip[] result)
@@ -55,7 +63,7 @@ internal static class ClipLibrary
         }
 
         string path = PathOf(voice, key);
-        if (!File.Exists(path))
+        if (path == null || !File.Exists(path))
         {
             ModLog.Warn($"Missing voice clip {id}");
             done(null);

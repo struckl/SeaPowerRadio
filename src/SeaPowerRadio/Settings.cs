@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
 using UnityEngine;
@@ -53,6 +56,10 @@ internal static class Settings
     public static ConfigEntry<bool> LogStockVoice;
     public static ConfigEntry<bool> LogRadio;
 
+    public const string VoicePackSection = "10. Voice packs";
+    private static readonly Dictionary<string, ConfigEntry<string>> NationEntries =
+        new Dictionary<string, ConfigEntry<string>>(StringComparer.OrdinalIgnoreCase);
+
     private static ConfigFile file;
     private static float saveAt = -1f;
 
@@ -69,6 +76,63 @@ internal static class Settings
         saveAt = -1f;
         try { file?.Save(); }
         catch (System.Exception ex) { ModLog.Warn($"Could not save the settings: {ex.Message}"); }
+    }
+
+    /// <summary>
+    /// The voice pack setting of one country (<see cref="Voices.VoicePacks.Auto"/>, <see cref="Voices.VoicePacks.GameVoice"/>
+    /// or a pack id), bound on first use: the list of countries comes from the game, which is not loaded yet when the
+    /// config is read.
+    /// </summary>
+    public static ConfigEntry<string> NationEntry(string nation)
+    {
+        if (NationEntries.TryGetValue(nation, out ConfigEntry<string> entry))
+            return entry;
+        entry = file.Bind(VoicePackSection, nation, Voices.VoicePacks.Auto,
+            $"Voice pack for the units of {nation}: Auto (the pack that lists the country, else the game's own voice), " +
+            "Game voice (the mod stays silent and the game's own voice lines play) or the Id of an installed voice pack. " +
+            "Takes effect at the next mission start. Also on the Audio page of the Options.");
+        NationEntries[nation] = entry;
+        return entry;
+    }
+
+    public static string NationChoice(string nation)
+    {
+        if (string.IsNullOrEmpty(nation) || file == null)
+            return Voices.VoicePacks.Auto;
+        string value = NationEntry(nation).Value;
+        return string.IsNullOrWhiteSpace(value) ? Voices.VoicePacks.Auto : value.Trim();
+    }
+
+    /// <summary>Binds the countries the mod knows without the game (nations.txt) and those an earlier run left in the file, so saving never drops them.</summary>
+    public static void BindNations()
+    {
+        foreach (string nation in Voices.Nations.Listed())
+            NationEntry(nation);
+        // The countries an earlier run saved (BepInEx rewrites the file from its bound entries only).
+        foreach (string nation in SavedNations())
+            NationEntry(nation);
+    }
+
+    private static IEnumerable<string> SavedNations()
+    {
+        var found = new List<string>();
+        try
+        {
+            bool inSection = false;
+            foreach (string raw in File.ReadAllLines(file.ConfigFilePath))
+            {
+                string line = raw.Trim();
+                if (line.StartsWith("["))
+                    inSection = line == "[" + VoicePackSection + "]";
+                else if (inSection && line.Length > 0 && !line.StartsWith("#") && line.IndexOf('=') > 0)
+                    found.Add(line.Substring(0, line.IndexOf('=')).Trim());
+            }
+        }
+        catch (Exception ex)
+        {
+            ModLog.Warn($"Could not read the saved voice pack settings: {ex.Message}");
+        }
+        return found;
     }
 
     public static void Init()
@@ -173,6 +237,7 @@ internal static class Settings
             "Log every voice line the game asks for (key, speaker, number).");
         LogRadio = file.Bind("9. Diagnostics", "Log radio calls", true,
             "Log every call the mod queues and speaks.");
+        BindNations();
         file.Save();   // writes the entries a config from an older version did not have yet
     }
 }

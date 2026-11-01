@@ -20,7 +20,7 @@ internal static class RosterService
     private static void OnMissionStarted()
     {
         string seed = MissionSeed();
-        var roster = new Roster(seed, VoiceLibrary.Personas);
+        var roster = new Roster(seed, CampaignMemory.ForMission(seed));
         roster.Build();
         Current = roster;
         if (Settings.LogRoster.Value)
@@ -37,7 +37,7 @@ internal static class RosterService
         string squadron = type.Squadrons[launch.SquadronIndex]._name;
         RosterElement element = roster.BindLaunch(launch.Deck._baseObject, type._fileName, squadron, launch.Aircraft);
         if (Settings.LogRoster.Value && element != null)
-            ModLog.Info($"[roster] launch {launch.Aircraft.getUIDAndName()} -> {element.Callsign} ({element.Voice?.Id ?? "-"})");
+            ModLog.Info($"[roster] launch {launch.Aircraft.getUIDAndName()} -> {element.Callsign} ({element.Voice?.FullId ?? "-"})");
     }
 
     /// <summary>

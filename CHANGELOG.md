@@ -9,9 +9,9 @@ mission have not been seen in the game.
 
 **What players of non-NATO sides will notice: they now hear the game's own voice by default** (the Soviets: the game's
 Russian voice), not the English radio voices of 1.1.x. Reason: the 43 voices are English and the base ships them as the
-**NATO (English)** pack, which lists only US, UK, Australia, New Zealand and Canada. Anyone who wants the old behaviour
+**NATO (English)** pack, which lists the NATO group (US, UK, Canada, France, Germany, Italy, the Netherlands, Belgium, Denmark, Norway, Iceland, Portugal, Greece, Turkey, Spain, plus Australia and New Zealand). Anyone who wants the old behaviour
 for another country picks *NATO (English)* for it in Options > Audio > Rats Radio > Voice packs (or sets the country to
-`nato-en` in the config). English-speaking NATO players notice nothing: their voices, callsigns and the seed per mission are
+`nato-en` in the config). NATO players notice nothing: their voices, callsigns and the seed per mission are
 unchanged.
 
 - **Voice packs.** The base's `voices/` folder is now a pack (`voicepack.ini`: Id, Name, Language, Nations, Version,

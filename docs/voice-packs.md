@@ -147,9 +147,9 @@ Added 2026-11-01 (Lukas): in a campaign every unit keeps the same voice and call
 - **Settings binding.** The per-country entries are bound on first use; `nations.txt` ids and the keys of an earlier run's
   `10. Voice packs` section are bound at start so that BepInEx's save never drops a choice.
 - **Not in 1.2.0:** a changed choice does not rebind a running mission (next mission start), and Language rules other than `en`.
-- **Group `NATO`** also holds Australia and New Zealand (the pack's countries) and the NATO members of the period; the pack itself
-  lists only US, UK, Australia, NewZealand, Canada under `Auto`. Other NATO countries (France, Germany, …) therefore get the
-  game's voice under `Auto` – add them to `Nations=` in `voices/voicepack.ini` if the English voices should keep speaking for them.
+- **Group `NATO`** (`nations.txt`) holds the NATO members of the period plus Australia and New Zealand, and the pack's `Nations=`
+  lists exactly that group, so every NATO country gets the English voices under `Auto` (Lukas, 2026-11-01: "yes for now"). Keep
+  `voicepack.ini` and the NATO lines of `nations.txt` in step; a country dropped from `Nations=` falls back to the game's voice.
 
 ## Offline test (what was run, 2026-11-01)
 

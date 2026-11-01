@@ -95,6 +95,20 @@ internal sealed class VoiceAssignment
     public bool IsAmong(VoicePersona persona, IEnumerable<string> candidates) =>
         persona != null && candidates != null && candidates.Contains(persona.Id);
 
+    /// <summary>Keeps a voice that is remembered for a unit (campaign) for that unit: new units avoid it while the pool lasts.</summary>
+    public void Reserve(string personaId)
+    {
+        if (byId.ContainsKey(personaId))
+            used.Add(personaId);
+    }
+
+    /// <summary>Gives an element the voice it had before (campaign memory).</summary>
+    public VoicePersona Claim(string elementKey, VoicePersona persona)
+    {
+        byElement.Remove(elementKey);
+        return Bind(elementKey, persona);
+    }
+
     private VoicePersona Bind(string elementKey, VoicePersona persona)
     {
         byElement[elementKey] = persona;

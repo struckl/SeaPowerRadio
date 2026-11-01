@@ -93,6 +93,34 @@ Base 1.2.0 with NATO only. English-only players notice nothing, but **players of
 game's voice instead of English** by default. Say this in the CHANGELOG and the change note. They can pick NATO
 for that country to get the old behaviour. `package.ps1 -Pack <id>` stages a pack folder for upload later.
 
+## Campaigns: a unit keeps its voice and callsign
+
+Added 2026-11-01 (Lukas): in a campaign every unit keeps the same voice and callsign for the whole campaign.
+
+- **Why a seed is not enough.** `RosterService.MissionSeed()` and `Roster.Build()` shuffle per mission file, and the pool order
+  shifts whenever the set of units changes. So a campaign has a **voice memory**, a small file
+  `BepInEx/config/SeaPowerRadio/campaigns/<campaign id>.txt`, one line per unit: `key|packId/personaId|callsign`
+  (`Roster/CampaignMemory.cs`). Delete a line to give that unit a new voice.
+- **Is this a campaign?** `SceneCreator._isLinearCampaign` (public in 0.8.7 and the globe build; true when a linear campaign is
+  playing a mission). Single missions, instant action and dynamic campaigns (`CampaignMain`) get no memory: their units carry no
+  stable id in the decompiled sources (no `_campaignTag` is written for them), and a ship's name alone would be shared by
+  unrelated missions. Nothing changes there.
+- **Campaign id** = the folder of the mission file (the seed `RosterService` already builds, which for a save is the base
+  mission file), lower-cased and sanitised; never the save file, so a new playthrough of the same campaign gets the same voices.
+  The game itself names the runtime save from the same folder (`linear_campaign_<folder>.sav`).
+- **Unit key.** `ObjectBase._campaignTag` (mission ini key `CampaignTag`; the game's stable per-unit id across the missions of a
+  linear campaign; aircraft get theirs from `FlightDeck._campaignUnitsOnBoard` when they launch), else a ship's or shore
+  unit's name. Aircraft without a tag are not remembered (formations rename them).
+- **Flow.** At roster build: first every element gets the voice and callsign remembered for its key, then the named units, then the
+  rest from the pool (remembered voices and callsigns are reserved, so new units avoid them while the pool lasts), then the memory is
+  written (new units added). A hangar slot is bound to its memory entry when the aircraft launches and its tag is known. Late units
+  are handled the same way.
+- **When the memory is not used (the unit is reassigned and the file updated):** the pack of the unit's country is not the remembered
+  one (setting changed, pack uninstalled), the persona no longer exists, Female voices is off and it is a woman's voice (as today,
+  also live during the mission), or the unit's in-game name does not exist in that voice.
+- **Not verified in the game:** that `_campaignTag` is set when the roster is built and that decks hand it over at launch. In the
+  roster log (`[campaign] '<id>': N units remembered`) the second mission of a campaign shows it.
+
 ## Implementation notes (1.2.0, found while building it)
 
 - **Where the nation comes from.** Player units: `ObjectBase.getNation()` (`Nation.Value`), the raw id (`US`, `Soviet`,
@@ -148,4 +176,8 @@ objects), `StockVoiceRouter.Handle` end to end, the options page and playback.
    collapsed, expand/collapse works, drop-downs open, change and persist; installed packs line; the list of countries is complete
    and in the right groups; nothing breaks the rest of the Audio page.
 6. A mixed task force (US ship with a Soviet unit, if a mission has one): each unit its own country's voice.
-7. `getNation()` equals the nation ids of `nations.ini` for player units (the roster log prints the nation next to each voice).
+7. **Voice stays across two campaign missions:** play two missions of one linear campaign; the units that appear in both have the same
+   voice and callsign (roster log + `BepInEx/config/SeaPowerRadio/campaigns/<id>.txt`), including after a save/load and in a new
+   playthrough; a unit new in mission 2 gets a voice nobody remembered used; switching a country's pack or Female voices off changes
+   the affected units and updates the file.
+8. `getNation()` equals the nation ids of `nations.ini` for player units (the roster log prints the nation next to each voice).

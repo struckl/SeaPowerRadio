@@ -28,6 +28,10 @@ unchanged.
   Options > Audio > Rats Radio has a **Voice packs** part: the installed packs, then the countries in collapsible groups
   (NATO, Warsaw Pact, Other), one drop-down per country. The country list is the game's own (`nations.ini`), the groups come
   from `voices/nations.txt`; a nation that is not listed lands in Other. A changed choice applies from the next mission.
+- **Campaigns keep voices.** In a linear campaign every unit keeps its voice and callsign from mission to mission, remembered per
+  campaign in `BepInEx/config/SeaPowerRadio/campaigns/<campaign>.txt` (key = the game's campaign tag, else a ship's name). A new
+  playthrough of the same campaign gets the same voices. A voice is reassigned (and the file updated) when the country's pack
+  changed, the pack is gone or Female voices is off. Single missions are unchanged.
 - Number and callsign rules are selected by a pack's `Language` (only `en` exists; an unknown language falls back to it with
   a warning).
 - `tools/package.ps1 -Pack <id>` stages a pack folder (`dist/pack-<id>`) for its own Workshop item.

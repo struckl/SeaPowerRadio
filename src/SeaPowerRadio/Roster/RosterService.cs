@@ -20,7 +20,7 @@ internal static class RosterService
     private static void OnMissionStarted()
     {
         string seed = MissionSeed();
-        var roster = new Roster(seed);
+        var roster = new Roster(seed, CampaignMemory.ForMission(seed));
         roster.Build();
         Current = roster;
         if (Settings.LogRoster.Value)

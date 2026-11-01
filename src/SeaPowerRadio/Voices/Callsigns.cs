@@ -100,6 +100,13 @@ internal sealed class Callsigns
         return result;
     }
 
+    /// <summary>A callsign that is taken (a unit of a campaign keeps it): generation will not hand it out again.</summary>
+    public void Reserve(string callsign)
+    {
+        if (!string.IsNullOrEmpty(callsign))
+            used.Add(callsign);
+    }
+
     public string Single(CallsignKind kind)
     {
         string word = NextWord(kind);

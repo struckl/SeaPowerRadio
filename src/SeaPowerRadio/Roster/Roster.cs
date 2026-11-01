@@ -18,6 +18,7 @@ internal sealed class RosterElement
     public string Callsign;        // generated fallback ("Viper 1-1"), used when the in-game name can't be said; null for Game voice
     public string Nation;          // the unit's own nation (ObjectBase.getNation()), which picks the pack
     public VoicePack Pack;         // the pack that speaks for this element; null = the game's own voice
+    public string MemoryKey;       // key in the campaign's voice memory (campaign tag, else the unit's name); null = not remembered
     public VoicePersona Voice;     // null for Game voice (and when the pack has no voice left)
     public GameName BoundName;     // the in-game name this element's voice was chosen for, if any
 
@@ -50,9 +51,49 @@ internal sealed class Roster
     public string MissionSeed { get; }
     public IReadOnlyList<RosterElement> Elements => elements;
 
-    public Roster(string missionSeed)
+    private readonly CampaignMemory memory;   // null outside a linear campaign
+
+    public Roster(string missionSeed, CampaignMemory campaign = null)
     {
         MissionSeed = missionSeed;
+        memory = campaign;
+    }
+
+    /// <summary>Key of a unit in the campaign memory: its campaign tag; failing that a ship's or shore unit's name (aircraft names are rewritten by formations).</summary>
+    private string MemoryKeyOf(ObjectBase unit)
+    {
+        if (memory == null || unit == null) return null;
+        if (!string.IsNullOrEmpty(unit._campaignTag)) return "t:" + unit._campaignTag;
+        string name = IsAir(unit) ? null : unit.getName();
+        return string.IsNullOrEmpty(name) ? null : "n:" + name;
+    }
+
+    /// <summary>
+    /// Gives the element the voice and callsign the campaign remembers for it. Not when the pack of that country is not the
+    /// remembered one (setting changed or pack gone), the voice is gone or not allowed (female voices off), or the unit's name
+    /// does not exist in that voice: then it is chosen anew and the memory updated.
+    /// </summary>
+    private bool ApplyMemory(RosterElement e)
+    {
+        if (memory == null || e.MemoryKey == null || e.Pack == null || !memory.TryGet(e.MemoryKey, out string voiceId, out string callsign))
+            return false;
+        int slash = voiceId.IndexOf('/');
+        if (slash < 0 || !string.Equals(voiceId.Substring(0, slash), e.Pack.Id, System.StringComparison.OrdinalIgnoreCase))
+            return false;
+        string persona = voiceId.Substring(slash + 1);
+        VoicePersona voice = e.Pack.Personas.FirstOrDefault(p => p.Id == persona);
+        if (voice == null || !VoiceAssignment.IsAllowed(voice) || (e.BoundName != null && !e.BoundName.Voices.Contains(persona)))
+            return false;
+        e.Voice = VoicesOf(e.Pack).Claim(e.Key, voice);
+        if (!string.IsNullOrEmpty(callsign) && e.Callsign != null)
+            e.Callsign = callsign;
+        return true;
+    }
+
+    private void Remember(RosterElement e)
+    {
+        if (memory != null && e.MemoryKey != null && e.Voice != null)
+            memory.Set(e.MemoryKey, e.Voice.FullId, e.Callsign);
     }
 
     /// <summary>The pack for a nation, settled once per mission (a changed setting applies from the next mission).</summary>
@@ -69,14 +110,25 @@ internal sealed class Roster
         if (pack == null) return null;
         string language = LanguageRules.For(pack.Language);
         if (!callsigns.TryGetValue(language, out Callsigns c))
+        {
             callsigns[language] = c = new Callsigns(MissionSeed);
+            if (memory != null)
+                foreach (string remembered in memory.Callsigns())
+                    c.Reserve(remembered);          // a unit of the campaign keeps its callsign: nobody new gets it
+        }
         return c;
     }
 
     private VoiceAssignment VoicesOf(VoicePack pack)
     {
         if (!voices.TryGetValue(pack.Id, out VoiceAssignment v))
+        {
             voices[pack.Id] = v = new VoiceAssignment(pack, MissionSeed);
+            if (memory != null)
+                foreach (VoicePersona p in pack.Personas)
+                    if (memory.IsRemembered(pack.Id + "/" + p.Id))
+                        v.Reserve(p.Id);            // remembered voices stay free for their units
+        }
         return v;
     }
 
@@ -85,8 +137,13 @@ internal sealed class Roster
     private void AssignVoice(RosterElement e)
     {
         if (e.Pack == null || e.Voice != null) return;
-        VoiceAssignment pool = VoicesOf(e.Pack);
-        e.Voice = e.BoundName != null ? pool.Prefer(e.Key, e.BoundName.Voices) : pool.For(e.Key);
+        if (!ApplyMemory(e))
+        {
+            VoiceAssignment pool = VoicesOf(e.Pack);
+            e.Voice = e.BoundName != null ? pool.Prefer(e.Key, e.BoundName.Voices) : pool.For(e.Key);
+        }
+        Remember(e);
+        memory?.SaveIfDirty();
     }
 
     public RosterElement Find(ObjectBase unit)
@@ -124,11 +181,23 @@ internal sealed class Roster
         foreach (ObjectBase deckOwner in units.Where(u => u._obp?._flightDeck != null))
             AddAirWing(deckOwner);
 
-        // Named units first – their names exist only in a few voices – then everyone else from the pool.
-        foreach (RosterElement e in elements.Where(e => e.BoundName != null && e.Pack != null))
+        // A campaign's units first get the voices and callsigns it remembers for them.
+        foreach (RosterElement e in elements.Where(e => e.Pack != null))
+            ApplyMemory(e);
+
+        // Named units next – their names exist only in a few voices – then everyone else from the pool.
+        foreach (RosterElement e in elements.Where(e => e.BoundName != null && e.Pack != null && e.Voice == null))
             e.Voice = VoicesOf(e.Pack).Prefer(e.Key, e.BoundName.Voices);
         foreach (RosterElement e in elements.Where(e => e.Voice == null && e.Pack != null))
             AssignVoice(e);
+
+        if (memory != null)
+        {
+            foreach (RosterElement e in elements)
+                Remember(e);
+            memory.SaveIfDirty();
+            ModLog.Info($"[campaign] '{memory.Id}': {memory.Count} units remembered");
+        }
     }
 
     /// <summary>
@@ -145,8 +214,12 @@ internal sealed class Roster
             VoicePersona before = e.Voice;
             e.Voice = VoicesOf(e.Pack).Rebind(e.Key, e.BoundName?.Voices);
             if (e.Voice != before)
+            {
                 changed++;
+                Remember(e);
+            }
         }
+        memory?.SaveIfDirty();
         return changed;
     }
 
@@ -183,6 +256,7 @@ internal sealed class Roster
             Pack = pack,
             Callsign = pack != null ? callsign : null,
             BoundName = NameOf(unit, pack),
+            MemoryKey = MemoryKeyOf(unit),
         };
         elements.Add(element);
         byUnit[unit.GetInstanceID()] = element;
@@ -244,6 +318,14 @@ internal sealed class Roster
         {
             slot.BoundName = name;
             slot.Voice = VoicesOf(slot.Pack).Prefer(slot.Key + "|" + name.Key, name.Voices);
+        }
+        // The aircraft knows its campaign tag now (the deck hands it over at launch): the voice it had before, or this one from now on.
+        slot.MemoryKey = MemoryKeyOf(aircraft);
+        if (slot.MemoryKey != null && slot.Pack != null)
+        {
+            if (!ApplyMemory(slot))
+                Remember(slot);
+            memory.SaveIfDirty();
         }
         return slot;
     }

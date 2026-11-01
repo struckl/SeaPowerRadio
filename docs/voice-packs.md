@@ -181,3 +181,25 @@ objects), `StockVoiceRouter.Handle` end to end, the options page and playback.
    playthrough; a unit new in mission 2 gets a voice nobody remembered used; switching a country's pack or Female voices off changes
    the affected units and updates the file.
 8. `getNation()` equals the nation ids of `nations.ini` for player units (the roster log prints the nation next to each voice).
+
+## In-game test (2026-11-01, 0.8.7 flat map, flat DLL)
+
+Run with Lukas's OK. The 1.2.0 DLLs and pack files were laid over both installed copies (StreamingAssets and the Workshop item),
+plus a dummy pack (`test-dummy`, three relabelled English voices) in `StreamingAssets/RadioTestDummy`. Afterwards everything went
+back to 1.1.0 and the dummy and its campaign memory were deleted.
+
+- **Discovery:** both packs found; the base pack found in both copies, the StreamingAssets one kept (`found twice` info line).
+- **NATO mission** (Intro 01 Red Sea Breakout): nation id `US`, three elements on `nato-en`, contact calls spoken. Not compared
+  voice by voice with 1.1.0.
+- **Soviet side, Auto** (Warsaw Pact > Breakthrough): all 64 elements `(game voice)`. `NewTaskReceived` and `NewContactMultiple`
+  go to the game, and the mod queues nothing. Note: the task-force nation came as `soviet` once and as `Soviet` once.
+- **Options page:** the Voice packs section with Installed line and NATO (17) / Warsaw Pact (7) / Other (53) groups that expand and
+  collapse. The country is shown as `USSR` (id `Soviet`). The dropdown offers Auto (Game voice) / Game voice / NATO (English) /
+  Test dummy (English). Choosing Test dummy for USSR wrote `Soviet = test-dummy` to the config at once.
+- **Soviet side, test-dummy:** after reloading the mission, the roster used `test-dummy` voices, and `NewTasking` was spoken in a
+  dummy voice.
+- **Campaign** (Strike Group Molniya, mission 1): `[campaign] ... 4 units remembered`. The memory file holds `t:p1`..`t:p4`
+  (the four ships' `CampaignTag`). Missions 2–5 use the same tags `p1`..`p4`, so the ships keep their voices there. **Not run:**
+  mission 2 itself (needs mission 1 finished). Aircraft without a tag (the Yak-38 and Ka-25 placed in the mission) are not
+  remembered, as designed. Left with Accept: no campaign save was written.
+- No Radio exception in the log. **Not run:** the globe build, a dropdown change surviving a restart.

@@ -2,10 +2,10 @@
 
 ## 1.2.0 – unreleased – voice packs: every country picks its own voice pack
 
-**Not run in the game yet.** Built for both versions (default and `-p:GameBuild=Flat`), `python tools/modtool.py compat`
-passes, and the discovery, per-country choice, catalog and voice-assignment code was run offline against a dummy pack
-(`docs/voice-packs.md`, section "Offline test"). The Options page, the stock-voice fallback and everything that needs a
-mission have not been seen in the game.
+**Run in the game on 0.8.7 (flat map); the 3D-globe build is not run yet.** Built for both versions (default and
+`-p:GameBuild=Flat`), `python tools/modtool.py compat` passes. In the game on 0.8.7: pack discovery, a NATO mission, a Soviet
+mission on the game voice and on a test pack, the Options page and the campaign voice memory (`docs/voice-packs.md`, section
+"In-game test").
 
 **What players of non-NATO sides will notice: they now hear the game's own voice by default** (the Soviets: the game's
 Russian voice), not the English radio voices of 1.1.x. Reason: the 43 voices are English and the base ships them as the

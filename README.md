@@ -114,6 +114,11 @@ Interim fix for "contact faded" spam without any mod: Options → Audio → **Re
   [Pop-Out Windows](https://github.com/struckl/SeaPowerPopOut).
 - No game files are changed.
 
+## Feedback and bug reports
+
+Bugs, feedback and ideas go on the R.A.T.S. feedback board: <https://hub.sewerlabs.dev/s/radio>.
+For a bug, add `<Sea Power>\BepInEx\LogOutput.log` as a link; it lists the roster, every call and every refusal.
+
 ## Building
 
 Requires the .NET SDK (8+) and a local Sea Power install with Anchor Chain subscribed (game and Anchor Chain

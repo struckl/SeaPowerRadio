@@ -71,7 +71,7 @@ internal static class NameAliases
     /// <summary>The alias for a game name: an exact line, else the longest "starts with" line; tried again without a prefix.</summary>
     public static NameAlias For(string gameName)
     {
-        if (string.IsNullOrWhiteSpace(gameName)) return null;
+        if (string.IsNullOrWhiteSpace(gameName) || (exact.Count == 0 && starts.Count == 0)) return null;
         return Lookup(gameName) ?? (StripPrefix(gameName) is string bare && bare != gameName ? Lookup(bare) : null);
     }
 
@@ -127,7 +127,7 @@ internal static class NameAliases
 
             bool startsWith = left.EndsWith("*");
             if (startsWith) left = left.TrimEnd('*').Trim();
-            if (left.Length == 0 || (say.Length == 0 && voice.Length == 0))
+            if (Names.Slug(left) == "x" || (say.Length == 0 && voice.Length == 0))   // "x": nothing but punctuation
             {
                 ModLog.Warn($"[aliases] {where}: \"{line}\" needs a game name and a name or voice, skipped");
                 continue;

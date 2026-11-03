@@ -1,8 +1,10 @@
 # Changelog
 
-## Unreleased – name aliases for mod ships
+## 1.3.0 – 2026-11-03 – name aliases for mod ships
 
-**Not run in the game yet.** Built for both versions, `python tools/modtool.py compat` passes.
+**Not run in the game.** Built for both versions, `python tools/modtool.py compat` passes. Vanilla ships are not affected:
+the aliases and prefixes are only tried for a name that has no clip of its own (or that a player listed). If loading the
+alias files fails, the mission goes on without aliases.
 
 - **Hull prefixes stripped.** A ship whose name has no clip is looked up again without a hull prefix (USS, HMS, HMCS, HMAS,
   FGS, FS, INS, HNLMS and about 25 more, `rats-radio-aliases.txt` in the mod folder), so a modded "USS Pargo" says "Pargo"

@@ -1,3 +1,4 @@
-1.2.0: voice packs.
-Every country can now have its own voice pack, set in Options > Audio > Rats Radio > Voice packs (NATO, Warsaw Pact and Other groups, one drop-down per country). The 43 voices are the NATO (English) pack; more languages can follow as separate Workshop items.
-A country without a pack keeps the game's own voice. If you play a side outside NATO (plus Australia and New Zealand), such as the Soviets, you now hear the game's voice by default instead of the English radio voices. Pick NATO (English) for that country to get the old behaviour. The choice applies from the next mission.
+1.3.0: names for mod ships.
+Ships from other mods that carry a hull prefix (USS, HMS, HMCS, FGS, ...) now say their name without it, so a modded "USS Pargo" says "Pargo" instead of a generated callsign.
+New file BepInEx/config/SeaPowerRadio/aliases.txt (created at your first mission, updates never touch it): map any ship onto a name the mod has clips for, and optionally pin it to one voice, e.g. "HMS Bristol = Bristol | gb_m_06". Ship mods can ship their own rats-radio-aliases.txt. Details in the README on GitHub.
+It can only use names that already have clips (every ship and shore unit of the base game); a completely new name still gets a callsign.

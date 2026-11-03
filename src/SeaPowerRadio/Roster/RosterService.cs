@@ -20,7 +20,14 @@ internal static class RosterService
     private static void OnMissionStarted()
     {
         string seed = MissionSeed();
-        Radio.NameAliases.Reload();     // an edited aliases.txt applies from the next mission
+        try
+        {
+            Radio.NameAliases.Reload();     // an edited aliases.txt applies from the next mission
+        }
+        catch (Exception ex)
+        {
+            ModLog.Warn($"[aliases] not loaded, ships use their own names: {ex.Message}");
+        }
         var roster = new Roster(seed, CampaignMemory.ForMission(seed));
         roster.Build();
         Current = roster;

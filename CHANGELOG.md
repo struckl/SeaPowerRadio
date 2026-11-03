@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.0 – unreleased – voice packs: every country picks its own voice pack
+## 1.2.0 – 2026-11-03 – voice packs: every country picks its own voice pack
 
 **Run in the game on 0.8.7 (flat map); the 3D-globe build is not run yet.** Built for both versions (default and
 `-p:GameBuild=Flat`), `python tools/modtool.py compat` passes. In the game on 0.8.7: pack discovery, a NATO mission, a Soviet

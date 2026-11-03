@@ -1,0 +1,6 @@
+# Rats Radio: name aliases shipped with the mod. Do not edit: a Workshop update overwrites this file.
+# Your own lines go in BepInEx/config/SeaPowerRadio/aliases.txt (format and examples there and in the README).
+# A ship mod can ship a file with this name in its own folder.
+#
+# Hull prefixes: "USS Pargo" says "Pargo" when the full name has no clip of its own.
+*prefix USS, USNS, USCGC, HMS, HMCS, HMAS, HMNZS, HMSAS, FS, FGS, INS, HNLMS, HDMS, HNoMS, HSwMS, ITS, ESPS, SPS, NRP, TCG, HS, ORP, ROKS, ROCS, JS, KRI, BNS, PNS, ARA, BAP, RFS, CNS, NS

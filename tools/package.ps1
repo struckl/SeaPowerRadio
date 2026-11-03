@@ -5,7 +5,7 @@
 .DESCRIPTION
     Release builds without the automatic deploy, then dist\SeaPowerRadio\ with exactly what players get:
     SeaPowerRadio.dll (the 3D-globe game) and SeaPowerRadioFlat.dll (Sea Power 0.8.7's flat map), the same sources
-    built against each game's assemblies, each staying off on the other game; _info.ini, LICENSE.txt, CREDITS.txt (the voices' CC BY 4.0 attribution), voices\ – the
+    built against each game's assemblies, each staying off on the other game; _info.ini, rats-radio-aliases.txt (default hull prefixes), LICENSE.txt, CREDITS.txt (the voices' CC BY 4.0 attribution), voices\ – the
     catalog files and the rendered library from mod\voices\ (not in git; rendered with tools\voicegen) – and
     preview.jpg, the Workshop preview (workshop\preview.jpg, if present): the game's upload screen only browses
     StreamingAssets for it. Refuses to stage a library with personas missing.
@@ -110,6 +110,7 @@ if (Test-Path $tool) {
 }
 else { Write-Warning 'tools\compat-check not found (the workspace next to this repo) - the DLLs were not checked against both games.' }
 Copy-Item (Join-Path $root 'mod\_info.ini') $dist
+Copy-Item (Join-Path $root 'mod\rats-radio-aliases.txt') $dist
 Copy-Item (Join-Path $root 'LICENSE') (Join-Path $dist 'LICENSE.txt')
 Copy-Item (Join-Path $root 'VOICES-LICENSE.md') (Join-Path $dist 'CREDITS.txt')
 $preview = Join-Path $root 'workshop\preview.jpg'

@@ -21,6 +21,7 @@ internal sealed class RosterElement
     public string MemoryKey;       // key in the campaign's voice memory (campaign tag, else the unit's name); null = not remembered
     public VoicePersona Voice;     // null for Game voice (and when the pack has no voice left)
     public GameName BoundName;     // the in-game name this element's voice was chosen for, if any
+    public NameAlias Alias;        // the player's alias line for this ship (aliases.txt), if any
 
     // Air-wing slots only.
     public ObjectBase Carrier;
@@ -134,10 +135,24 @@ internal sealed class Roster
 
     private string NationOf(ObjectBase unit) => unit.getNation();
 
+    /// <summary>The voice an alias line pins this ship to, if the unit's pack has it. Wins over the campaign memory and the name's voices.</summary>
+    private bool ApplyPin(RosterElement e)
+    {
+        if (e.Alias?.Voice == null || e.Pack == null) return false;
+        VoicePersona voice = NameAliases.FindVoice(e.Alias.Voice, e.Pack);
+        if (voice == null)
+        {
+            NameAliases.WarnVoiceNotInPack(e.Alias, e.Pack, e.Unit != null ? e.Unit.getName() : e.Key);
+            return false;
+        }
+        e.Voice = VoicesOf(e.Pack).Claim(e.Key, voice);
+        return true;
+    }
+
     private void AssignVoice(RosterElement e)
     {
         if (e.Pack == null || e.Voice != null) return;
-        if (!ApplyMemory(e))
+        if (!ApplyPin(e) && !ApplyMemory(e))
         {
             VoiceAssignment pool = VoicesOf(e.Pack);
             e.Voice = e.BoundName != null ? pool.Prefer(e.Key, e.BoundName.Voices) : pool.For(e.Key);
@@ -181,8 +196,10 @@ internal sealed class Roster
         foreach (ObjectBase deckOwner in units.Where(u => u._obp?._flightDeck != null))
             AddAirWing(deckOwner);
 
-        // A campaign's units first get the voices and callsigns it remembers for them.
+        // Ships the player pinned to a voice (aliases.txt) first, then a campaign's units get the voices and callsigns it remembers for them.
         foreach (RosterElement e in elements.Where(e => e.Pack != null))
+            ApplyPin(e);
+        foreach (RosterElement e in elements.Where(e => e.Pack != null && e.Voice == null))
             ApplyMemory(e);
 
         // Named units next – their names exist only in a few voices – then everyone else from the pool.
@@ -209,8 +226,8 @@ internal sealed class Roster
         int changed = 0;
         foreach (RosterElement e in elements)
         {
-            if (e.Voice == null || VoiceAssignment.IsAllowed(e.Voice))
-                continue;
+            if (e.Voice == null || VoiceAssignment.IsAllowed(e.Voice) || e.Alias?.Voice != null)
+                continue;   // a voice the player pinned stays
             VoicePersona before = e.Voice;
             e.Voice = VoicesOf(e.Pack).Rebind(e.Key, e.BoundName?.Voices);
             if (e.Voice != before)
@@ -223,14 +240,29 @@ internal sealed class Roster
         return changed;
     }
 
-    /// <summary>The in-game name a unit says: a ship's short name, or an aircraft's squadron callsign word.</summary>
+    /// <summary>
+    /// The in-game name a unit says: a ship's short name, or an aircraft's squadron callsign word. A ship's alias line
+    /// (aliases.txt) comes first, then its own name, then its name without a hull prefix ("USS Pargo" → "Pargo").
+    /// </summary>
     public static GameName NameOf(ObjectBase unit, VoicePack pack)
     {
         if (unit == null || pack?.Names == null) return null;
         if (IsAir(unit))
             return Names.TryParseAircraft(unit.Name.Value, out string word, out _, out _) ? pack.Names.SquadronWord(word) : null;
-        return pack.Names.Unit(unit._obp?._shortName) ?? pack.Names.Unit(unit.getName());
+        foreach (string name in new[] { unit._obp?._shortName, unit.getName() })
+        {
+            if (string.IsNullOrEmpty(name)) continue;
+            NameAlias alias = NameAliases.For(name);
+            GameName found = (alias?.Say != null ? pack.Names.Unit(alias.Say) : null)
+                ?? pack.Names.Unit(name) ?? pack.Names.Unit(NameAliases.StripPrefix(name));
+            if (found != null) return found;
+        }
+        return null;
     }
+
+    /// <summary>A ship's alias line: by its short name, else its full name. Aircraft have none (formations rename them).</summary>
+    private static NameAlias AliasOf(ObjectBase unit) =>
+        IsAir(unit) ? null : NameAliases.For(unit._obp?._shortName) ?? NameAliases.For(unit.getName());
 
     private void AddFlight(List<ObjectBase> members)
     {
@@ -256,6 +288,7 @@ internal sealed class Roster
             Pack = pack,
             Callsign = pack != null ? callsign : null,
             BoundName = NameOf(unit, pack),
+            Alias = AliasOf(unit),
             MemoryKey = MemoryKeyOf(unit),
         };
         elements.Add(element);
@@ -381,6 +414,7 @@ internal sealed class Roster
                 : e.Unit.getUIDAndName();
             string says = e.Pack == null ? "(game voice)"
                 : e.BoundName != null ? e.BoundName.Text + (e.BoundName.Squadron ? " (squadron)" : "") : "gen: " + e.Callsign;
+            if (e.Alias != null) says += " (alias)";
             sb.AppendLine($"  {says,-24} {e.Voice?.FullId ?? "-",-18} {e.Nation,-10} {e.Kind,-10} {e.ClassName,-22} {who}");
         }
         return sb.ToString();

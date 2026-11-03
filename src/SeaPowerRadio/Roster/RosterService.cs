@@ -20,6 +20,7 @@ internal static class RosterService
     private static void OnMissionStarted()
     {
         string seed = MissionSeed();
+        Radio.NameAliases.Reload();     // an edited aliases.txt applies from the next mission
         var roster = new Roster(seed, CampaignMemory.ForMission(seed));
         roster.Build();
         Current = roster;

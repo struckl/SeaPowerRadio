@@ -96,7 +96,7 @@ internal static class VoicePacks
         ModLog.Info($"Voice packs installed: {(All.Count == 0 ? "none" : string.Join(", ", All.Select(p => $"{p.Id} {p.Version}")))}");
     }
 
-    private static IEnumerable<string> ModFolders()
+    public static IEnumerable<string> ModFolders()
     {
         var roots = new List<string>();
         // Each root on its own: one that cannot be worked out must not drop the others.

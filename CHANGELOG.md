@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased – name aliases for mod ships
+
+**Not run in the game yet.** Built for both versions, `python tools/modtool.py compat` passes.
+
+- **Hull prefixes stripped.** A ship whose name has no clip is looked up again without a hull prefix (USS, HMS, HMCS, HMAS,
+  FGS, FS, INS, HNLMS and about 25 more, `rats-radio-aliases.txt` in the mod folder), so a modded "USS Pargo" says "Pargo"
+  instead of a generated callsign.
+- **`aliases.txt`** in `BepInEx/config/SeaPowerRadio/` (created with examples at the first mission; Workshop updates
+  never touch it): `game name = name to say | voice`. Maps a mod ship onto any name that has clips, optionally pins it to one
+  voice (`gb_m_06` or `nato-en/gb_m_06`), or only pins the voice (`= | gb_m_06`). A `*` at the end of the game name matches
+  every name that starts with it; `*prefix` lines add prefixes. A pinned voice wins over the campaign memory and stays when
+  female voices are switched off; if the name has no clip in that voice, the ship keeps the voice and says its callsign.
+  Read at every mission start. A line whose name or voice does not exist is logged. The roster log marks aliased ships.
+- **Ship mods can ship aliases.** A `rats-radio-aliases.txt` in any mod folder (StreamingAssets or Workshop) is read too;
+  the player's own file wins.
+
 ## 1.2.0 – 2026-11-03 – voice packs: every country picks its own voice pack
 
 **Run in the game on 0.8.7 (flat map); the 3D-globe build is not run yet.** Built for both versions (default and

@@ -103,6 +103,23 @@ Settings: in the game, Options > Audio > **Rats Radio** (see above). The same va
 `<Sea Power>\BepInEx\config\dev.sewerlabs.seapowerradio.cfg` (volumes, static, voices, which calls are spoken, the order
 queue key, how many voices may overlap, …).
 
+**Mod ships and their names.** A ship says its name only if that name was rendered as a clip (every ship and shore unit
+of the base game, `voices/names.txt`); any other name gets a generated callsign. Hull prefixes such as USS, HMS, HMCS or
+FGS are stripped automatically, so a modded "USS Pargo" says "Pargo". For everything else there is
+`<Sea Power>\BepInEx\config\SeaPowerRadio\aliases.txt` (created at the first mission, Workshop updates never touch it):
+
+```
+USS Pargo = Pargo                  # say the name of a base-game ship
+HMS Bristol = Bristol | gb_m_06    # and pin it to one voice
+HMS Bristol = | gb_m_06            # only pin the voice
+CVN-68* = Nimitz                   # '*': every name that starts with it
+*prefix HNoMS, HSwMS               # more prefixes to strip
+```
+
+It can only point to names that have clips; a truly new name needs new clips. Edits apply from the next mission, and the
+log says when a line names a ship or voice that does not exist. A ship mod can ship its own `rats-radio-aliases.txt` in
+its folder. Details: [docs/name-aliases.md](docs/name-aliases.md).
+
 Interim fix for "contact faded" spam without any mod: Options → Audio → **Report Faded Contacts** → off.
 
 ## Compatibility
@@ -223,7 +240,7 @@ src/SeaPowerRadio/        C# plugin (netstandard2.1, BepInEx 5 / HarmonyX via An
   Formation/              UnitRole (ship type / aircraft mission / helicopter type), RoleLine (adds the role line
                           to the formation manager's row templates when the view is built)
 mod/                      files shipped next to the DLL (voices/: personas.txt, catalog.txt, stockmap.txt,
-                          names.txt, rendered clips; _info.ini)
+                          names.txt, rendered clips; _info.ini; rats-radio-aliases.txt = default hull prefixes)
 tools/voicegen/           offline voice pipeline (cast.py = the persona list)
 tools/package.ps1         release build → dist/SeaPowerRadio/ (+ release zip)
 tools/shot-director/      dev-only plugin that drives the game for the Workshop screenshots (never shipped)

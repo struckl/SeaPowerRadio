@@ -2,6 +2,8 @@
 
 ## 1.4.0 – unreleased – accents follow the nation, random voices each mission, female voices off
 
+- Fuel calls on globe beta 261107: the game replaced its fuel curves with a performance model; the calls read the new model and the old curves by name. Run in the game on 261107: all five aircraft in the test mission watched, no scan errors.
+
 **Not run in the game.** Built for both versions against the reference copies (`_gamerefs`) and against the installed game of
 2026-11-07 (globe public beta 261107); `python tools/modtool.py compat` passes and `compat-check` finds 0 missing references
 in the installed `Managed` folder.

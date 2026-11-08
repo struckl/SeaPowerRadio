@@ -1,0 +1,10 @@
+# nationId|accent,accent,... -- the accents a nation's units may use, best first (voice pack file, optional).
+# Ids are the game's nation ids (language_en/nations.ini); accents are the 'accent' column of personas.txt.
+# Units get unused voices of the first accent first, then the next; when the whole family is taken the voices are shared
+# inside it, never a foreign accent. A nation that is not listed uses the whole pack. names.txt binds a ship's name to
+# voices of its nation's family (tools/voicegen/names.py reads this file).
+US|us,ca
+UK|gb,sc,ni
+Canada|ca,us
+Australia|au
+NewZealand|nz,au

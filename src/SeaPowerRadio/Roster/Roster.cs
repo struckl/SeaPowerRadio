@@ -54,11 +54,18 @@ internal sealed class Roster
 
     private readonly CampaignMemory memory;   // null outside a linear campaign
 
-    public Roster(string missionSeed, CampaignMemory campaign = null)
+    private readonly string voiceSalt;        // null = the plain per-mission shuffle (Random voices off, campaigns, saves without a salt)
+
+    /// <param name="voiceSalt">Settings.RandomVoices: mixed into the voice shuffle. Ignored in a campaign with a voice memory.</param>
+    public Roster(string missionSeed, CampaignMemory campaign = null, string voiceSalt = null)
     {
         MissionSeed = missionSeed;
         memory = campaign;
+        this.voiceSalt = campaign == null ? voiceSalt : null;
     }
+
+    /// <summary>The accents the element's nation uses in its pack (accents.txt), best first; null = any voice of the pack.</summary>
+    private static string[] AccentsOf(RosterElement e) => e.Pack?.AccentsFor(e.Nation);
 
     /// <summary>Key of a unit in the campaign memory: its campaign tag; failing that a ship's or shore unit's name (aircraft names are rewritten by formations).</summary>
     private string MemoryKeyOf(ObjectBase unit)
@@ -124,7 +131,7 @@ internal sealed class Roster
     {
         if (!voices.TryGetValue(pack.Id, out VoiceAssignment v))
         {
-            voices[pack.Id] = v = new VoiceAssignment(pack, MissionSeed);
+            voices[pack.Id] = v = new VoiceAssignment(pack, MissionSeed, voiceSalt);
             if (memory != null)
                 foreach (VoicePersona p in pack.Personas)
                     if (memory.IsRemembered(pack.Id + "/" + p.Id))
@@ -155,7 +162,7 @@ internal sealed class Roster
         if (!ApplyPin(e) && !ApplyMemory(e))
         {
             VoiceAssignment pool = VoicesOf(e.Pack);
-            e.Voice = e.BoundName != null ? pool.Prefer(e.Key, e.BoundName.Voices) : pool.For(e.Key);
+            e.Voice = e.BoundName != null ? pool.Prefer(e.Key, e.BoundName.Voices, AccentsOf(e)) : pool.For(e.Key, AccentsOf(e));
         }
         Remember(e);
         memory?.SaveIfDirty();
@@ -204,7 +211,7 @@ internal sealed class Roster
 
         // Named units next – their names exist only in a few voices – then everyone else from the pool.
         foreach (RosterElement e in elements.Where(e => e.BoundName != null && e.Pack != null && e.Voice == null))
-            e.Voice = VoicesOf(e.Pack).Prefer(e.Key, e.BoundName.Voices);
+            e.Voice = VoicesOf(e.Pack).Prefer(e.Key, e.BoundName.Voices, AccentsOf(e));
         foreach (RosterElement e in elements.Where(e => e.Voice == null && e.Pack != null))
             AssignVoice(e);
 
@@ -229,7 +236,7 @@ internal sealed class Roster
             if (e.Voice == null || VoiceAssignment.IsAllowed(e.Voice) || e.Alias?.Voice != null)
                 continue;   // a voice the player pinned stays
             VoicePersona before = e.Voice;
-            e.Voice = VoicesOf(e.Pack).Rebind(e.Key, e.BoundName?.Voices);
+            e.Voice = VoicesOf(e.Pack).Rebind(e.Key, e.BoundName?.Voices, AccentsOf(e));
             if (e.Voice != before)
             {
                 changed++;
@@ -350,7 +357,7 @@ internal sealed class Roster
         if (name != null && slot.Pack != null && !VoicesOf(slot.Pack).IsAmong(slot.Voice, name.Voices))
         {
             slot.BoundName = name;
-            slot.Voice = VoicesOf(slot.Pack).Prefer(slot.Key + "|" + name.Key, name.Voices);
+            slot.Voice = VoicesOf(slot.Pack).Prefer(slot.Key + "|" + name.Key, name.Voices, AccentsOf(slot));
         }
         // The aircraft knows its campaign tag now (the deck hands it over at launch): the voice it had before, or this one from now on.
         slot.MemoryKey = MemoryKeyOf(aircraft);

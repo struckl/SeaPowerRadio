@@ -28,11 +28,48 @@ internal static class RosterService
         {
             ModLog.Warn($"[aliases] not loaded, ships use their own names: {ex.Message}");
         }
-        var roster = new Roster(seed, CampaignMemory.ForMission(seed));
+        CampaignMemory campaign = CampaignMemory.ForMission(seed);
+        string salt = RandomVoiceSalt(seed, campaign);
+        var roster = new Roster(seed, campaign, salt);
         roster.Build();
         Current = roster;
         if (Settings.LogRoster.Value)
             ModLog.Info(roster.Describe());
+    }
+
+    /// <summary>
+    /// The salt that makes the voices of this mission start random (Settings.RandomVoices), or null for the plain per-mission
+    /// seed: Random voices off, a linear campaign (the voice memory decides there), a dynamic campaign (not randomised).
+    /// </summary>
+    private static string RandomVoiceSalt(string seed, CampaignMemory campaign)
+    {
+        if (Settings.RandomVoices == null || !Settings.RandomVoices.Value || campaign != null || IsDynamicCampaign(seed))
+            return null;
+        bool fresh = !SaveLoadManager.IsASaveFile;
+        string salt = VoiceSalts.ForStart(seed, fresh);
+        ModLog.Info(salt != null
+            ? $"[voices] random voices: salt {salt} for '{seed}' ({(fresh ? "new start" : "save, salt of its latest start")})"
+            : $"[voices] random voices: no salt on record for the save of '{seed}', plain seed");
+        return salt;
+    }
+
+    /// <summary>
+    /// A tactical mission fought from the dynamic campaign (<c>CampaignMain</c>). The campaign scene stays loaded under the
+    /// mission, and the game writes the mission to <c>user/missions/Campaign Mission.ini</c> (<c>MissionEditorModel.SetupMission</c>,
+    /// same in 0.8.7 and the globe build); either one marks it.
+    /// </summary>
+    private static bool IsDynamicCampaign(string seed)
+    {
+        try
+        {
+            if (Singleton<CampaignMain>.InstanceExists())
+                return true;
+        }
+        catch (Exception ex)
+        {
+            ModLog.Warn($"[voices] dynamic campaign check failed: {ex.Message}");
+        }
+        return (seed ?? "").EndsWith("campaign mission.ini", StringComparison.OrdinalIgnoreCase);
     }
 
     private static void OnAircraftLaunched(AircraftLaunch launch)

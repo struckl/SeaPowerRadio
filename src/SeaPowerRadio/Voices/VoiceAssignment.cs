@@ -31,10 +31,20 @@ internal sealed class VoiceAssignment
     private readonly HashSet<string> used = new HashSet<string>();
     private int next;
 
-    public VoiceAssignment(VoicePack pack, string missionSeed)
+    private readonly string seed;       // mission seed, plus the salt when voices are randomised
+    private readonly bool randomize;
+    private readonly Dictionary<string, int> familyNext = new Dictionary<string, int>();
+
+    /// <param name="salt">
+    /// Null = today's deterministic shuffle (same voices at every start of the mission). A salt (Settings.RandomVoices) is mixed
+    /// into the shuffle and into the choice among a named unit's candidate voices, so a fresh start sounds different.
+    /// </param>
+    public VoiceAssignment(VoicePack pack, string missionSeed, string salt = null)
     {
+        randomize = !string.IsNullOrEmpty(salt);
+        seed = randomize ? missionSeed + "|salt:" + salt : missionSeed;
         // The NATO pack keeps the 1.1.0 seed, so its voices per mission are the ones players already know.
-        var rng = new StableRandom(pack.Id == VoicePacks.NatoId ? "voices|" + missionSeed : "voices|" + missionSeed + "|" + pack.Id);
+        var rng = new StableRandom(pack.Id == VoicePacks.NatoId ? "voices|" + seed : "voices|" + seed + "|" + pack.Id);
         // Sort first so the shuffle does not depend on the order the library happened to be read from disk.
         order = rng.Shuffled(pack.Personas.OrderBy(p => p.Id, StringComparer.Ordinal));
         byId = order.ToDictionary(p => p.Id);
@@ -48,13 +58,24 @@ internal sealed class VoiceAssignment
     /// <summary>Whether this persona may speak with the current settings.</summary>
     public static bool IsAllowed(VoicePersona p) => p == null || Allowed(p);
 
-    /// <summary>Next unused voice for an element (stable key: unit id, or carrier + air-wing slot).</summary>
-    public VoicePersona For(string elementKey)
+    /// <summary>
+    /// Next unused voice for an element (stable key: unit id, or carrier + air-wing slot). <paramref name="accents"/> = the
+    /// accents of the unit's nation, best first (accents.txt): the voices of the first accent come first, then the next; when
+    /// every voice of that family is taken they are shared inside the family, never a foreign accent. Null (a nation without
+    /// accents) = the whole pack, as before.
+    /// </summary>
+    public VoicePersona For(string elementKey, string[] accents = null)
     {
         if (byElement.TryGetValue(elementKey, out VoicePersona persona))
             return persona;
         if (order.Count == 0)
             return null;
+        if (accents != null)
+        {
+            persona = FromFamily(accents);
+            if (persona != null)
+                return Bind(elementKey, persona);
+        }
         persona = null;
         for (int i = 0; i < order.Count && persona == null; i++)
         {
@@ -68,28 +89,55 @@ internal sealed class VoiceAssignment
         return Bind(elementKey, persona);
     }
 
+    private static bool InFamily(VoicePersona p, string[] accents) =>
+        accents.Any(a => string.Equals(a, p.Accent, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>The next voice of an accent family: unused ones first (first accent first, shuffled inside it), then shared round-robin. Null when the family has no allowed voice.</summary>
+    private VoicePersona FromFamily(string[] accents)
+    {
+        var family = accents.SelectMany(a => order.Where(p => string.Equals(p.Accent, a, StringComparison.OrdinalIgnoreCase) && Allowed(p))).ToList();
+        if (family.Count == 0)
+            return null;
+        VoicePersona free = family.FirstOrDefault(p => !used.Contains(p.Id));
+        if (free != null)
+            return free;
+        string key = string.Join(",", accents);
+        familyNext.TryGetValue(key, out int n);
+        familyNext[key] = n + 1;
+        return family[n % family.Count];
+    }
+
     /// <summary>
     /// A voice from <paramref name="candidates"/> (the voices a name was rendered in): the first one nobody uses
     /// yet, else the first one even if shared – saying the right name matters more than a unique voice.
     /// Falls back to <see cref="For"/> when no candidate is in the library.
     /// </summary>
-    public VoicePersona Prefer(string elementKey, IEnumerable<string> candidates)
+    public VoicePersona Prefer(string elementKey, IEnumerable<string> candidates, string[] accents = null)
     {
         var known = candidates?.Where(byId.ContainsKey).ToList();
         if (known == null || known.Count == 0)
-            return For(elementKey);
+            return For(elementKey, accents);
         var men = known.Where(c => Allowed(byId[c])).ToList();
         if (men.Count > 0)
             known = men;                 // none of the voices the name exists in is a man: the name matters more
+        if (accents != null)
+        {
+            // The accent of the unit's nation; when the name was rendered in none of them the name still matters more.
+            var inFamily = known.Where(c => InFamily(byId[c], accents)).ToList();
+            if (inFamily.Count > 0)
+                known = inFamily;
+        }
+        if (randomize)                   // a salted start picks among the name's voices in a new order
+            known = known.OrderBy(c => StableRandom.Hash(seed + "|name|" + elementKey + "|" + c)).ThenBy(c => c, StringComparer.Ordinal).ToList();
         string id = known.FirstOrDefault(c => !used.Contains(c)) ?? known[0];
         return Bind(elementKey, byId[id]);
     }
 
     /// <summary>A new voice for an element that already has one (the settings changed): forgets the old binding.</summary>
-    public VoicePersona Rebind(string elementKey, IEnumerable<string> candidates)
+    public VoicePersona Rebind(string elementKey, IEnumerable<string> candidates, string[] accents = null)
     {
         byElement.Remove(elementKey);
-        return candidates != null ? Prefer(elementKey, candidates) : For(elementKey);
+        return candidates != null ? Prefer(elementKey, candidates, accents) : For(elementKey, accents);
     }
 
     public bool IsAmong(VoicePersona persona, IEnumerable<string> candidates) =>

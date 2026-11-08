@@ -25,6 +25,20 @@ internal sealed class VoicePack
     public Catalog Catalog;
     public Names Names;
 
+    /// <summary>
+    /// <c>accents.txt</c> (optional): per nation the accents its units may use, best first. A nation that is not listed
+    /// uses the whole pack. Data only, so a later pack can declare its own accents and nations.
+    /// </summary>
+    private readonly Dictionary<string, string[]> nationAccents = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The accents a nation's units use in this pack, best first; null = no restriction (any voice of the pack).</summary>
+    public string[] AccentsFor(string nation)
+    {
+        if (string.IsNullOrEmpty(nation))
+            return null;
+        return nationAccents.TryGetValue(nation, out string[] accents) ? accents : null;
+    }
+
     public bool ListsNation(string nation)
     {
         if (string.IsNullOrEmpty(nation))
@@ -119,9 +133,33 @@ internal sealed class VoicePack
             }
             Personas.Add(new VoicePersona { Pack = this, Id = f[0].Trim(), Language = f[1].Trim(), Gender = f[2].Trim(), Accent = f[3].Trim() });
         }
+        LoadAccents();
         Catalog = new Catalog(Directory, baseCatalog);
         Names = new Names(Directory);
         ModLog.Info($"Voice pack '{Id}' ({Name}) {Version}: {Personas.Count} personas, {Catalog.PhraseCount} phrases, {Names.Count} names, nations: {string.Join(",", Nations)}");
         return Catalog.Loaded && Personas.Count > 0;
+    }
+
+    private void LoadAccents()
+    {
+        string file = System.IO.Path.Combine(Directory, "accents.txt");
+        if (!File.Exists(file))
+            return;
+        var known = new HashSet<string>(Personas.Select(p => p.Accent), StringComparer.OrdinalIgnoreCase);
+        foreach (string raw in File.ReadAllLines(file))
+        {
+            string line = raw.Trim();
+            if (line.Length == 0 || line.StartsWith("#")) continue;
+            string[] f = line.Split('|');
+            string[] accents = f.Length >= 2
+                ? f[1].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(a => a.Trim()).Where(a => known.Contains(a)).ToArray()
+                : new string[0];
+            if (f[0].Trim().Length == 0 || accents.Length == 0)
+            {
+                ModLog.Warn($"{Id}/accents.txt: no usable accent in '{line}', the nation uses the whole pack.");
+                continue;
+            }
+            nationAccents[f[0].Trim()] = accents;
+        }
     }
 }

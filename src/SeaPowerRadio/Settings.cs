@@ -25,6 +25,8 @@ internal static class Settings
     public static ConfigEntry<bool> LinkMentions;
     public static ConfigEntry<bool> CallsignEveryCall;
     public static ConfigEntry<bool> FemaleVoices;
+    public static ConfigEntry<bool> RandomVoices;
+    public static ConfigEntry<int> ConfigMigration;
     public static ConfigEntry<bool> OverlapVoices;
     public static ConfigEntry<int> MaxOverlap;
 
@@ -144,6 +146,9 @@ internal static class Settings
             "Master switch. Needs a restart.");
         VerboseLog = file.Bind("1. General", "Verbose log", false,
             "Write debug detail to BepInEx/LogOutput.log.");
+        ConfigMigration = file.Bind("1. General", "Config migration", 0,
+            "Bookkeeping, leave as it is: the number of one-time settings migrations that have run (1 = Female voices " +
+            "was reset to off once, 1.4.0). A setting you change afterwards is kept.");
 
         ReplaceStockVoices = file.Bind("2. Radio", "Replace stock voices", true,
             "Mute the game's voice lines and have every unit say them in its own voice and callsign.");
@@ -166,10 +171,15 @@ internal static class Settings
             new ConfigDescription("Static: how much hiss and crackle sits under the voices. 1 = the default amount, 0 = clean " +
                                   "voice. Also on the Audio page of the game's Options (0-150 %). Applies from the next call.",
                                   new AcceptableValueRange<float>(0f, 3f)));
-        FemaleVoices = file.Bind("2. Radio", "Female voices", true,
-            "Off: only male voices are picked for units. Takes effect at the next mission start; switching it off during " +
-            "a mission moves the speakers that have a female voice to a male one at once. A unit whose name exists only " +
-            "in a female voice keeps it.");
+        FemaleVoices = file.Bind("2. Radio", "Female voices", false,
+            "On: women's voices are picked for units too. Off (the default since 1.4.0): only male voices. Takes effect at the " +
+            "next mission start; switching it off during a mission moves the speakers that have a female voice to a male one " +
+            "at once. A unit whose name exists only in a female voice keeps it.");
+        RandomVoices = file.Bind("2. Radio", "Random voices each mission", true,
+            "On: every fresh start of a mission shuffles the voices anew (ships and aircraft sound different each time you " +
+            "play it); loading a save of that mission keeps the voices it had at its latest start. Callsigns stay as they are. " +
+            "Linear campaigns keep their remembered voices and dynamic campaigns are not shuffled. Off: the voices of a mission " +
+            "are always the same. Takes effect at the next mission start.");
         OverlapVoices = file.Bind("2. Radio", "Overlapping voices", true,
             "Several stations can talk over each other, like a busy net: a new call starts while another is still " +
             "playing (never the same unit twice at once). Off: one call at a time, the rest wait in the queue.");
@@ -238,6 +248,23 @@ internal static class Settings
         LogRadio = file.Bind("9. Diagnostics", "Log radio calls", true,
             "Log every call the mod queues and speaks.");
         BindNations();
+        Migrate();
         file.Save();   // writes the entries a config from an older version did not have yet
+    }
+
+    /// <summary>
+    /// One-time changes of a saved config. 1.4.0: Female voices now defaults to off; a config saved by an older version
+    /// that still says true is switched to false once. The marker keeps a player who turns it back on afterwards.
+    /// </summary>
+    private static void Migrate()
+    {
+        if (ConfigMigration.Value >= 1)
+            return;
+        if (FemaleVoices.Value)
+        {
+            FemaleVoices.Value = false;
+            ModLog.Info("Config: 'Female voices' was on (the old default); switched to off once, as in 1.4.0.");
+        }
+        ConfigMigration.Value = 1;
     }
 }

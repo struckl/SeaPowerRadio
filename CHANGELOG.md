@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.4.0 – unreleased – accents follow the nation, random voices each mission, female voices off
+
+**Not run in the game.** Built for both versions against the reference copies (`_gamerefs`), `python tools/modtool.py compat`
+passes. Against the installed game of 2026-11-07 (globe public beta 261107) the build fails in `Air/FuelMonitor.cs` (the game
+dropped `AircraftParameters._altitudeEfficiencyCurve` / `_rangeMultiplierCurve` and `HelicopterParameters._hoveringFuelConsumption`);
+that is not part of this change.
+
+- **Female voices default to off.** A config saved with the old default (on) is switched to off once (the setting
+  `1. General / Config migration` is the marker); a player who turns it back on keeps it.
+- **New setting "Random voices each mission"** (default on, config `2. Radio` and Options > Audio). A fresh start of a mission
+  shuffles the voices with a new random salt, and also the choice among a named unit's candidate voices, so ships change voice
+  too. Loading a save reuses the salt of that mission's latest start (`BepInEx/config/SeaPowerRadio/voice-salts.txt`; none
+  on record = the plain seed). Generated callsigns do not change. Not applied in linear campaigns (the voice memory decides)
+  and dynamic campaigns (`CampaignMain` loaded, or the mission file `Campaign Mission.ini`). Off = the voices of 1.3.0.
+- **Accent matching.** A voice pack may carry `accents.txt` (`nationId|accent,accent,...`, best first). The base pack:
+  US us,ca; UK gb,sc,ni; Canada ca,us; Australia au; NewZealand nz,au. A nation's units take unused voices of its first
+  accent, then the next; when the family is taken, voices are shared inside it. With female voices off a family without a man
+  moves on to the next accent (New Zealand to Australian). Nations not listed (the other NATO countries) use the whole pack
+  as before. Alias pins and remembered campaign voices win; the female-voices switch during a mission keeps working.
+- **Names bound by nation.** `tools/voicegen/names.py` now binds ship names and squadron words to the accent family of the
+  nation they belong to (the game's language files: section banner, section prefix, hull prefix), 3 men and 1 woman per ship
+  name as far as the family has them. Names of no known or unlisted nation keep their old binding. **The new name clips must
+  be rendered** (`tools/voicegen/rerender_names_1.4.txt`); until then a ship says its generated callsign.
+- Voice pack `nato-en` 1.1.0 (names.txt, accents.txt).
+
 ## 1.3.0 – 2026-11-03 – name aliases for mod ships
 
 **Not run in the game.** Built for both versions, `python tools/modtool.py compat` passes. Vanilla ships are not affected:

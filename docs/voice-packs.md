@@ -203,3 +203,36 @@ back to 1.1.0 and the dummy and its campaign memory were deleted.
   mission 2 itself (needs mission 1 finished). Aircraft without a tag (the Yak-38 and Ka-25 placed in the mission) are not
   remembered, as designed. Left with Accept: no campaign save was written.
 - No Radio exception in the log. **Not run:** the globe build, a dropdown change surviving a restart.
+
+## Accents per nation and random voices (1.4.0)
+
+- **`accents.txt`** (optional, in the pack folder): `nationId|accent,accent,...`, best first; accents are the `accent` column of
+  `personas.txt`. A nation that is not listed uses the whole pack. A pack can declare its own accents and nations with data only.
+  Base pack: `US|us,ca`, `UK|gb,sc,ni`, `Canada|ca,us`, `Australia|au`, `NewZealand|nz,au`.
+- **Assignment** (`VoiceAssignment.For/Prefer`, accents of the unit's own nation): unused voices of the first accent (in the
+  mission's shuffle order), then the next accent; once the whole family is used the voices are shared round-robin inside it,
+  never a foreign accent. Used voices are tracked per pack, so two nations with overlapping families (US and Canada) avoid each
+  other's voices while some are free. A woman is skipped with Female voices off, so a family without a man (New Zealand) moves to
+  its next accent. A family with no allowed voice at all uses the whole pack. A named unit picks among the voices its name was
+  rendered in that are of its nation's accents; if the name has none of them, the name's voices stay (the name matters more).
+- Pins from `aliases.txt` and remembered campaign voices are applied first and unchanged. `Revoice` passes the same accents.
+- **Random voices** (`Settings.RandomVoices`, `RosterService.RandomVoiceSalt`, `Roster/VoiceSalts.cs`): a salt is added to the voice
+  seed (`voices|<mission>|salt:<salt>` for NATO, `voices|<mission>|salt:<salt>|<packId>` for others) and to the ranking of a named
+  unit's candidate voices (`hash(seed|name|element|voice)`). Fresh start = new salt, saved per mission seed; a save loads the saved
+  salt (none: plain seed). Callsigns are seeded without the salt. No salt in a linear campaign (`SceneCreator._isLinearCampaign`,
+  memory in use) or a dynamic one (`Singleton<CampaignMain>` exists while a mission is fought from it, and the mission file is
+  `user/missions/Campaign Mission.ini`; same in 0.8.7 and the globe build, both decompiled).
+- **Names by nation** (`tools/voicegen/names.py`): a nation per name from the game's language files (banner lines of
+  `vessel_names.ini` / `land_units_names.ini` / `aircraft_names.ini`, section prefix, hull prefix of the full name); a name used
+  by several nations takes the union of their families; names without a listed nation keep the old three/eight voices of the
+  whole cast. `python tools/voicegen/names.py --stats` prints the coverage.
+
+## To test in the game (1.4.0)
+
+1. Female voices off on a fresh config and after the one-time switch of an old config (on stays on after the user turned it on).
+2. Random voices: the same mission started twice sounds different; loading a save keeps the voices of the latest start; a linear
+   campaign keeps its remembered voices; a dynamic campaign mission has the same voices at every start.
+3. Accents: a US task force speaks with us/ca voices only, a British one with gb/sc/ni, an Australian one with au; ships whose
+   name clips are rendered say their names in those voices, others their generated callsign.
+4. Options > Audio shows the new checkbox on both builds.
+

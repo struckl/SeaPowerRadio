@@ -204,7 +204,8 @@ fuel/RTB; "Object to Identify" is on the Sensors tab.
   the enumerator is created. `VoiceMessage.OnStart` runs once at boot, not per mission.
 - **Mission seed** (stable voices per mission): the mission file (`SceneCreator.MissionIniBaseFile` for saves, else
   the relative `Globals.currentMissionFilePath`), lower-cased, FNV hash. Instant Action always writes
-  `user/missions/_InstantAction.ini`, and random spawns use the unseeded `Globals._rnd`, so such rosters can vary.
+  `user/missions/_InstantAction.ini`, and random spawns use the unseeded `Globals._rnd`, so such rosters can vary. With Random voices on (1.4.0) a fresh start adds a random salt to the voice seed (kept per
+  mission, see docs/voice-packs.md).
 - Units: `ObjectBase` → `Vessel`, `Submarine` (not a Vessel), `Aircraft`, `Helicopter`, `LandUnit`. Player units:
   `Globals._playerTaskforce._taskforceUnits` plus `_taskforceDisabledUnits` (enabled later by triggers), without
   life rafts. Identity: `UniqueID` survives save/load; names are rewritten by formations ("Leader-N").

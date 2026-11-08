@@ -33,7 +33,7 @@ ordered.
 - **Overlapping voices** (on by default) – like a busy net, several stations can talk over each other: a new call
   starts a second or so after the last one began, while it is still playing (up to 3 at once, panned a little left and
   right, never the same unit twice at once). Off: one voice at a time, the rest wait in the queue.
-- **Settings in the Options menu** – Options > Audio has a group **Rats Radio**: female voices on/off, overlapping
+- **Settings in the Options menu** – Options > Audio has a group **Rats Radio**: female voices on/off, random voices on/off, overlapping
   voices on/off, radio volume, radio static (0 = clean voice, 100 % = the default amount) and a volume for each kind
   of call: contact and track calls, combat calls, warning calls (inbound missile, we're hit, bingo...), replies to
   orders, other calls - for example to make "new contact" and "track identified" stand out. Changes apply at once and
@@ -44,8 +44,21 @@ ordered.
   country without a pack keeps the **game's own voice** – so playing the Soviets at 1.2.0 means the game's Russian voice;
   choose *NATO (English)* for that country to get the old English radio net. A pack lacking a line also leaves it to the
   game. Applies from the next mission. Pack format: [docs/voice-packs.md](docs/voice-packs.md).
-- **Female voices** – the voice library has male and female voices; switch the female ones off and units speak with
-  male voices only (a unit whose name was rendered only in a female voice keeps it).
+- **Female voices** (off by default since 1.4.0) – the voice library has male and female voices; switch the female ones
+  on and units use them too. Off: units speak with male voices only (a unit whose name was rendered only in a female voice
+  keeps it). A config saved by an older version that still said on is switched to off once; turn it on again and it stays.
+- **Random voices each mission** (on by default, 1.4.0) – every fresh start of a mission shuffles the voices, so the same
+  mission sounds different each time. Loading a save of that mission keeps the voices of its latest start (the salt is kept
+  per mission in `BepInEx/config/SeaPowerRadio/voice-salts.txt`; none on record = the plain voices). Callsigns stay as they
+  are. Linear campaigns keep their remembered voices and dynamic campaigns are not shuffled. Off: a mission always has the
+  same voices, as before.
+- **Accents follow the nation** (1.4.0) – a pack can list the accents each nation's units use (`accents.txt`, data only):
+  the US and Canada speak with American and Canadian voices, the UK with English, Scottish and Northern Irish ones,
+  Australia with Australian, New Zealand with New Zealand then Australian. Units get unused voices of their nation's accents
+  first and share inside them when those run out, never a foreign accent just for being unique. A ship's name is rendered in
+  voices of its own nation's accents (names of other nations keep the old mix). Countries not listed use the whole pack.
+  Clips of the new name voices have to be rendered first; until then a ship says its generated callsign. Pins in
+  `aliases.txt` and remembered campaign voices win.
 - **Why-not diagnostics** – the reasons the game knows but never says, spoken by the unit, as a message and in
   the log: not in rear aspect, outside the launch envelope, can't reach, inside minimum range, no radar lock, no
   sensor track, sonar contact only, below the radar horizon, no line of sight, too low / too high, not in the firing

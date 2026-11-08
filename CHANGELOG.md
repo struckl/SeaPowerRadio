@@ -2,11 +2,18 @@
 
 ## 1.4.0 – unreleased – accents follow the nation, random voices each mission, female voices off
 
-**Not run in the game.** Built for both versions against the reference copies (`_gamerefs`), `python tools/modtool.py compat`
-passes. Against the installed game of 2026-11-07 (globe public beta 261107) the build fails in `Air/FuelMonitor.cs` (the game
-dropped `AircraftParameters._altitudeEfficiencyCurve` / `_rangeMultiplierCurve` and `HelicopterParameters._hoveringFuelConsumption`);
-that is not part of this change.
+**Not run in the game.** Built for both versions against the reference copies (`_gamerefs`) and against the installed game of
+2026-11-07 (globe public beta 261107); `python tools/modtool.py compat` passes and `compat-check` finds 0 missing references
+in the installed `Managed` folder.
 
+- **Fuel calls follow the new fuel model of build 261107.** The game dropped `AircraftParameters._altitudeEfficiencyCurve` /
+  `_rangeMultiplierCurve` and `HelicopterParameters._hoveringFuelConsumption` and now keeps the fuel burn per km itself
+  (`_fuelPerKmCruise`, `_fuelPerKmNow` in kg per km, refreshed by the game). Radio reads those two values (economy = the
+  game's cruise rate, the one it reckons the way home with; cruise = the greater of that and the rate at the speed flown)
+  and converts them to the units of the range figure with the game's own `CruiseKmForFuel`. Older builds (0.8.7, globe
+  26223125) keep the curve model. The members are looked up by reflection, so the same DLL loads on every build; if neither
+  model can be read, the fuel calls stay off and one line goes to the log, nothing is thrown. The fuel reserve the game
+  holds back is not subtracted: the calls come slightly later than the game's own bingo.
 - **Female voices default to off.** A config saved with the old default (on) is switched to off once (the setting
   `1. General / Config migration` is the marker); a player who turns it back on keeps it.
 - **New setting "Random voices each mission"** (default on, config `2. Radio` and Options > Audio). A fresh start of a mission

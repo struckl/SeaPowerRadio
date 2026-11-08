@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using SeaPower;
 using SeapowerUI.ViewModels;
 using SeaPowerRadio.Radio;
@@ -248,33 +249,165 @@ internal sealed class FuelMonitor
     }
 
     /// <summary>
-    /// Fuel per km flown (in the game's "km at best efficiency"): at cruise and at the cheapest speed. The cheapest is
-    /// what the game itself reckons the way home with – distance × load factor (Aircraft/Helicopter
-    /// .UpdateFuelConsumption, the home base branch) – so our bingo always comes just before the game's.
+    /// Fuel per km flown, in the unit of <c>RangeInKm</c> ("km at best efficiency"): at cruise and at the cheapest speed.
+    /// Two game models, both reached by reflection so that one DLL loads and stays quiet on every build (a member missing on
+    /// one build must never be named in a method that is JIT-compiled there):
+    /// <list type="bullet">
+    /// <item>Builds from 261107: the game keeps <c>_fuelPerKmCruise</c> (best-range speed / cruise step) and
+    /// <c>_fuelPerKmNow</c> (at the speed flown), kg per km, and reckons the way home with the cruise rate
+    /// (Aircraft/Helicopter.UpdateFuelConsumption). economy = that cruise rate, cruise = the greater of it and the rate at
+    /// the speed flown; both go through <c>ObjectBase.CruiseKmForFuel</c> into the units of <c>RangeInKm</c>.</item>
+    /// <item>Older builds (0.8.7, globe 26223125): the altitude and range-multiplier curves, and the hover share of the
+    /// helicopter, as before.</item>
+    /// </list>
+    /// If neither model can be read: false, no fuel calls, nothing thrown.
     /// </summary>
     private static bool Burn(ObjectBase unit, out float cruise, out float economy)
     {
         cruise = economy = 0f;
+        try
+        {
+            if (BurnPerKm(unit, out cruise, out economy) || BurnCurves(unit, out cruise, out economy))
+                return true;
+        }
+        catch (Exception ex)
+        {
+            if (!burnErrorLogged)
+            {
+                burnErrorLogged = true;
+                ModLog.Warn($"[fuel] fuel rate unreadable, no fuel calls: {ex.Message}");
+            }
+        }
+        cruise = economy = 0f;
+        return false;
+    }
+
+    private static bool burnErrorLogged;
+    private const BindingFlags AnyMember = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+    private sealed class PerKmType
+    {
+        public bool Ok;
+        public FieldInfo Cruise, Now;
+        public MethodInfo Refresh;
+    }
+
+    private static readonly Dictionary<Type, PerKmType> perKmTypes = new Dictionary<Type, PerKmType>();
+    private static MethodInfo cruiseKmForFuel;
+    private static bool cruiseKmResolved;
+
+    private static PerKmType PerKmOf(Type t)
+    {
+        if (perKmTypes.TryGetValue(t, out PerKmType m))
+            return m;
+        m = new PerKmType
+        {
+            Cruise = t.GetField("_fuelPerKmCruise", AnyMember),
+            Now = t.GetField("_fuelPerKmNow", AnyMember),
+            Refresh = t.GetMethod("RefreshFuelRates", AnyMember, null, new[] { typeof(bool) }, null),
+        };
+        m.Ok = m.Cruise != null && m.Cruise.FieldType == typeof(float) && m.Now != null && m.Now.FieldType == typeof(float);
+        perKmTypes[t] = m;
+        return m;
+    }
+
+    private static bool BurnPerKm(ObjectBase unit, out float cruise, out float economy)
+    {
+        cruise = economy = 0f;
+        PerKmType m = PerKmOf(unit.GetType());
+        if (!m.Ok)
+            return false;
+        if (!cruiseKmResolved)
+        {
+            cruiseKmResolved = true;
+            cruiseKmForFuel = typeof(ObjectBase).GetMethod("CruiseKmForFuel", AnyMember, null, new[] { typeof(float) }, null);
+        }
+        if (cruiseKmForFuel == null || cruiseKmForFuel.ReturnType != typeof(float))
+            return false;
+        m.Refresh?.Invoke(unit, new object[] { false });    // the game's own once-a-second refresh of the two fields
+        float kgCruise = (float)m.Cruise.GetValue(unit);
+        float kgNow = (float)m.Now.GetValue(unit);
+        if (!(kgCruise > 0f) || float.IsInfinity(kgCruise))
+            return false;
+        economy = (float)cruiseKmForFuel.Invoke(unit, new object[] { kgCruise });
+        float now = kgNow > 0f && !float.IsInfinity(kgNow) ? (float)cruiseKmForFuel.Invoke(unit, new object[] { kgNow }) : 0f;
+        cruise = Mathf.Max(economy, now);
+        return economy > 0f;
+    }
+
+    /// <summary>The members of the old curve model on one parameter type (null entries: not on this build).</summary>
+    private sealed class CurveType
+    {
+        public bool Ok;
+        public FieldInfo Mach, Empty, Load, Altitude, RangeMult, Hover;
+    }
+
+    private static CurveType aircraftCurves, heliCurves;
+
+    private static CurveType CurvesOf(ref CurveType cache, object parameters, bool heli)
+    {
+        if (cache != null)
+            return cache;
+        Type t = parameters.GetType();
+        CurveType c = new CurveType
+        {
+            Empty = t.GetField("_emptyMass", AnyMember),
+            Load = t.GetField("_loadoutMass", AnyMember),
+        };
+        if (heli)
+        {
+            c.Hover = t.GetField("_hoveringFuelConsumption", AnyMember);
+            c.Ok = c.Empty != null && c.Load != null && c.Hover != null;
+        }
+        else
+        {
+            c.Mach = t.GetField("_speedValuesInMach", AnyMember);
+            c.Altitude = t.GetField("_altitudeEfficiencyCurve", AnyMember);
+            c.RangeMult = t.GetField("_rangeMultiplierCurve", AnyMember);
+            c.Ok = c.Empty != null && c.Load != null && c.Mach != null && c.Altitude != null && c.RangeMult != null;
+        }
+        cache = c;
+        return c;
+    }
+
+    private static bool BurnCurves(ObjectBase unit, out float cruise, out float economy)
+    {
+        cruise = economy = 0f;
         if (unit is Aircraft a)
         {
-            AircraftParameters ap = a.Ap;
-            if (ap?._speedValuesInMach == null || ap._speedValuesInMach.Length == 0 || ap._emptyMass <= 0f)
+            object ap = a.Ap;
+            if (ap == null)
                 return false;
-            float mass = 1f + ap._loadoutMass / ap._emptyMass;
-            float altitude = Mathf.Max(0.05f, ap._altitudeEfficiencyCurve.Evaluate(a.getHeightInFeet()));
-            float mach = ap._speedValuesInMach[Math.Min(CruiseSpeedIndex, ap._speedValuesInMach.Length - 1)];
+            CurveType c = CurvesOf(ref aircraftCurves, ap, false);
+            if (!c.Ok)
+                return false;
+            float[] speeds = (float[])c.Mach.GetValue(ap);
+            float empty = (float)c.Empty.GetValue(ap);
+            AnimationCurve alt = c.Altitude.GetValue(ap) as AnimationCurve;
+            AnimationCurve rng = c.RangeMult.GetValue(ap) as AnimationCurve;
+            if (speeds == null || speeds.Length == 0 || empty <= 0f || alt == null || rng == null)
+                return false;
+            float mass = 1f + (float)c.Load.GetValue(ap) / empty;
+            float altitude = Mathf.Max(0.05f, alt.Evaluate(a.getHeightInFeet()));
+            float mach = speeds[Math.Min(CruiseSpeedIndex, speeds.Length - 1)];
             economy = Mathf.Max(1f, mass);
-            cruise = Mathf.Max(economy, ap._rangeMultiplierCurve.Evaluate(mach) / altitude * mass);
+            cruise = Mathf.Max(economy, rng.Evaluate(mach) / altitude * mass);
             return true;
         }
         if (unit is Helicopter h)
         {
-            HelicopterParameters hp = h._hp;
-            if (hp == null || hp._emptyMass <= 0f)
+            object hp = h._hp;
+            if (hp == null)
                 return false;
-            float mass = 1f + hp._loadoutMass / hp._emptyMass;
-            float hover = Mathf.Clamp01(hp._hoveringFuelConsumption);
-            // Per km: mass * (hover * vmax / v + 1 - hover) – flat out is the cheapest, the hover burn is per hour.
+            CurveType c = CurvesOf(ref heliCurves, hp, true);
+            if (!c.Ok)
+                return false;
+            float empty = (float)c.Empty.GetValue(hp);
+            if (empty <= 0f)
+                return false;
+            float mass = 1f + (float)c.Load.GetValue(hp) / empty;
+            float hover = Mathf.Clamp01((float)c.Hover.GetValue(hp));
+            // Per km: mass * (hover * vmax / v + 1 - hover) - flat out is the cheapest, the hover burn is per hour.
             economy = mass;
             cruise = mass * (hover / 0.7f + 1f - hover);
             return true;

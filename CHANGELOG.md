@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased – callsign words in aliases.txt
+## 1.4.2 – 2026-11-09 – callsign words in aliases.txt
 
 - **An alias can keep a generated callsign** (bug report: `Akira O-ren = Victory` logged "no voice pack has the name
   Victory"). `aliases.txt` only accepted base-game ship names; it now also takes the ship, submarine and shore callsign
@@ -17,14 +17,6 @@ Compiled for both game versions against the reference copies (`_gamerefs`); `pyt
   gender, over the Female voices setting. A name without `*` matches every squadron whose name contains it, `*` is a
   wildcard, the last matching line wins. Applies from the next mission; the file is created with examples. A squadron
   callsign word that exists only in voices of the other gender keeps that voice. See [docs/squadron-voices.md](docs/squadron-voices.md).
-
-## Unreleased – voice gender per squadron
-
-- **`BepInEx/config/SeaPowerRadio/squadrons.txt`** (text file, no menu setting): `Bear Aces = female`, `Ghostriders = male`.
-  Every pilot of a matching air-wing squadron speaks with a voice of that gender, over the Female voices setting. Name
-  without `*` = contains, `*` = wildcard, last matching line wins. Applies from the next mission. See
-  [docs/squadron-voices.md](docs/squadron-voices.md). Compiled only (the Anchor Chain reference is missing on this PC);
-  not run in the game.
 
 ## 1.4.0 – 2026-11-09 – accents follow the nation, random voices each mission, female voices off
 

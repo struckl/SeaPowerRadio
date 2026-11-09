@@ -1,3 +1,3 @@
-1.4.1: a voice gender per squadron.
-New: a text file, BepInEx/config/SeaPowerRadio/squadrons.txt, with lines like "Bear Aces = female" or "Ghostriders = male" gives every pilot of that squadron a voice of that gender, whatever the Female voices setting says. There is no menu entry; the file is created with examples at the first mission and applies from the next mission.
+1.4.2: aliases.txt can keep a callsign.
+Fixed: a line like "Akira O-ren = Victory" in BepInEx/config/SeaPowerRadio/aliases.txt was refused, because Victory is one of the mod's own callsigns, not a ship name. Now any ship, submarine or shore callsign word works there (Bulwark, Sentinel, Victory, Warden, Guardian, Valiant, Resolute, Steadfast, Vigilant, Defiant, Intrepid, Courage, Shadow, Silent, Deepwater, Barracuda, Castle, Bastion, Harbor, Lighthouse). The ship keeps it in every mission and no other unit gets it.
 Not run in the game yet; checked offline for the globe beta and 0.8.7.

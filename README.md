@@ -4,8 +4,7 @@ A mod for [Sea Power: Naval Combat in the Missile Age](https://store.steampowere
 radio net sound like people instead of a screen reader, and makes units tell you **why** they are not doing what you
 ordered.
 
-**[Get it on the Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579)** – requires
-[Anchor Chain](https://steamcommunity.com/sharedfiles/filedetails/?id=3380210757).
+**[Get it on the Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579)** – needs a mod loader, either one: [R.A.T.S. Keel](https://steamcommunity.com/sharedfiles/filedetails/?id=3835527459) or [Anchor Chain](https://steamcommunity.com/sharedfiles/filedetails/?id=3380210757).
 
 **[Watch and listen on YouTube](https://youtu.be/pGwOIPXckpY)** (1:49, sound on) – the same call before and after
 1.0.1, then the radio net while Yak-38s close in on the Iowa group. The 1.0.0 video: https://youtu.be/g7P1pg2J0Lk.
@@ -100,10 +99,10 @@ everything works offline.
 
 ## Installation
 
-1. Install **[Anchor Chain](https://steamcommunity.com/sharedfiles/filedetails/?id=3380210757)**, the Sea Power
-   community mod loader, following its
-   [installation guide](https://seapower-modders.github.io/AnchorChain/install-anchor-chain.html) (one manual step:
-   copy its preloader into the game folder).
+1. Install a mod loader, either one: **[R.A.T.S. Keel](https://steamcommunity.com/sharedfiles/filedetails/?id=3835527459)** (subscribe, switch it on in the Mods menu, copy its one stub
+   file once; it is the one that runs on the 3D-globe public beta) or **[Anchor Chain](https://steamcommunity.com/sharedfiles/filedetails/?id=3380210757)** following its
+   [installation guide](https://seapower-modders.github.io/AnchorChain/install-anchor-chain.html) (one manual step: copy its
+   preloader into the game folder).
 2. Subscribe to **[Sea Power: R.A.T.S. Radio](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579)** on the Steam Workshop. About 390 MB: the
    43 rendered voices.
 3. Start a mission. The log `<Sea Power>\BepInEx\LogOutput.log` lists the installed voice packs and the roster: every

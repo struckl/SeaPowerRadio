@@ -1,12 +1,10 @@
 # Changelog
 
-## 1.4.0 – unreleased – accents follow the nation, random voices each mission, female voices off
+## 1.4.0 – 2026-11-09 – accents follow the nation, random voices each mission, female voices off
 
 - Fuel calls on globe beta 261107: the game replaced its fuel curves with a performance model; the calls read the new model and the old curves by name. Run in the game on 261107: all five aircraft in the test mission watched, no scan errors.
 
-**Not run in the game.** Built for both versions against the reference copies (`_gamerefs`) and against the installed game of
-2026-11-07 (globe public beta 261107); `python tools/modtool.py compat` passes and `compat-check` finds 0 missing references
-in the installed `Managed` folder.
+Run in the game on the globe beta (build 261107) on 2026-11-09: the mod starts under Keel and a mission's radio calls play (a missile warning call in Intro 01), and the fuel calls were watched on five aircraft earlier. Not run in the game: the accent matching by nation, random voices each mission and the female-voices default (they only change which voice is picked); 0.8.7. Built for both versions against the reference copies (`_gamerefs`); `python tools/modtool.py compat` passes.
 
 - **Fuel calls follow the new fuel model of build 261107.** The game dropped `AircraftParameters._altitudeEfficiencyCurve` /
   `_rangeMultiplierCurve` and `HelicopterParameters._hoveringFuelConsumption` and now keeps the fuel burn per km itself

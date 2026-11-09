@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.1 – 2026-11-09 – voice gender per squadron
+
+Compiled for both game versions against the reference copies (`_gamerefs`); `python tools/modtool.py compat` passes. Not run in the game.
+
+- **Voice gender per squadron, in a text file** (no menu setting): `BepInEx/config/SeaPowerRadio/squadrons.txt`, lines like
+  `Bear Aces = female` or `Ghostriders = male`. Every pilot of a matching air-wing squadron speaks with a voice of that
+  gender, over the Female voices setting. A name without `*` matches every squadron whose name contains it, `*` is a
+  wildcard, the last matching line wins. Applies from the next mission; the file is created with examples. A squadron
+  callsign word that exists only in voices of the other gender keeps that voice. See [docs/squadron-voices.md](docs/squadron-voices.md).
+
 ## Unreleased – voice gender per squadron
 
 - **`BepInEx/config/SeaPowerRadio/squadrons.txt`** (text file, no menu setting): `Bear Aces = female`, `Ghostriders = male`.

@@ -1,4 +1,3 @@
-1.4.0: voices follow the nation, a new random mix each mission, fuel calls for the new game build.
-Ship names and squadron words are spoken in the accent family of their country. New setting "Random voices each mission" (on by default): every fresh mission start mixes the voices anew, ships included; loading a save keeps that mission's voices. Female voices are off by default now (a config saved with the old default is switched once; turn them back on and they stay on).
-The fuel calls (bingo and the like) read the new fuel model of the globe public beta (build 261107) and keep the old one for older builds.
-Run in the game on the globe beta 261107: calls play in a mission and the fuel calls were watched; the new voice choices are not run in the game yet. 0.8.7 checked offline only.
+1.4.1: a voice gender per squadron.
+New: a text file, BepInEx/config/SeaPowerRadio/squadrons.txt, with lines like "Bear Aces = female" or "Ghostriders = male" gives every pilot of that squadron a voice of that gender, whatever the Female voices setting says. There is no menu entry; the file is created with examples at the first mission and applies from the next mission.
+Not run in the game yet; checked offline for the globe beta and 0.8.7.

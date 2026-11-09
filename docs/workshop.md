@@ -67,9 +67,11 @@ and the item's new update time. `check` also lists the page's extra previews (vi
 first YouTube video for the new one (or adds it if there is none) without a change note. A changed `_info.ini`
 `[Compatibility]` or new dependencies still need the game's Create Mod screen.
 
-After the first upload, on the Workshop page itself (Steam web → Edit → Add/edit images & videos):
+After the first upload:
 
-- the screenshots from [workshop/screenshots/](../workshop/screenshots), in their numbered order:
+- the screenshots from [workshop/screenshots/](../workshop/screenshots), in their numbered order, sent with
+  `python tools/modtool.py workshop radio gallery --yes` from the workspace (never the Steam web page: Steam drops a
+  picture re-sent under an old name; the tool sends unique names and verifies the page):
 
   | Image | Shows |
   | --- | --- |

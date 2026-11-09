@@ -27,6 +27,7 @@ internal sealed class RosterElement
     public ObjectBase Carrier;
     public string AircraftIni;
     public string Squadron;
+    public string Gender;          // "m" / "f" when squadrons.txt has a rule for this squadron, else null (the general settings decide)
     public int Slot;
 
     public bool IsAirWingSlot => Carrier != null;
@@ -90,7 +91,7 @@ internal sealed class Roster
             return false;
         string persona = voiceId.Substring(slash + 1);
         VoicePersona voice = e.Pack.Personas.FirstOrDefault(p => p.Id == persona);
-        if (voice == null || !VoiceAssignment.IsAllowed(voice) || (e.BoundName != null && !e.BoundName.Voices.Contains(persona)))
+        if (voice == null || !VoiceAssignment.IsAllowed(voice, e.Gender) || (e.BoundName != null && !e.BoundName.Voices.Contains(persona)))
             return false;
         e.Voice = VoicesOf(e.Pack).Claim(e.Key, voice);
         if (!string.IsNullOrEmpty(callsign) && e.Callsign != null)
@@ -162,7 +163,7 @@ internal sealed class Roster
         if (!ApplyPin(e) && !ApplyMemory(e))
         {
             VoiceAssignment pool = VoicesOf(e.Pack);
-            e.Voice = e.BoundName != null ? pool.Prefer(e.Key, e.BoundName.Voices, AccentsOf(e)) : pool.For(e.Key, AccentsOf(e));
+            e.Voice = e.BoundName != null ? pool.Prefer(e.Key, e.BoundName.Voices, AccentsOf(e), e.Gender) : pool.For(e.Key, AccentsOf(e), e.Gender);
         }
         Remember(e);
         memory?.SaveIfDirty();
@@ -211,7 +212,7 @@ internal sealed class Roster
 
         // Named units next – their names exist only in a few voices – then everyone else from the pool.
         foreach (RosterElement e in elements.Where(e => e.BoundName != null && e.Pack != null && e.Voice == null))
-            e.Voice = VoicesOf(e.Pack).Prefer(e.Key, e.BoundName.Voices, AccentsOf(e));
+            e.Voice = VoicesOf(e.Pack).Prefer(e.Key, e.BoundName.Voices, AccentsOf(e), e.Gender);
         foreach (RosterElement e in elements.Where(e => e.Voice == null && e.Pack != null))
             AssignVoice(e);
 
@@ -233,10 +234,10 @@ internal sealed class Roster
         int changed = 0;
         foreach (RosterElement e in elements)
         {
-            if (e.Voice == null || VoiceAssignment.IsAllowed(e.Voice) || e.Alias?.Voice != null)
+            if (e.Voice == null || VoiceAssignment.IsAllowed(e.Voice, e.Gender) || e.Alias?.Voice != null)
                 continue;   // a voice the player pinned stays
             VoicePersona before = e.Voice;
-            e.Voice = VoicesOf(e.Pack).Rebind(e.Key, e.BoundName?.Voices, AccentsOf(e));
+            e.Voice = VoicesOf(e.Pack).Rebind(e.Key, e.BoundName?.Voices, AccentsOf(e), e.Gender);
             if (e.Voice != before)
             {
                 changed++;
@@ -327,6 +328,7 @@ internal sealed class Roster
                         Carrier = deckOwner,
                         AircraftIni = type._fileName,
                         Squadron = squadron._name,
+                        Gender = SquadronVoices.GenderFor(squadron._name),
                         Slot = slot,
                     };
                     elements.Add(element);
@@ -357,7 +359,7 @@ internal sealed class Roster
         if (name != null && slot.Pack != null && !VoicesOf(slot.Pack).IsAmong(slot.Voice, name.Voices))
         {
             slot.BoundName = name;
-            slot.Voice = VoicesOf(slot.Pack).Prefer(slot.Key + "|" + name.Key, name.Voices, AccentsOf(slot));
+            slot.Voice = VoicesOf(slot.Pack).Prefer(slot.Key + "|" + name.Key, name.Voices, AccentsOf(slot), slot.Gender);
         }
         // The aircraft knows its campaign tag now (the deck hands it over at launch): the voice it had before, or this one from now on.
         slot.MemoryKey = MemoryKeyOf(aircraft);
@@ -422,6 +424,7 @@ internal sealed class Roster
             string says = e.Pack == null ? "(game voice)"
                 : e.BoundName != null ? e.BoundName.Text + (e.BoundName.Squadron ? " (squadron)" : "") : "gen: " + e.Callsign;
             if (e.Alias != null) says += " (alias)";
+            if (e.Gender != null) says += e.Gender == "f" ? " (squadron: f)" : " (squadron: m)";
             sb.AppendLine($"  {says,-24} {e.Voice?.FullId ?? "-",-18} {e.Nation,-10} {e.Kind,-10} {e.ClassName,-22} {who}");
         }
         return sb.ToString();

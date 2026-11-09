@@ -53,10 +53,15 @@ internal sealed class VoiceAssignment
     public int PoolSize => order.Count;
 
     /// <summary>"Female voices" off: women's voices are skipped while a male voice is still available.</summary>
-    private static bool Allowed(VoicePersona p) => p.Gender != "f" || Settings.FemaleVoices == null || Settings.FemaleVoices.Value;
+    /// <summary>
+    /// <paramref name="gender"/> = a squadron rule (squadrons.txt, "m" / "f"): only that gender, whatever the setting says.
+    /// Null = the "Female voices" setting decides.
+    /// </summary>
+    private static bool Allowed(VoicePersona p, string gender = null) =>
+        gender != null ? p.Gender == gender : p.Gender != "f" || Settings.FemaleVoices == null || Settings.FemaleVoices.Value;
 
-    /// <summary>Whether this persona may speak with the current settings.</summary>
-    public static bool IsAllowed(VoicePersona p) => p == null || Allowed(p);
+    /// <summary>Whether this persona may speak with the current settings (and the squadron's gender rule, if it has one).</summary>
+    public static bool IsAllowed(VoicePersona p, string gender = null) => p == null || Allowed(p, gender);
 
     /// <summary>
     /// Next unused voice for an element (stable key: unit id, or carrier + air-wing slot). <paramref name="accents"/> = the
@@ -64,7 +69,7 @@ internal sealed class VoiceAssignment
     /// every voice of that family is taken they are shared inside the family, never a foreign accent. Null (a nation without
     /// accents) = the whole pack, as before.
     /// </summary>
-    public VoicePersona For(string elementKey, string[] accents = null)
+    public VoicePersona For(string elementKey, string[] accents = null, string gender = null)
     {
         if (byElement.TryGetValue(elementKey, out VoicePersona persona))
             return persona;
@@ -72,7 +77,7 @@ internal sealed class VoiceAssignment
             return null;
         if (accents != null)
         {
-            persona = FromFamily(accents);
+            persona = FromFamily(accents, gender);
             if (persona != null)
                 return Bind(elementKey, persona);
         }
@@ -80,11 +85,11 @@ internal sealed class VoiceAssignment
         for (int i = 0; i < order.Count && persona == null; i++)
         {
             VoicePersona candidate = order[(next + i) % order.Count];
-            if (!used.Contains(candidate.Id) && Allowed(candidate))
+            if (!used.Contains(candidate.Id) && Allowed(candidate, gender))
                 persona = candidate;
         }
         // Everyone is taken: share (a man, if women are switched off).
-        persona ??= order.Where(Allowed).Skip(next % Math.Max(1, order.Count(Allowed))).FirstOrDefault() ?? order[next % order.Count];
+        persona ??= order.Where(p => Allowed(p, gender)).Skip(next % Math.Max(1, order.Count(p => Allowed(p, gender)))).FirstOrDefault() ?? order[next % order.Count];
         next++;
         return Bind(elementKey, persona);
     }
@@ -93,9 +98,9 @@ internal sealed class VoiceAssignment
         accents.Any(a => string.Equals(a, p.Accent, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>The next voice of an accent family: unused ones first (first accent first, shuffled inside it), then shared round-robin. Null when the family has no allowed voice.</summary>
-    private VoicePersona FromFamily(string[] accents)
+    private VoicePersona FromFamily(string[] accents, string gender = null)
     {
-        var family = accents.SelectMany(a => order.Where(p => string.Equals(p.Accent, a, StringComparison.OrdinalIgnoreCase) && Allowed(p))).ToList();
+        var family = accents.SelectMany(a => order.Where(p => string.Equals(p.Accent, a, StringComparison.OrdinalIgnoreCase) && Allowed(p, gender))).ToList();
         if (family.Count == 0)
             return null;
         VoicePersona free = family.FirstOrDefault(p => !used.Contains(p.Id));
@@ -112,12 +117,12 @@ internal sealed class VoiceAssignment
     /// yet, else the first one even if shared – saying the right name matters more than a unique voice.
     /// Falls back to <see cref="For"/> when no candidate is in the library.
     /// </summary>
-    public VoicePersona Prefer(string elementKey, IEnumerable<string> candidates, string[] accents = null)
+    public VoicePersona Prefer(string elementKey, IEnumerable<string> candidates, string[] accents = null, string gender = null)
     {
         var known = candidates?.Where(byId.ContainsKey).ToList();
         if (known == null || known.Count == 0)
-            return For(elementKey, accents);
-        var men = known.Where(c => Allowed(byId[c])).ToList();
+            return For(elementKey, accents, gender);
+        var men = known.Where(c => Allowed(byId[c], gender)).ToList();
         if (men.Count > 0)
             known = men;                 // none of the voices the name exists in is a man: the name matters more
         if (accents != null)
@@ -134,10 +139,10 @@ internal sealed class VoiceAssignment
     }
 
     /// <summary>A new voice for an element that already has one (the settings changed): forgets the old binding.</summary>
-    public VoicePersona Rebind(string elementKey, IEnumerable<string> candidates, string[] accents = null)
+    public VoicePersona Rebind(string elementKey, IEnumerable<string> candidates, string[] accents = null, string gender = null)
     {
         byElement.Remove(elementKey);
-        return candidates != null ? Prefer(elementKey, candidates, accents) : For(elementKey, accents);
+        return candidates != null ? Prefer(elementKey, candidates, accents, gender) : For(elementKey, accents, gender);
     }
 
     public bool IsAmong(VoicePersona persona, IEnumerable<string> candidates) =>

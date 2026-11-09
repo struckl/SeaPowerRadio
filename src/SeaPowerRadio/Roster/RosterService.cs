@@ -28,6 +28,14 @@ internal static class RosterService
         {
             ModLog.Warn($"[aliases] not loaded, ships use their own names: {ex.Message}");
         }
+        try
+        {
+            Voices.SquadronVoices.Reload(); // an edited squadrons.txt applies from the next mission
+        }
+        catch (Exception ex)
+        {
+            ModLog.Warn($"[squadrons] not loaded, squadrons use the general voice settings: {ex.Message}");
+        }
         CampaignMemory campaign = CampaignMemory.ForMission(seed);
         string salt = RandomVoiceSalt(seed, campaign);
         var roster = new Roster(seed, campaign, salt);

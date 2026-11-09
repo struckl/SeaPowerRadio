@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased – voice gender per squadron
+
+- **`BepInEx/config/SeaPowerRadio/squadrons.txt`** (text file, no menu setting): `Bear Aces = female`, `Ghostriders = male`.
+  Every pilot of a matching air-wing squadron speaks with a voice of that gender, over the Female voices setting. Name
+  without `*` = contains, `*` = wildcard, last matching line wins. Applies from the next mission. See
+  [docs/squadron-voices.md](docs/squadron-voices.md). Compiled only (the Anchor Chain reference is missing on this PC);
+  not run in the game.
+
 ## 1.4.0 – 2026-11-09 – accents follow the nation, random voices each mission, female voices off
 
 - Fuel calls on globe beta 261107: the game replaced its fuel curves with a performance model; the calls read the new model and the old curves by name. Run in the game on 261107: all five aircraft in the test mission watched, no scan errors.

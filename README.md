@@ -46,6 +46,9 @@ ordered.
 - **Female voices** (off by default since 1.4.0) – the voice library has male and female voices; switch the female ones
   on and units use them too. Off: units speak with male voices only (a unit whose name was rendered only in a female voice
   keeps it). A config saved by an older version that still said on is switched to off once; turn it on again and it stays.
+- **Voice gender per squadron** – a text file only (no menu entry): `BepInEx/config/SeaPowerRadio/squadrons.txt`, lines like
+  `Bear Aces = female` or `Ghostriders = male`; all pilots of that squadron then use that gender, whatever the Female
+  voices setting says. Details: [docs/squadron-voices.md](docs/squadron-voices.md).
 - **Random voices each mission** (on by default, 1.4.0) – every fresh start of a mission shuffles the voices, so the same
   mission sounds different each time. Loading a save of that mission keeps the voices of its latest start (the salt is kept
   per mission in `BepInEx/config/SeaPowerRadio/voice-salts.txt`; none on record = the plain voices). Callsigns stay as they

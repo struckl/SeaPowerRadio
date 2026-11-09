@@ -39,7 +39,7 @@ CVN-68* = Nimitz
 
 ## Lookup
 
-For a ship (aircraft are not aliased: formations rename them), with its short name, then its full name:
+For a ship (aircraft are not aliased: formations rename them; a squadron's voice gender has its own file, [squadron-voices.md](squadron-voices.md)), with its short name, then its full name:
 alias → its name to say; else the name itself; else the name without a prefix. The first that has a clip in the unit's
 pack is the one it says (`Roster.NameOf`). The voice pin is applied when the roster is built, before the campaign memory.
 

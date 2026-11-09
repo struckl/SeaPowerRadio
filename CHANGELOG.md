@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased – callsign words in aliases.txt
+
+- **An alias can keep a generated callsign** (bug report: `Akira O-ren = Victory` logged "no voice pack has the name
+  Victory"). `aliases.txt` only accepted base-game ship names; it now also takes the ship, submarine and shore callsign
+  words (Victory, Courage, Castle, …). The ship gets that callsign in every mission. No other unit is handed the word, and
+  it wins over a campaign's remembered callsign. Generation now skips a taken word before falling back to a numbered one.
+  The template in a newly created `aliases.txt` lists the words. Compiled only, not run in the game.
+
 ## 1.4.1 – 2026-11-09 – voice gender per squadron
 
 Compiled for both game versions against the reference copies (`_gamerefs`); `python tools/modtool.py compat` passes. Not run in the game.

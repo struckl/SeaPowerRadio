@@ -29,7 +29,11 @@ CVN-68* = Nimitz
 - **game name**: the unit's short name or full name as the game shows it. Compared like `names.txt` keys (lower case,
   anything but letters and digits counts as one `_`), so case and punctuation do not matter. A trailing `*` matches every
   name that starts with it; the longest match wins.
-- **name to say**: a name from `names.txt` (any pack's). Optional when a voice is given.
+- **name to say**: a name from `names.txt` (any pack's), or one of the standalone callsign words (the ship, submarine and
+  shore lists in `Callsigns.Words`: Bulwark … Courage, Shadow … Barracuda, Castle … Lighthouse). A callsign word becomes
+  the unit's callsign for every mission (`Akira O-ren = Victory`): it is reserved before the others are handed out, so no
+  other unit gets it, and it wins over a campaign's remembered callsign and over the unit's own name. A word that is
+  also a unit name in `names.txt` is said as that name. Optional when a voice is given.
 - **voice**: a persona folder of the unit's pack (`gb_m_06`) or `packId/personaId`. Pins the unit to that voice for every
   mission; it wins over the campaign memory and the name's own voices, and stays when female voices are switched off. If
   the name has no clip in that voice, the unit keeps the voice and says its generated callsign. A voice of another pack than
@@ -40,10 +44,10 @@ CVN-68* = Nimitz
 ## Lookup
 
 For a ship (aircraft are not aliased: formations rename them; a squadron's voice gender has its own file, [squadron-voices.md](squadron-voices.md)), with its short name, then its full name:
-alias → its name to say; else the name itself; else the name without a prefix. The first that has a clip in the unit's
+alias → its name to say (a callsign word: no name, the unit says that callsign); else the name itself; else the name without a prefix. The first that has a clip in the unit's
 pack is the one it says (`Roster.NameOf`). The voice pin is applied when the roster is built, before the campaign memory.
 
 ## Log
 
 `[aliases] N aliases, M prefixes from K file(s)` at every mission start; a warning for a line without `=`, a name no pack
-has, or a voice that is not installed. With the roster log on, aliased units carry `(alias)`.
+has that is no callsign word either, or a voice that is not installed. With the roster log on, aliased units carry `(alias)`.

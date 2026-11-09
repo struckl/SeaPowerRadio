@@ -94,8 +94,8 @@ internal sealed class Roster
         if (voice == null || !VoiceAssignment.IsAllowed(voice, e.Gender) || (e.BoundName != null && !e.BoundName.Voices.Contains(persona)))
             return false;
         e.Voice = VoicesOf(e.Pack).Claim(e.Key, voice);
-        if (!string.IsNullOrEmpty(callsign) && e.Callsign != null)
-            e.Callsign = callsign;
+        if (!string.IsNullOrEmpty(callsign) && e.Callsign != null && AliasCallsign(e.Alias, e.Pack) == null)
+            e.Callsign = callsign;   // a callsign word from aliases.txt wins over the remembered one
         return true;
     }
 
@@ -198,6 +198,14 @@ internal sealed class Roster
             }
         }
 
+        // Callsign words the player gave ships (aliases.txt: "Akira O-ren = Victory") are theirs: generation skips them.
+        foreach (ObjectBase unit in units.Where(u => !IsAir(u)))
+        {
+            VoicePack pack = PackForNation(NationOf(unit));
+            if (AliasCallsign(AliasOf(unit), pack) is string word)
+                CallsignsFor(pack)?.Reserve(word);
+        }
+
         foreach (ObjectBase unit in units.Where(u => !IsAir(u)))
             AddUnit(unit, KindOf(unit), CallsignsFor(PackForNation(NationOf(unit)))?.Single(KindOf(unit)));
 
@@ -261,6 +269,7 @@ internal sealed class Roster
         {
             if (string.IsNullOrEmpty(name)) continue;
             NameAlias alias = NameAliases.For(name);
+            if (AliasCallsign(alias, pack) != null) return null;   // the alias gives a callsign word: that, not the ship's name
             GameName found = (alias?.Say != null ? pack.Names.Unit(alias.Say) : null)
                 ?? pack.Names.Unit(name) ?? pack.Names.Unit(NameAliases.StripPrefix(name));
             if (found != null) return found;
@@ -271,6 +280,16 @@ internal sealed class Roster
     /// <summary>A ship's alias line: by its short name, else its full name. Aircraft have none (formations rename them).</summary>
     private static NameAlias AliasOf(ObjectBase unit) =>
         IsAir(unit) ? null : NameAliases.For(unit._obp?._shortName) ?? NameAliases.For(unit.getName());
+
+    /// <summary>
+    /// The callsign word an alias line gives ("= Victory"): its name is no unit name of the pack but one of the standalone
+    /// callsign words. Null otherwise (a unit name wins when a word is both).
+    /// </summary>
+    private static string AliasCallsign(NameAlias alias, VoicePack pack)
+    {
+        if (alias?.Say == null || pack == null || pack.Names?.Unit(alias.Say) != null) return null;
+        return Callsigns.SingleWord(alias.Say);
+    }
 
     private void AddFlight(List<ObjectBase> members)
     {
@@ -286,6 +305,12 @@ internal sealed class Roster
     {
         if (Find(unit) != null) return;
         VoicePack pack = PackForNation(NationOf(unit));
+        NameAlias alias = AliasOf(unit);
+        if (AliasCallsign(alias, pack) is string word)
+        {
+            callsign = word;
+            CallsignsFor(pack)?.Reserve(word);
+        }
         var element = new RosterElement
         {
             Key = "u" + unit.UniqueID,
@@ -296,7 +321,7 @@ internal sealed class Roster
             Pack = pack,
             Callsign = pack != null ? callsign : null,
             BoundName = NameOf(unit, pack),
-            Alias = AliasOf(unit),
+            Alias = alias,
             MemoryKey = MemoryKeyOf(unit),
         };
         elements.Add(element);

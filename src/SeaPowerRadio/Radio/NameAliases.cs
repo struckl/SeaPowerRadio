@@ -12,7 +12,7 @@ internal sealed class NameAlias
 {
     public string Match;      // slug of the game name ("uss_pargo")
     public bool StartsWith;   // the line ended in '*': every name that starts with it
-    public string Say;        // a name with clips (names.txt), null = keep the unit's own
+    public string Say;        // a name with clips (names.txt) or a ship/sub/shore callsign word ("Victory"), null = keep the unit's own
     public string Voice;      // "gb_m_04" or "nato-en/gb_m_04", null = chosen as usual
     public string Source;     // file:line, for the log
 }
@@ -159,8 +159,8 @@ internal static class NameAliases
     {
         IReadOnlyList<VoicePack> packs = VoicePacks.Installed;
         if (packs.Count == 0) return;
-        if (a.Say != null && !packs.Any(p => p.Names?.Unit(a.Say) != null))
-            ModLog.Warn($"[aliases] {a.Source}: no voice pack has the name \"{a.Say}\", this ship keeps a generated callsign");
+        if (a.Say != null && Callsigns.SingleWord(a.Say) == null && !packs.Any(p => p.Names?.Unit(a.Say) != null))
+            ModLog.Warn($"[aliases] {a.Source}: no voice pack has the name \"{a.Say}\" and it is no callsign word, this ship keeps a generated callsign");
         if (a.Voice != null && FindVoice(a.Voice, null) == null)
             ModLog.Warn($"[aliases] {a.Source}: no voice \"{a.Voice}\" installed, the ship gets a voice as usual");
     }
@@ -203,7 +203,9 @@ internal static class NameAliases
 #   game name = name to say | voice
 #
 # 'name to say' must be a name the mod has clips for (any ship or shore unit of the base game,
-# see voices/names.txt). 'voice' is optional and pins the ship to one voice, e.g. gb_m_04
+# see voices/names.txt), or a callsign word: Bulwark, Sentinel, Victory, Warden, Guardian, Valiant,
+# Resolute, Steadfast, Vigilant, Defiant, Intrepid, Courage, Shadow, Silent, Deepwater, Barracuda,
+# Castle, Bastion, Harbor, Lighthouse. 'voice' is optional and pins the ship to one voice, e.g. gb_m_04
 # (folder names in voices/). Leave the name out to only pin the voice: 'HMS Bristol = | gb_m_06'.
 # A '*' at the end of the game name matches every name that starts with it.
 # '*prefix' lines strip hull prefixes before the lookup (the mod ships a list; add your own).

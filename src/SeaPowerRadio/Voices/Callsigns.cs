@@ -107,11 +107,31 @@ internal sealed class Callsigns
             used.Add(callsign);
     }
 
+    /// <summary>
+    /// The single-word callsign (ship, submarine or shore list) that <paramref name="say"/> names, in its listed spelling;
+    /// null when it is none. Those words are rendered standalone in every voice, so an alias line may hand one out.
+    /// </summary>
+    public static string SingleWord(string say)
+    {
+        if (string.IsNullOrWhiteSpace(say)) return null;
+        string s = say.Trim();
+        foreach (CallsignKind kind in new[] { CallsignKind.Ship, CallsignKind.Submarine, CallsignKind.Shore })
+            foreach (string w in Words[kind])
+                if (string.Equals(w, s, System.StringComparison.OrdinalIgnoreCase))
+                    return w;
+        return null;
+    }
+
     public string Single(CallsignKind kind)
     {
+        // A free word first (an alias line may hold one), only then a numbered one.
+        for (int i = 0; i < Words[kind].Length; i++)
+        {
+            string free = NextWord(kind);
+            if (used.Add(free))
+                return free;
+        }
         string word = NextWord(kind);
-        if (used.Add(word))
-            return word;
         // Word list exhausted for this kind: append a number ("Sentinel 2").
         wordReuse.TryGetValue(kind, out int n);
         for (n = n == 0 ? 2 : n; n < 10; n++)

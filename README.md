@@ -128,10 +128,14 @@ USS Pargo = Pargo                  # say the name of a base-game ship
 HMS Bristol = Bristol | gb_m_06    # and pin it to one voice
 HMS Bristol = | gb_m_06            # only pin the voice
 CVN-68* = Nimitz                   # '*': every name that starts with it
+Akira O-ren = Victory              # or keep a callsign word for good
 *prefix HNoMS, HSwMS               # more prefixes to strip
 ```
 
-It can only point to names that have clips; a truly new name needs new clips. Edits apply from the next mission, and the
+It can only point to names that have clips: a base-game ship name, or one of the ship, submarine and shore callsign
+words (Bulwark, Sentinel, Victory, Warden, Guardian, Valiant, Resolute, Steadfast, Vigilant, Defiant, Intrepid, Courage,
+Shadow, Silent, Deepwater, Barracuda, Castle, Bastion, Harbor, Lighthouse). A word given this way is that ship's alone. A
+truly new name needs new clips. Edits apply from the next mission, and the
 log says when a line names a ship or voice that does not exist. A ship mod can ship its own `rats-radio-aliases.txt` in
 its folder. Details: [docs/name-aliases.md](docs/name-aliases.md).
 

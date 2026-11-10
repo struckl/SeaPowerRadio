@@ -78,14 +78,40 @@ internal static class SquadronVoices
         }
     }
 
-    /// <summary>"m" / "f" for a squadron the player made a rule for, else null. When several rules match, the last one in the file wins.</summary>
-    public static string GenderFor(string squadronName)
+    /// <summary>
+    /// Every name a player may know a squadron by: the name the game shows (DisplayName, e.g. "VF-84 Jolly Rogers"), its short
+    /// name, its callsign words ("Viper", what a launched aircraft is called: "Viper 1") and the mission file's key ("Squadron1").
+    /// 1.4.1 matched only the key, so a rule with a shown name or a callsign never applied.
+    /// </summary>
+    public static List<string> NamesOf(SeaPower.Squadron squadron)
     {
-        if (rules.Count == 0 || string.IsNullOrWhiteSpace(squadronName)) return null;
-        string slug = Names.Slug(squadronName);
+        var names = new List<string>();
+        if (squadron == null) return names;
+        void Add(string n)
+        {
+            if (string.IsNullOrWhiteSpace(n) || n == "DEFAULT") return;
+            n = n.Trim();
+            if (!names.Contains(n)) names.Add(n);
+        }
+        Add(squadron.DisplayName);
+        Add(squadron.ShortName);
+        if (squadron.Callsigns != null)
+            foreach (string c in squadron.Callsigns) Add(c);
+        Add(squadron._name);
+        return names;
+    }
+
+    /// <summary>"m" / "f" for a squadron the player made a rule for, else null. When several rules match, the last one in the file wins.</summary>
+    public static string GenderFor(IEnumerable<string> squadronNames)
+    {
+        if (rules.Count == 0 || squadronNames == null) return null;
+        var slugs = new List<string>();
+        foreach (string n in squadronNames)
+            if (!string.IsNullOrWhiteSpace(n)) slugs.Add(Names.Slug(n));
+        if (slugs.Count == 0) return null;
         string gender = null;
         foreach (Rule r in rules)
-            if (Matches(slug, r.Pattern))
+            if (slugs.Exists(s => s.Length > 0 && Matches(s, r.Pattern)))
                 gender = r.Gender;
         return gender;
     }
@@ -121,9 +147,11 @@ internal static class SquadronVoices
 #   squadron name = male | female
 #
 # Every pilot of a matching squadron then speaks with a voice of that gender, whatever the 'Female voices' setting says.
+# The name can be the squadron's name as the game shows it, its short name or its callsign (Viper = female: every
+# squadron whose aircraft launch as 'Viper 1', 'Viper 2' ...).
 # Without a '*' the name matches every squadron whose name contains it (case and punctuation ignored);
 # a '*' is a wildcard (VF-11* = every squadron name that starts with VF-11).
-# Squadron names are listed in BepInEx/LogOutput.log at mission start ('[hangar <carrier> / <squadron> #1]').
+# Squadron names and callsigns are listed in BepInEx/LogOutput.log at mission start ('[hangar <carrier> / <names> #1]').
 # If several lines match a squadron, the last one wins. Applies from the next mission.
 #
 # Examples:

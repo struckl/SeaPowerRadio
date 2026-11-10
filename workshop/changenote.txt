@@ -1,3 +1,3 @@
-1.4.2: aliases.txt can keep a callsign.
-Fixed: a line like "Akira O-ren = Victory" in BepInEx/config/SeaPowerRadio/aliases.txt was refused, because Victory is one of the mod's own callsigns, not a ship name. Now any ship, submarine or shore callsign word works there (Bulwark, Sentinel, Victory, Warden, Guardian, Valiant, Resolute, Steadfast, Vigilant, Defiant, Intrepid, Courage, Shadow, Silent, Deepwater, Barracuda, Castle, Bastion, Harbor, Lighthouse). The ship keeps it in every mission and no other unit gets it.
+1.4.3: squadrons.txt works with the names you see.
+Fixed: a line like "Viper = female" in BepInEx/config/SeaPowerRadio/squadrons.txt did nothing. The mod only compared it with the squadron's internal name in the mission file ("Squadron1"), which no player ever sees. A line now matches the squadron's name as the game shows it, its short name or its callsign: "Viper = female" covers every squadron whose aircraft launch as "Viper 1", "Viper 2" ... The log lists every name per hangar slot at mission start.
 Not run in the game yet; checked offline for the globe beta and 0.8.7.

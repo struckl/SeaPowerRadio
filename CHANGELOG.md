@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.3 – 2026-11-10 – squadrons.txt matches the names players see
+
+- **Squadron rules now apply** (bug report: `Viper = female` left the T-20 squadron launching as "Viper 1" with mixed
+  voices). 1.4.1 compared the rule only with the mission file's internal key ("Squadron1"), never with a name the player
+  sees, so a rule by name could not match. A rule now matches the squadron's shown name, its short name, its callsign
+  words ("Viper") and the internal key. The hangar lines in the log list all of them. Compiled only, not run in the game.
+
 ## 1.4.2 – 2026-11-09 – callsign words in aliases.txt
 
 - **An alias can keep a generated callsign** (bug report: `Akira O-ren = Victory` logged "no voice pack has the name

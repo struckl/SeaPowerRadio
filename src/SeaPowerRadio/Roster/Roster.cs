@@ -26,8 +26,9 @@ internal sealed class RosterElement
     // Air-wing slots only.
     public ObjectBase Carrier;
     public string AircraftIni;
-    public string Squadron;
-    public string Gender;          // "m" / "f" when squadrons.txt has a rule for this squadron, else null (the general settings decide)
+    public string Squadron;        // the mission file's key ("Squadron1"); launches are matched by it
+    public string SquadronNames;   // every name squadrons.txt matches against (shown name, short name, callsigns, key), for the log
+    public string Gender;         // "m" / "f" when squadrons.txt has a rule for this squadron, else null (the general settings decide)
     public int Slot;
 
     public bool IsAirWingSlot => Carrier != null;
@@ -338,6 +339,8 @@ internal sealed class Roster
             foreach (Squadron squadron in type.Squadrons.OrderBy(s => s._name))
             {
                 if (squadron.Numbers <= 0) continue;
+                List<string> squadronNames = SquadronVoices.NamesOf(squadron);
+                string gender = SquadronVoices.GenderFor(squadronNames);
                 // Four to a flight, the way the deck launches them.
                 List<string> names = CallsignsFor(pack)?.Flight(kind, squadron.Numbers);
                 for (int slot = 0; slot < squadron.Numbers; slot++)
@@ -353,7 +356,8 @@ internal sealed class Roster
                         Carrier = deckOwner,
                         AircraftIni = type._fileName,
                         Squadron = squadron._name,
-                        Gender = SquadronVoices.GenderFor(squadron._name),
+                        SquadronNames = string.Join(", ", squadronNames),
+                        Gender = gender,
                         Slot = slot,
                     };
                     elements.Add(element);
@@ -444,7 +448,7 @@ internal sealed class Roster
         foreach (RosterElement e in elements)
         {
             string who = e.IsAirWingSlot
-                ? $"[hangar {e.Carrier.getName()} / {e.Squadron} #{e.Slot + 1}]"
+                ? $"[hangar {e.Carrier.getName()} / {e.SquadronNames ?? e.Squadron} #{e.Slot + 1}]"
                 : e.Unit.getUIDAndName();
             string says = e.Pack == null ? "(game voice)"
                 : e.BoundName != null ? e.BoundName.Text + (e.BoundName.Squadron ? " (squadron)" : "") : "gen: " + e.Callsign;

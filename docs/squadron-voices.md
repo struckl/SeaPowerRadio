@@ -11,10 +11,12 @@ Ghostriders = male        # every pilot of the F-4 squadron speaks with a man's 
 VF-11* = male             # '*' is a wildcard: every squadron name that starts with VF-11
 ```
 
-- **Matching.** Without a `*` the name matches every squadron whose name *contains* it; case and punctuation are ignored.
+- **Which name?** Any name the squadron goes by: the name the game shows for the air wing, its short name, or its callsign
+  (`Viper = female` covers a squadron whose aircraft launch as "Viper 1", "Viper 2" ...). The mission file's key
+  ("Squadron1") works too. The log (`BepInEx\LogOutput.log`) lists every hangar slot at mission start as
+  `[hangar <carrier> / <names> #1]` with all of these, and a squadron with a rule is marked `(squadron: f)` or `(squadron: m)`.
+- **Matching.** Without a `*` the rule matches every squadron with a name that *contains* it; case and punctuation are ignored.
   With a `*` it is a wildcard over the whole name (`VF-11*` starts with, `*Aces` ends with, `*Ghost*` contains).
-- **Which name?** The squadron name the game shows for the air wing. The log (`BepInEx\LogOutput.log`) lists every hangar
-  slot at mission start as `[hangar <carrier> / <squadron> #1]`, and a squadron with a rule is marked `(squadron: f)` or `(squadron: m)`.
 - **Several lines match.** The last one in the file wins.
 - **Beats the "Female voices" setting** for that squadron: a `female` squadron speaks with women even while the setting is
   off, a `male` squadron with men even while it is on. Every other unit follows the setting as before.

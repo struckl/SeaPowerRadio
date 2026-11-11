@@ -1,3 +1,3 @@
-1.4.3: squadrons.txt works with the names you see.
-Fixed: a line like "Viper = female" in BepInEx/config/SeaPowerRadio/squadrons.txt did nothing. The mod only compared it with the squadron's internal name in the mission file ("Squadron1"), which no player ever sees. A line now matches the squadron's name as the game shows it, its short name or its callsign: "Viper = female" covers every squadron whose aircraft launch as "Viper 1", "Viper 2" ... The log lists every name per hangar slot at mission start.
-Not run in the game yet; checked offline for the globe beta and 0.8.7.
+1.4.4: ready for Sea Power 0.9.0.
+The game no longer lists this mod as "not declared to be compatible", and 0.9.0 players get this and later updates from the Workshop (the game skips updates from items that do not declare its version).
+Nothing else changed. Checked against 0.9.0 (build 261111) without starting the game: everything the mod uses is still there. Not yet run in the game on 0.9.0.

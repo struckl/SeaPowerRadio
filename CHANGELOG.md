@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.4 – 2026-11-11 – declared for game 0.9.0
+
+- **Declared for game 0.9.0.** The mod's `_info.ini` now says it fits 0.8.7 up to every 0.9.x, so the game no longer lists it as "not declared to be compatible", and Steam hands this and later updates to 0.9.0 players (the game skips Workshop updates whose declaration does not fit its version). Checked offline against 0.9.0 (build 261111): every game type, member, Harmony target and by-name lookup the mod uses is there; not run in the game on 0.9.0 yet.
+
 ## 1.4.3 – 2026-11-10 – squadrons.txt matches the names players see
 
 - **Squadron rules now apply** (bug report: `Viper = female` left the T-20 squadron launching as "Viper 1" with mixed

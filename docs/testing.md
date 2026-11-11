@@ -43,6 +43,9 @@ the mouse; the package holds **both DLLs**, the globe build needs Anchor Chain's
 - `rtb Joker 1-1` (perf director) sent the A-6E home to Souda Airbase; the ReturnToBase call was spoken.
 - **Map: Joker 1-1 turned yellow** (symbol, heading line and label), Joker 1-2 to 1-4 stayed blue (his screenshot, night
   map). Before this fix the symbol kept its colour on every globe build since 261107.
+- First run: only label and heading line turned yellow, the aircraft shape stayed blue (it is coloured by
+  `UnitPostureBrushConverter` from the unit's palette). Fixed in e8a6d33 (converter hooked, symbol told to convert again);
+  second run 22:43, same steps: **the whole symbol yellow** (his check).
 - Not checked: the formation manager rows, the day yellow, the symbol turning back after landing, the flat build.
 
 ## Roster and the new voices (2026-10-17)

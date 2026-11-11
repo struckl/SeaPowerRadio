@@ -1,19 +1,19 @@
 # Changelog
 
-## 1.5.0 – unreleased – moods
+## 1.5.0 – 2026-11-11 – moods
 
-- **Units sound the way the situation feels** (with the new optional item *R.A.T.S. Radio Moods*, about 455 MB: 60,169
-  stressed, happy and sad takes of all 43 voices). Warnings and weapons calls are stressed, and a unit that just called a
-  missile inbound, a hit or flooding stays stressed for a minute; kills, hits, rescues and mission success sound pleased,
-  and so do the unit's acknowledgements right after; a failure, survivors in the water, Winchester or a lost contact sound
-  low. A line without a mood take is spoken calmly, as before. Options > Audio > Rats Radio > **Moods** switches it off.
-  Without the pack nothing changes. The radio log adds the mood to each call (`[Warnings, channel 1, stressed]`).
-- The base item stays as it was (no mood clips in it); the mood takes are their own Workshop item.
+- **Units sound the way the situation feels.** Every voice now also has stressed, happy and sad takes (60,169 more clips;
+  the item grows to about twice its size). Warnings and weapons calls are stressed, and a unit that just called a missile
+  inbound, a hit or flooding stays stressed for a minute; kills, hits, rescues and mission success sound pleased, and so
+  do the unit's acknowledgements right after; a failure, survivors in the water, Winchester or a lost contact sound low.
+  A line without a mood take is spoken calmly, as before. Options > Audio > Rats Radio > **Moods** switches it off. The
+  radio log adds the mood to each call (`[Warnings, channel 1, stressed]`). Moods are part of the voices, not an item of
+  their own: a later language pack brings its own moods.
 - **Aircraft heading home turn yellow on the map again** (game 0.9.0). Since the globe build of 2026-11-07, the game
   colours map symbols in a different place, so the yellow never showed, though the formation manager rows still
   turned yellow. The whole symbol (shape, heading line and label) now turns yellow the moment the aircraft heads home and goes back to normal when it stops,
   in the day or night yellow of where it is on the globe. The 0.8.7 build is unchanged. Run in the game on 0.9.0: an A-6 sent home turned yellow all over, its wingmen stayed blue.
-- Compiled for both game versions; `python tools/modtool.py compat` passes. Not run in the game yet.
+- Compiled for both game versions; `python tools/modtool.py compat` passes. The moods have not been run in the game yet.
 
 ## 1.4.4 – 2026-11-11 – declared for game 0.9.0
 

@@ -9,23 +9,15 @@ Every voice of the NATO (English) pack has three more deliveries, rendered with 
 | happy | 31 keys (`tools/render-app/mood-keys/happy.txt` on the render branch) | 0.7 / 0.5 |
 | sad | 15 keys (`sad.txt`) | 0.35 / 0.6 |
 
-## The Moods pack
+## Where the takes live
 
-A separate Workshop item, so the base stays at its size. Folder (staged by `tools/package.ps1 -Moods`, installed locally
-to `StreamingAssets/SeaPowerRadioMoods`): `moodpack.ini`, `_info.ini`, `CREDITS.txt`, `<persona>/<mood>/<key>.mp3`.
+In the voice pack, next to the calm clips: `<persona>/<mood>/<key>.mp3`. Since 1.5.0 they ship inside the R.A.T.S.
+Radio item (the NATO pack is the base's `voices/` until 2.0, then the item R.A.T.S. Radio English), so a language or
+accent pack brings its own moods. Discovery (`VoicePacks.Discover`) adds a pack's own folder as a mood root when its
+personas have mood sub folders; a separate folder with a `moodpack.ini` ([Moods] Pack, Moods, MinBaseVersion) still works
+for a mod that adds moods to a pack it does not own. Mood clips are keys `mood/key` (`VoicePack.PathOf`).
 
-```ini
-[Moods]
-Pack=nato-en              ; the voice pack whose personas these are
-Moods=stressed,happy,sad
-Version=1.0.0
-MinBaseVersion=1.5.0
-```
-
-Discovery is the voice-pack scan (`VoicePacks.Discover`): every mod folder (StreamingAssets, Workshop items) with a
-`moodpack.ini` at the top or in `voices/` adds a mood root to that pack. A pack's own folder counts too, if its personas
-have mood sub folders (the repo's `mod/voices` after a render). Mood clips are keys `mood/key` (`VoicePack.PathOf`).
-The base package never carries mood folders (`robocopy /XD stressed happy sad`).
+Decided 2026-11-11: moods stay in the voice pack, no separate Moods item (a planned one was never published).
 
 ## Which mood a call gets (`Radio/Moods.cs`)
 

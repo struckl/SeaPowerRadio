@@ -47,12 +47,12 @@ ordered.
   country without a pack keeps the **game's own voice** – so playing the Soviets at 1.2.0 means the game's Russian voice;
   choose *NATO (English)* for that country to get the old English radio net. A pack lacking a line also leaves it to the
   game. Applies from the next mission. Pack format: [docs/voice-packs.md](docs/voice-packs.md).
-- **Moods** (1.5.0, needs the optional **R.A.T.S. Radio Moods** pack) – every voice also has stressed, happy and sad
-  takes. Warnings and weapons calls sound stressed, and a unit stays stressed for a minute after its own warning (missile
-  inbound, we're hit, flooding); a kill, a hit, a rescue or mission success sounds pleased (and the unit's next
-  acknowledgements too); a failure, survivors in the water, Winchester or a lost contact sound low. A line the mood has no
-  take for is spoken calmly. Switch: Options > Audio > Rats Radio > **Moods** (on by default; without the pack nothing
-  changes). The pack is a folder with `moodpack.ini` and `<persona>/<mood>/<key>.mp3`, no DLL: [docs/moods.md](docs/moods.md).
+- **Moods** (1.5.0) – every voice also has stressed, happy and sad takes. Warnings and weapons calls sound stressed,
+  and a unit stays stressed for a minute after its own warning (missile inbound, we're hit, flooding); a kill, a hit, a
+  rescue or mission success sounds pleased (and the unit's next acknowledgements too); a failure, survivors in the water,
+  Winchester or a lost contact sound low. A line the mood has no take for is spoken calmly. Switch: Options > Audio >
+  Rats Radio > **Moods** (on by default). The takes live in the voice pack (`<persona>/<mood>/<key>.mp3`), so a language
+  pack brings its own: [docs/moods.md](docs/moods.md).
 - **Female voices** (off by default since 1.4.0) – the voice library has male and female voices; switch the female ones
   on and units use them too. Off: units speak with male voices only (a unit whose name was rendered only in a female voice
   keeps it). A config saved by an older version that still said on is switched to off once; turn it on again and it stays.
@@ -116,8 +116,8 @@ everything works offline.
    file once; it is the one that runs on the 3D-globe public beta) or **[Anchor Chain](https://steamcommunity.com/sharedfiles/filedetails/?id=3380210757)** following its
    [installation guide](https://seapower-modders.github.io/AnchorChain/install-anchor-chain.html) (one manual step: copy its
    preloader into the game folder).
-2. Subscribe to **[Sea Power: R.A.T.S. Radio](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579)** on the Steam Workshop. About 390 MB: the
-   43 rendered voices.
+2. Subscribe to **[Sea Power: R.A.T.S. Radio](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579)** on the Steam Workshop. About 910 MB: the
+   43 rendered voices with their mood takes.
 3. Start a mission. The log `<Sea Power>\BepInEx\LogOutput.log` lists the installed voice packs and the roster: every
    unit with its callsign, voice (`packId/personaId`) and nation.
 

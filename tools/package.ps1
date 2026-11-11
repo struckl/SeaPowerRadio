@@ -20,11 +20,6 @@
     in packs\*, e.g. a pack under work) goes to dist\pack-<id>\ as it is (voicepack.ini, personas.txt, catalog.txt, names.txt, clips;
     plus the pack's own _info.ini and CREDITS if it has them) – the folder to upload to that pack's Workshop item. No
     build, no DLL: packs never carry code. -Zip also writes dist\SeaPowerRadio-pack-<id>-<version>.zip.
-    -Moods stages the Moods pack instead (dist\SeaPowerRadioMoods: mod\moods\* plus every persona's stressed/happy/sad
-    folders from mod\voices); -Install puts it in StreamingAssets\SeaPowerRadioMoods. The base never carries mood folders.
-
-.EXAMPLE
-    powershell -ExecutionPolicy Bypass -File tools\package.ps1 -Install
 #>
 param(
     [string]$GameDir = $(if ($env:GameDir) { $env:GameDir } else { 'E:\Games\steamapps\common\Sea Power' }),
@@ -34,8 +29,7 @@ param(
     [switch]$NoFlat,
     [switch]$Install,
     [switch]$Zip,
-    [string]$Pack,
-    [switch]$Moods
+    [string]$Pack
 )
 
 $ErrorActionPreference = 'Stop'
@@ -43,45 +37,6 @@ $root = Split-Path -Parent $PSScriptRoot
 $project = Join-Path $root 'src\SeaPowerRadio\SeaPowerRadio.csproj'
 $dist = Join-Path $root 'dist\SeaPowerRadio'
 $voices = Join-Path $root 'mod\voices'
-
-# -Moods: stage the Moods pack (mod\moods: moodpack.ini, _info.ini, CREDITS) with every persona's mood folders, and stop.
-if ($Moods) {
-    $src = Join-Path $root 'mod\moods'
-    $ini = Get-Content (Join-Path $src 'moodpack.ini')
-    $moodNames = (($ini | Where-Object { $_ -match '^\s*Moods\s*=' } | Select-Object -First 1) -replace '^\s*Moods\s*=\s*([^;]+).*$', '$1').Split(',') | ForEach-Object { $_.Trim() }
-    $moodVersion = ($ini | Where-Object { $_ -match '^\s*Version\s*=' } | Select-Object -First 1) -replace '^\s*Version\s*=\s*([^\s;]+).*$', '$1'
-    $target = Join-Path $root 'dist\SeaPowerRadioMoods'
-    if (Test-Path $target) { Remove-Item -Recurse -Force $target }
-    New-Item -ItemType Directory $target | Out-Null
-    Get-ChildItem -File $src | Copy-Item -Destination $target
-    $moodPreview = Join-Path $root 'workshop\moods\preview.jpg'
-    if (Test-Path $moodPreview) { Copy-Item $moodPreview $target }
-    $ids = Get-Content (Join-Path $voices 'personas.txt') | Where-Object { $_ -and -not $_.StartsWith('#') } | ForEach-Object { ($_ -split '[\s|,;=]+')[0] }
-    foreach ($id in $ids) {
-        foreach ($m in $moodNames) {
-            $from = Join-Path $voices "$id\$m"
-            if (-not (Test-Path $from)) { throw "No $m clips for $id (mod\voices\$id\$m)." }
-            robocopy $from (Join-Path $target "$id\$m") /E /XF *.part.mp3 /NFL /NDL /NJH /NJS /NP | Out-Null
-            if ($LASTEXITCODE -ge 8) { throw "Copying $id\$m failed (robocopy $LASTEXITCODE)." }
-        }
-    }
-    $n = (Get-ChildItem -Recurse -File -Filter *.mp3 $target).Count
-    Write-Host "Staged the Moods pack $moodVersion in $target ($($ids.Count) voices, moods $($moodNames -join ','), $n clips)"
-    if ($Zip) {
-        $archive = Join-Path $root "dist\SeaPowerRadio-moods-$moodVersion.zip"
-        if (Test-Path $archive) { Remove-Item -Force $archive }
-        Compress-Archive -Path $target -DestinationPath $archive -CompressionLevel Fastest
-        Write-Host "Moods zip: $archive"
-    }
-    if ($Install) {
-        if (Get-Process -Name 'Sea Power' -ErrorAction SilentlyContinue) { throw 'Sea Power is running - close it first.' }
-        $dest = Join-Path $GameDir 'Sea Power_Data\StreamingAssets\SeaPowerRadioMoods'
-        robocopy $target $dest /MIR /NFL /NDL /NJH /NJS /NP | Out-Null
-        if ($LASTEXITCODE -ge 8) { throw "Installing failed (robocopy $LASTEXITCODE)." }
-        Write-Host "Installed to $dest"
-    }
-    return
-}
 
 # -Pack <id>: stage one voice pack and stop (no build: a pack has no DLL).
 if ($Pack) {
@@ -159,8 +114,8 @@ $preview = Join-Path $root 'workshop\preview.jpg'
 if (Test-Path $preview) { Copy-Item $preview $dist } else { Write-Warning 'workshop\preview.jpg missing - nothing to pick as the Workshop preview.' }
 
 # robocopy is far faster than Copy-Item for ~57,000 small clips; half-written takes (*.part.mp3) stay behind.
-# Mood clips (<persona>\stressed|happy|sad) are the Moods pack's (-Moods), never the base's.
-robocopy $voices (Join-Path $dist 'voices') /E /XF *.part.mp3 /XD stressed happy sad /NFL /NDL /NJH /NJS /NP | Out-Null
+# The mood takes (<persona>\stressed|happy|sad, docs/moods.md) travel with their voices.
+robocopy $voices (Join-Path $dist 'voices') /E /XF *.part.mp3 /NFL /NDL /NJH /NJS /NP | Out-Null
 if ($LASTEXITCODE -ge 8) { throw "Copying the voice library failed (robocopy $LASTEXITCODE)." }
 
 $version = (Select-String -Path (Join-Path $root 'src\SeaPowerRadio\Plugin.cs') -Pattern 'Version = "([^"]+)"').Matches[0].Groups[1].Value

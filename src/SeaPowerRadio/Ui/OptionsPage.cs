@@ -85,7 +85,7 @@ internal static class OptionsPage
         panel.Children.Add(Check(look, "Random voices each mission", Settings.RandomVoices,
             "On: every fresh start of a mission shuffles the voices (a save you load keeps the voices of its latest start; linear campaigns keep their remembered voices, dynamic campaigns are not shuffled). Off: a mission always has the same voices. Applies at the next mission start."));
         panel.Children.Add(Check(look, "Moods", Settings.Moods,
-            "Needs the Rats Radio Moods pack. On: units sound stressed in danger and combat, pleased after a kill or a rescue, low after a failure. Off: every call calm, as before. Applies from the next call."));
+            "On: units sound stressed in danger and combat, pleased after a kill or a rescue, low after a failure. Off: every call calm, as before. Applies from the next call."));
         panel.Children.Add(Check(look, "Overlapping voices", Settings.OverlapVoices,
             "On: several stations can talk over each other like a busy net (up to the number in the config file, 3 by default). Off: one call at a time, the others wait."));
 

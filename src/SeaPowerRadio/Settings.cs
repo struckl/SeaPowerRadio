@@ -182,8 +182,8 @@ internal static class Settings
             "Linear campaigns keep their remembered voices and dynamic campaigns are not shuffled. Off: the voices of a mission " +
             "are always the same. Takes effect at the next mission start.");
         Moods = file.Bind("2. Radio", "Moods", true,
-            "On: with the Moods pack installed, units sound stressed in danger and in combat (and for a while after a warning), " +
-            "pleased after a kill or a rescue, low after a failure or a lost contact. Off, or without the pack: every call is " +
+            "On: units sound stressed in danger and in combat (and for a while after a warning), " +
+            "pleased after a kill or a rescue, low after a failure or a lost contact. Off, or a voice pack without moods: every call is " +
             "spoken calmly, as before. Applies from the next call.");
         OverlapVoices = file.Bind("2. Radio", "Overlapping voices", true,
             "Several stations can talk over each other, like a busy net: a new call starts while another is still " +

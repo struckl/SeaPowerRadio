@@ -28,6 +28,9 @@ internal static class RtbPatches
             postfix: nameof(SymbolPostfix))
         .Hook("SeapowerUI.MapUnitViewModel", "Update", System.Type.EmptyTypes, typeof(RtbPatches),
             prefix: nameof(SymbolUpdatePrefix))
+        .Hook("SeapowerUI.UnitPostureBrushConverter", "Convert",
+            new[] { typeof(object[]), typeof(System.Type), typeof(object), typeof(System.Globalization.CultureInfo) },
+            typeof(RtbPatches), postfix: nameof(SymbolBrushPostfix))
 #endif
         .Hook("SeapowerUI.FormationManagerView", ".ctor", System.Type.EmptyTypes, typeof(RtbPatches),
             postfix: nameof(ViewPostfix));
@@ -73,13 +76,50 @@ internal static class RtbPatches
         try
         {
             bool marked = Marked(unit);
-            Drawn.GetValue(__instance, _ => new StrongBox<bool>()).Value = marked;
+            StrongBox<bool> drawn = Drawn.GetValue(__instance, _ => new StrongBox<bool>());
+            if (drawn.Value != marked)
+            {
+                drawn.Value = marked;
+                // The symbol itself is coloured by UnitPostureBrushConverter from UnitPalette: make it convert again.
+                RaiseChanged?.Invoke(__instance, "UnitPalette");
+            }
             if (marked)
                 __result = (__result.Posture, RtbMarker.Brush(____isNight));
         }
         catch (System.Exception ex)
         {
             ModLog.Debug($"[rtb] symbol colour: {ex.Message}");
+        }
+    }
+
+    private static readonly System.Action<MapUnitViewModel, string> RaiseChanged = MakeRaiseChanged();
+
+    private static System.Action<MapUnitViewModel, string> MakeRaiseChanged()
+    {
+        try
+        {
+            return HarmonyLib.AccessTools.MethodDelegate<System.Action<MapUnitViewModel, string>>(
+                HarmonyLib.AccessTools.Method(typeof(MapUnitViewModel), "OnPropertyChanged", new[] { typeof(string) }));
+        }
+        catch (System.Exception ex)
+        {
+            ModLog.Debug($"[rtb] no OnPropertyChanged: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>The map symbol (the aircraft shape, not only its label and heading line) in yellow too.</summary>
+    private static void SymbolBrushPostfix(object[] values, ref object __result)
+    {
+        try
+        {
+            if (values == null || values.Length < 4 || !(values[3] is MapUnitViewModel vm) || !Marked(vm.Unit))
+                return;
+            __result = RtbMarker.Brush(MissionEditorSideColorBrushConverter.IsDarkMap(values[1] as Noesis.ResourceDictionary));
+        }
+        catch (System.Exception ex)
+        {
+            ModLog.Debug($"[rtb] symbol brush: {ex.Message}");
         }
     }
 

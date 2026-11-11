@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.0.0 – unreleased – Radio is the radio; voices and tools are items of their own
+
+- **Voices are items of their own.** The 43 English voices, with their mood takes, are now **R.A.T.S. Radio English**
+  (the same pack, `nato-en` 2.0.0); Radio itself carries no voices (it has a small `data/` folder with the country groups and the map of the game's
+  voice lines). Every language and accent pack after it works the same way.
+- **The reports and tools moved to R.A.T.S. Command Tools**: why-not, contact reports, fuel calls, search and rescue,
+  the order queue window, clickable units and tracks, unit roles and the RTB highlight. Command Tools works alone (as
+  messages and windows) and Radio speaks its reports in the units' voices. Your settings for them are taken over once.
+  Without Command Tools, the game's own contact lines play again instead of being muted.
+- **Required Items**: R.A.T.S. Radio English and R.A.T.S. Command Tools. The game's Mod menu ("Sync dependencies") fetches
+  them; players who had Radio before also get a note in the main menu once (what moved, a Subscribe button for what is
+  missing, "Don't show again"). New players never see it.
+- **Other mods can talk on the net**: `rats.radio.say` (a unit, phrase keys, numbers) and **line packs** (`linepack.ini`,
+  a mod's own lines rendered in the voices, no code). Packs are also found in a `radio/` sub folder.
+  [docs/rats-bus.md](docs/rats-bus.md).
+- Compiled for both game versions; the DLLs pass the both-games check (`tools/compat-check`). Not run in the game yet.
+
 ## 1.5.1 – 2026-11-12 – in-game name R.A.T.S. Radio
 
 Run in the game on 0.9.1 (build 261112) on 2026-11-12: the new name shows in Keel's list, the mod works in Red Sea Breakout.

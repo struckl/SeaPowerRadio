@@ -22,12 +22,15 @@ internal static class Settings
     public static ConfigEntry<float> RadioNoise;
     public static ConfigEntry<float> ReportVolume;
     public static ConfigEntry<bool> LinkAlerts;
-    public static ConfigEntry<bool> LinkMentions;
     public static ConfigEntry<bool> CallsignEveryCall;
     public static ConfigEntry<bool> FemaleVoices;
     public static ConfigEntry<bool> RandomVoices;
     public static ConfigEntry<bool> Moods;
     public static ConfigEntry<int> ConfigMigration;
+    public static ConfigEntry<bool> ShowUpgradeNotice;
+
+    /// <summary>The config file was there before this start (a player who had Radio before).</summary>
+    private static bool hadConfig;
     public static ConfigEntry<bool> OverlapVoices;
     public static ConfigEntry<int> MaxOverlap;
 
@@ -38,22 +41,9 @@ internal static class Settings
     public static ConfigEntry<float> VolumeOrders;
     public static ConfigEntry<float> VolumeOther;
 
-    public static ConfigEntry<bool> WhyNot;
-    public static ConfigEntry<bool> DetachForVid;
-    public static ConfigEntry<bool> QueueOverlay;
-    public static ConfigEntry<KeyCode> QueueOverlayKey;
 
-    public static ConfigEntry<bool> FuelCalls;
-    public static ConfigEntry<bool> RtbHighlight;
-    public static ConfigEntry<bool> SarCalls;
 
-    public static ConfigEntry<bool> UnitRoles;
 
-    public static ConfigEntry<bool> ContactReports;
-    public static ConfigEntry<float> FadeHysteresis;
-    public static ConfigEntry<float> ContactCooldown;
-    public static ConfigEntry<int> FlickerCount;
-    public static ConfigEntry<bool> AnnounceNeutral;
 
     public static ConfigEntry<bool> LogRoster;
     public static ConfigEntry<bool> LogStockVoice;
@@ -140,13 +130,18 @@ internal static class Settings
 
     public static void Init()
     {
-        file = new ConfigFile(Path.Combine(Paths.ConfigPath, Plugin.Guid + ".cfg"), saveOnInit: true);
+        string path = Path.Combine(Paths.ConfigPath, Plugin.Guid + ".cfg");
+        hadConfig = File.Exists(path);
+        file = new ConfigFile(path, saveOnInit: true);
         file.SaveOnConfigSet = false;
 
         Enabled = file.Bind("1. General", "Enable mod", true,
             "Master switch. Needs a restart.");
         VerboseLog = file.Bind("1. General", "Verbose log", false,
             "Write debug detail to BepInEx/LogOutput.log.");
+        ShowUpgradeNotice = file.Bind("1. General", "Show the 2.0 notice", false,
+            "Players who had Radio before 2.0 see a note once in the main menu: what moved to R.A.T.S. Command Tools and the " +
+            "English voices item, with buttons to subscribe. Set by the mod; 'Don't show again' turns it off.");
         ConfigMigration = file.Bind("1. General", "Config migration", 0,
             "Bookkeeping, leave as it is: the number of one-time settings migrations that have run (1 = Female voices " +
             "was reset to off once, 1.4.0). A setting you change afterwards is kept.");
@@ -162,9 +157,6 @@ internal static class Settings
         LinkAlerts = file.Bind("2. Radio", "Keep messages until spoken", true,
             "The message bottom right that belongs to a radio call stays visible until the call has been spoken, " +
             "and is highlighted while it is being spoken.");
-        LinkMentions = file.Bind("2. Radio", "Clickable units and tracks", true,
-            "Every unit and track a message mentions (bottom right and in the message log) is a link that moves " +
-            "the camera there - own units, contacts, track numbers - not only the ones the game links itself.");
         CallsignEveryCall = file.Bind("2. Radio", "Callsign on every call", false,
             "Say the unit's name at the start of every call. Off: only when a different unit talks than the one " +
             "before - the same unit again just goes on, a wingman of the same flight only gives its number.");
@@ -191,45 +183,9 @@ internal static class Settings
         MaxOverlap = file.Bind("2. Radio", "Voices at once", 3,
             new ConfigDescription("Most calls playing at the same time when Overlapping voices is on.", new AcceptableValueRange<int>(2, 4)));
 
-        WhyNot = file.Bind("4. Why not", "Explain refusals", true,
-            "Units say why an ordered engagement isn't happening (reloading, no radar track, out of envelope, sonar " +
-            "contact only...), tell you their place in the queue, and why a wingman won't VID.");
-        DetachForVid = file.Bind("4. Why not", "Detach wingman for VID", false,
-            "A wingman ordered to VID is released from its formation so the VID actually happens (the game would " +
-            "keep it in formation). Off = it just tells you it is holding formation.");
-        QueueOverlay = file.Bind("5. Order queue", "Show order queue", true,
-            "Small window listing the selected unit's stacked attack orders, each with a delete button.");
-        QueueOverlayKey = file.Bind("5. Order queue", "Toggle key", KeyCode.F8,
-            "Shows / hides the order queue window.");
 
-        FuelCalls = file.Bind("6. Air ops", "Fuel calls", true,
-            "Aircraft and helicopters call joker, bingo and fuel emergency against the nearest deck or airfield that " +
-            "can take them: joker = at cruise speed only just enough fuel to get there, bingo = only just enough even " +
-            "at the most economical speed, emergency = not enough at all. Aircraft nothing in the mission can take " +
-            "call against the nearest friendly field all the same, or at 25 / 15 / 5 % of a full tank without one.");
-        RtbHighlight = file.Bind("6. Air ops", "Highlight RTB", true,
-            "Aircraft returning to base are yellow on the map and in the formation manager, and returning groups " +
-            "move to the bottom of the formation manager.");
-        SarCalls = file.Bind("6. Air ops", "Search and rescue calls", true,
-            "Survivors in the water, rescuer proceeding, pickup complete with souls aboard, cabin full, survivors " +
-            "delivered - spoken and as messages (replaces the game's one-line pickup message).");
 
-        UnitRoles = file.Bind("7. Formation manager", "Show unit roles", true,
-            "A small line under each unit says what it is: the ship type (Destroyer, Frigate, Attack Submarine), " +
-            "the mission an aircraft is loaded for (CAP, Strike, SEAD, AEW...), the helicopter type (ASW " +
-            "Helicopter). Groups show the role their members share. Takes effect the next time the formation " +
-            "manager opens.");
 
-        ContactReports = file.Bind("3. Contacts", "Contact reports", true,
-            "New, lost, intermittent and hostile contacts are called out by the unit that detected them.");
-        FadeHysteresis = file.Bind("3. Contacts", "Lost after (seconds)", 20f,
-            "A contact must stay lost this long before it is called out; regained earlier = silence.");
-        ContactCooldown = file.Bind("3. Contacts", "Per-contact cooldown (seconds)", 120f,
-            "The same call for the same contact at most once in this time.");
-        FlickerCount = file.Bind("3. Contacts", "Flicker drops per minute", 4,
-            "A contact lost this often within a minute is called intermittent once, then stays quiet until stable.");
-        AnnounceNeutral = file.Bind("3. Contacts", "Announce neutral classification", false,
-            "Also call out contacts classified neutral (merchant traffic can be a lot).");
 
         VolumeContacts = file.Bind("8. Call volumes", "Contacts and tracks", 1.0f,
             new ConfigDescription("Volume of new / lost / identified contact and track calls (multiplier, 1 = default).",
@@ -263,13 +219,23 @@ internal static class Settings
     /// </summary>
     private static void Migrate()
     {
-        if (ConfigMigration.Value >= 1)
-            return;
-        if (FemaleVoices.Value)
+        if (ConfigMigration.Value < 1)
         {
-            FemaleVoices.Value = false;
-            ModLog.Info("Config: 'Female voices' was on (the old default); switched to off once, as in 1.4.0.");
+            if (FemaleVoices.Value)
+            {
+                FemaleVoices.Value = false;
+                ModLog.Info("Config: 'Female voices' was on (the old default); switched to off once, as in 1.4.0.");
+            }
+            ConfigMigration.Value = 1;
         }
-        ConfigMigration.Value = 1;
+        // 2.0.0: features moved to R.A.T.S. Command Tools and English became an item of its own. Only a player who had a
+        // config from before sees the notice; a new player starts without one and never does.
+        if (ConfigMigration.Value < 2)
+        {
+            ShowUpgradeNotice.Value = hadConfig;
+            ConfigMigration.Value = 2;
+            if (hadConfig)
+                ModLog.Info("Config from before 2.0: the main menu shows what moved, once.");
+        }
     }
 }

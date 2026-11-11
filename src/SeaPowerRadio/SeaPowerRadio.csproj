@@ -5,7 +5,7 @@
     <AssemblyName>SeaPowerRadio</AssemblyName>
     <RootNamespace>SeaPowerRadio</RootNamespace>
     <Product>Per-unit radio voices and why-not callouts for Sea Power.</Product>
-    <Version>1.5.1</Version>
+    <Version>2.0.0</Version>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
@@ -59,6 +59,7 @@
     <Reference Include="UniRx"><HintPath>$(ManagedDir)\UniRx.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Unity.Entities"><HintPath>$(ManagedDir)\Unity.Entities.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Unity.Collections"><HintPath>$(ManagedDir)\Unity.Collections.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="com.rlabrecque.steamworks.net"><HintPath>$(ManagedDir)\com.rlabrecque.steamworks.net.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="AnchorChain"><HintPath>$(AnchorChainRef)</HintPath><Private>false</Private></Reference>
   </ItemGroup>
 

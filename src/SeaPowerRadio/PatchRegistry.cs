@@ -63,12 +63,7 @@ internal static class PatchRegistry
         Features.Add(Patches.LaunchVoicePatches.Declare());
         Features.Add(Patches.SpeedOrderPatches.Declare());
         Features.Add(Patches.MissionPatches.Declare());
-        Features.Add(Patches.WhyNotPatches.Declare());
         Features.Add(Patches.AlertPatches.Declare());
-        Features.Add(Patches.ContactAlertPatches.Declare());
-        Features.Add(Patches.RtbPatches.Declare());
-        Features.Add(Patches.SarPatches.Declare());
-        Features.Add(Patches.UnitRolePatches.Declare());
         Features.Add(Patches.OptionsPatches.Declare());
 
         foreach (Feature feature in Features)

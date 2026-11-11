@@ -57,7 +57,46 @@ internal sealed class Catalog
             ModLog.Warn($"Voice catalog missing in {directory}.");
             return;
         }
-        foreach (string line in ReadRows(catalog))
+        AddRows(catalog);
+        if (File.Exists(stockmap))
+        {
+            foreach (string line in ReadRows(stockmap))
+            {
+                string[] f = line.Split('|');
+                if (f.Length < 3) continue;
+                stock[f[0]] = (f[1] == "-" ? null : f[1], f[2] == "-" ? null : f[2]);
+            }
+        }
+        else if (fallback != null)
+        {
+            stock = fallback.stock;
+        }
+        else if (File.Exists(Voices.VoiceLibrary.DataFile("stockmap.txt")))
+        {
+            foreach (string line in ReadRows(Voices.VoiceLibrary.DataFile("stockmap.txt")))   // Radio's own (2.0)
+            {
+                string[] f = line.Split('|');
+                if (f.Length < 3) continue;
+                stock[f[0]] = (f[1] == "-" ? null : f[1], f[2] == "-" ? null : f[2]);
+            }
+        }
+        else
+        {
+            ModLog.Warn($"Stock map missing in {directory}, and Radio has none of its own.");
+            return;
+        }
+        Loaded = true;
+    }
+
+    /// <summary>
+    /// Phrase rows of a catalog file (<c>phrase|n|slot|a|b|priority|role|pauseA|pauseB</c>). A line pack adds its own file
+    /// to its voice pack's catalog this way; a phrase it defines again replaces the pack's variants of that phrase.
+    /// </summary>
+    public int AddRows(string file)
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        int added = 0;
+        foreach (string line in ReadRows(file))
         {
             string[] f = line.Split('|');
             if (f.Length < 6) continue;
@@ -73,29 +112,12 @@ internal sealed class Catalog
                 PauseA = f.Length > 7 && f[7] == "1",
                 PauseB = f.Length > 8 && f[8] == "1",
             };
-            if (!phrases.TryGetValue(v.Phrase, out List<PhraseVariant> list))
-                phrases[v.Phrase] = list = new List<PhraseVariant>();
-            list.Add(v);
+            if (seen.Add(v.Phrase) || !phrases.ContainsKey(v.Phrase))
+                phrases[v.Phrase] = new List<PhraseVariant>();
+            phrases[v.Phrase].Add(v);
+            added++;
         }
-        if (File.Exists(stockmap))
-        {
-            foreach (string line in ReadRows(stockmap))
-            {
-                string[] f = line.Split('|');
-                if (f.Length < 3) continue;
-                stock[f[0]] = (f[1] == "-" ? null : f[1], f[2] == "-" ? null : f[2]);
-            }
-        }
-        else if (fallback != null)
-        {
-            stock = fallback.stock;
-        }
-        else
-        {
-            ModLog.Warn($"Stock map missing in {directory} and no base pack to take it from.");
-            return;
-        }
-        Loaded = true;
+        return added;
     }
 
     private static CallRole ParseRole(string role, int priority)

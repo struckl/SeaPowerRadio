@@ -57,6 +57,12 @@ internal sealed class VoicePack
     public readonly HashSet<string> Moods = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
+    /// Folders of line packs (<c>linepack.ini</c>) for this pack: other mods' own lines, <c>&lt;root&gt;/&lt;persona&gt;/&lt;key&gt;.mp3</c>.
+    /// A clip the pack itself does not have is looked for there.
+    /// </summary>
+    public readonly List<string> LineRoots = new List<string>();
+
+    /// <summary>
     /// File of a clip. A key "mood/clip" is looked up in the mood folders (first one that has it); a plain key in the
     /// persona's folder.
     /// </summary>
@@ -64,7 +70,18 @@ internal sealed class VoicePack
     {
         int slash = key.IndexOf('/');
         if (slash < 0)
-            return System.IO.Path.Combine(Directory, persona, key + ".mp3");
+        {
+            string own = System.IO.Path.Combine(Directory, persona, key + ".mp3");
+            if (LineRoots.Count == 0 || File.Exists(own))
+                return own;
+            foreach (string root in LineRoots)
+            {
+                string path = System.IO.Path.Combine(root, persona, key + ".mp3");
+                if (File.Exists(path))
+                    return path;
+            }
+            return own;
+        }
         string mood = key.Substring(0, slash), clip = key.Substring(slash + 1) + ".mp3";
         string first = null;
         foreach (string root in MoodRoots)

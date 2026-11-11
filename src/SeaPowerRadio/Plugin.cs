@@ -19,15 +19,15 @@ namespace SeaPowerRadio;
 public class Plugin : IAnchorChainMod
 {
     public const string Guid = "dev.sewerlabs.seapowerradio";
-    public const string Version = "1.5.1";
+    public const string Version = "2.0.0";
 
 #if FLATMAP
     // Anchor Chain skips a plugin whose GUID it has already seen, so the two builds register under different ones.
     public const string PluginGuid = Guid + ".flatmap";
-    public const string Name = "R.A.T.S. Radio";
+    public const string Name = "Sea Power Radio (flat map)";
 #else
     public const string PluginGuid = Guid;
-    public const string Name = "R.A.T.S. Radio";
+    public const string Name = "Sea Power Radio";
 #endif
 
     // Anchor Chain loads assemblies with Assembly.LoadFile, so the same DLL found in two folders would be two
@@ -76,6 +76,7 @@ public class Plugin : IAnchorChainMod
                 return;
             }
 
+            RatsBus.AnnounceRadio(Version);
             Voices.VoicePacks.Discover(System.Version.Parse(Version));
 
             Harmony = new Harmony(Guid);

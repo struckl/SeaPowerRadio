@@ -47,6 +47,8 @@ internal static class StockVoiceRouter
             return !passAppended;
         if (phrase == null)
         {
+            if (ContactStockKey(request.Key) && !RatsBus.ToolsHas(RatsBus.Contacts))
+                return StockPlays(request);         // nobody reports contacts in our voices: the game's own line plays
             passAppended = false;
             return true;
         }
@@ -64,6 +66,11 @@ internal static class StockVoiceRouter
         Player.Submit(t);
         return true;
     }
+
+    /// <summary>The game's contact report lines (new, classified, faded), which R.A.T.S. Command Tools' contact reports replace.</summary>
+    private static bool ContactStockKey(string key) =>
+        key.StartsWith("Contact", StringComparison.Ordinal) || key.StartsWith("Classified", StringComparison.Ordinal)
+        || key == "ActiveContact";
 
     // True while the pieces the game appends to a call belong to a line that was left to the game: they play too.
     private static bool passAppended;
@@ -141,8 +148,8 @@ internal static class StockVoiceRouter
             return AltitudePhrase(phrase, unit, voice, ref variant);
         if (request.Key == "ASHMFired" || request.Key == "ASUMFired" || request.Key == "WeaponAway")
             return LaunchPhrase(phrase, request, ref variant);
-        if (!Settings.WhyNot.Value)
-            return phrase;
+        if (!RatsBus.ToolsHas(RatsBus.WhyNot))
+            return phrase;                          // the "queued" and "holding formation" replies belong to R.A.T.S. Command Tools' why-not
 
         if (phrase == "EngageTrack" && !(unit is Aircraft))
         {
@@ -155,18 +162,10 @@ internal static class StockVoiceRouter
             }
         }
 
+        // Command Tools has already seen this line (its prefix runs first): it released the wingman for the VID, or raised
+        // the "holding formation" message, which this call then speaks.
         if (phrase == "Identify" && unit is Aircraft aircraft && aircraft.InAirFormation())
         {
-            if (Settings.DetachForVid.Value && aircraft.Formation != null)
-            {
-                aircraft.Formation.MakeUnitActIndependently(aircraft);
-                ModLog.Info($"[why-not] {unit.getName()}: detached from formation for VID");
-                return phrase;
-            }
-            string text = "${Name}: " + WhyNot.WhyNotMonitor.AlertText("WhyNot_HoldingFormation");
-            ModLog.Info("[why-not] " + text.Replace("${Name}", unit.getName()));
-            try { Globals._mainGameViewModel?.RaiseAlert(unit, text); }
-            catch (Exception) { /* the alert is a nice-to-have */ }
             number = null;
             return "WhyNot_HoldingFormation";
         }

@@ -34,7 +34,7 @@ internal static class Nations
     {
         if (groups != null) return groups;
         groups = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        string file = Path.Combine(VoiceLibrary.VoicesDirectory, "nations.txt");
+        string file = VoiceLibrary.DataFile("nations.txt");
         if (!File.Exists(file))
         {
             ModLog.Warn("nations.txt missing: every country goes in the group 'Other'.");

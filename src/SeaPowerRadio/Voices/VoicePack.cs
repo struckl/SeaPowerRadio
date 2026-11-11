@@ -49,7 +49,33 @@ internal sealed class VoicePack
         return false;
     }
 
-    public string PathOf(string persona, string key) => System.IO.Path.Combine(Directory, persona, key + ".mp3");
+    /// <summary>
+    /// Folders that hold mood clips for this pack (<c>&lt;root&gt;/&lt;persona&gt;/&lt;mood&gt;/&lt;key&gt;.mp3</c>): the pack's own
+    /// folder and every mood pack (<c>moodpack.ini</c>) that names this pack. See <see cref="Radio.Moods"/>.
+    /// </summary>
+    public readonly List<string> MoodRoots = new List<string>();
+    public readonly HashSet<string> Moods = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// File of a clip. A key "mood/clip" is looked up in the mood folders (first one that has it); a plain key in the
+    /// persona's folder.
+    /// </summary>
+    public string PathOf(string persona, string key)
+    {
+        int slash = key.IndexOf('/');
+        if (slash < 0)
+            return System.IO.Path.Combine(Directory, persona, key + ".mp3");
+        string mood = key.Substring(0, slash), clip = key.Substring(slash + 1) + ".mp3";
+        string first = null;
+        foreach (string root in MoodRoots)
+        {
+            string path = System.IO.Path.Combine(root, persona, mood, clip);
+            first ??= path;
+            if (File.Exists(path))
+                return path;
+        }
+        return first;
+    }
 
     /// <summary>Reads <c>voicepack.ini</c> in <paramref name="directory"/>; null (with a log line) if it is unusable.</summary>
     public static VoicePack ReadIni(string directory, Version baseVersion)

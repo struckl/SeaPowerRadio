@@ -195,7 +195,8 @@ internal sealed class RadioPlayer
     private IEnumerator Prepare(Channel ch, Transmission t, int version)
     {
         var clips = new AudioClip[t.Clips.Count];
-        yield return ClipLibrary.LoadAll(t.Voice, t.Clips, clips);
+        IList<string> keys = Moods.Apply(t, out string mood);
+        yield return ClipLibrary.LoadAll(t.Voice, keys, clips);
         if (version != ch.Version || ch.Current != t)
             yield break;
 
@@ -231,7 +232,7 @@ internal sealed class RadioPlayer
         AlertLink.StartSpeaking(t);
         ch.Preparing = false;
         if (Settings.LogRadio.Value)
-            ModLog.Info($"[radio] >> {t.Voice}: {t.Text} [{ch.Category}, channel {ch.Index + 1}]");
+            ModLog.Info($"[radio] >> {t.Voice}: {t.Text} [{ch.Category}, channel {ch.Index + 1}{(mood != null ? ", " + mood : "")}]");
     }
 
     /// <summary>

@@ -26,6 +26,7 @@ internal static class Settings
     public static ConfigEntry<bool> CallsignEveryCall;
     public static ConfigEntry<bool> FemaleVoices;
     public static ConfigEntry<bool> RandomVoices;
+    public static ConfigEntry<bool> Moods;
     public static ConfigEntry<int> ConfigMigration;
     public static ConfigEntry<bool> OverlapVoices;
     public static ConfigEntry<int> MaxOverlap;
@@ -180,6 +181,10 @@ internal static class Settings
             "play it); loading a save of that mission keeps the voices it had at its latest start. Callsigns stay as they are. " +
             "Linear campaigns keep their remembered voices and dynamic campaigns are not shuffled. Off: the voices of a mission " +
             "are always the same. Takes effect at the next mission start.");
+        Moods = file.Bind("2. Radio", "Moods", true,
+            "On: with the Moods pack installed, units sound stressed in danger and in combat (and for a while after a warning), " +
+            "pleased after a kill or a rescue, low after a failure or a lost contact. Off, or without the pack: every call is " +
+            "spoken calmly, as before. Applies from the next call.");
         OverlapVoices = file.Bind("2. Radio", "Overlapping voices", true,
             "Several stations can talk over each other, like a busy net: a new call starts while another is still " +
             "playing (never the same unit twice at once). Off: one call at a time, the rest wait in the queue.");

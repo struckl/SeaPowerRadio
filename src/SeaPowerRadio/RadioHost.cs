@@ -62,6 +62,7 @@ internal sealed class RadioHost : MonoBehaviour
         AlertLink.Clear();
         RtbMarker.Clear();
         ClipLibrary.Clear();
+        Moods.Reset();
     }
 
     private void Update()

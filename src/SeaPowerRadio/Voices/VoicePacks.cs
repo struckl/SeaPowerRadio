@@ -48,12 +48,15 @@ internal static class VoicePacks
 
         var found = new Dictionary<string, VoicePack>(StringComparer.OrdinalIgnoreCase);
         var seenDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var moodDirs = new List<string>();
         foreach (string folder in folders)
         {
             foreach (string dir in new[] { folder, Path.Combine(folder, "voices") })
             {
                 string full;
                 try { full = Path.GetFullPath(dir); } catch (Exception) { continue; }
+                if (File.Exists(Path.Combine(full, "moodpack.ini")) && !moodDirs.Contains(full, StringComparer.OrdinalIgnoreCase))
+                    moodDirs.Add(full);
                 if (!File.Exists(Path.Combine(full, "voicepack.ini")) || !seenDirs.Add(full))
                     continue;
                 try
@@ -93,7 +96,70 @@ internal static class VoicePacks
                 ModLog.Warn($"Voice pack '{pack.Id}' could not be loaded: {ex.Message}");
             }
         }
+        foreach (VoicePack pack in All)
+            AddMoodRoot(pack, pack.Directory, null);
+        foreach (string dir in moodDirs)
+        {
+            try { AttachMoodPack(dir, baseVersion); }
+            catch (Exception ex) { ModLog.Warn($"Mood pack in {dir} could not be read: {ex.Message}"); }
+        }
         ModLog.Info($"Voice packs installed: {(All.Count == 0 ? "none" : string.Join(", ", All.Select(p => $"{p.Id} {p.Version}")))}");
+    }
+
+    /// <summary>
+    /// A mood pack: a folder with <c>moodpack.ini</c> ([Moods] Pack=&lt;voice pack id&gt;, Moods=stressed,happy,sad,
+    /// MinBaseVersion) and <c>&lt;persona&gt;/&lt;mood&gt;/&lt;key&gt;.mp3</c> for that voice pack's personas. No code, no catalog.
+    /// </summary>
+    private static void AttachMoodPack(string dir, Version baseVersion)
+    {
+        var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (string raw in File.ReadAllLines(Path.Combine(dir, "moodpack.ini")))
+        {
+            string line = raw;
+            int comment = line.IndexOf(';');
+            if (comment >= 0) line = line.Substring(0, comment);
+            line = line.Trim();
+            int eq = line.IndexOf('=');
+            if (eq > 0 && !line.StartsWith("#"))
+                values[line.Substring(0, eq).Trim()] = line.Substring(eq + 1).Trim();
+        }
+        values.TryGetValue("Pack", out string packId);
+        values.TryGetValue("Moods", out string moods);
+        values.TryGetValue("MinBaseVersion", out string min);
+        if (VoicePack.ParseVersion(min, new Version(0, 0)) > baseVersion)
+        {
+            ModLog.Warn($"Mood pack {dir} needs Rats Radio {min} or newer (this is {baseVersion}), skipped.");
+            return;
+        }
+        VoicePack pack = ById(packId ?? NatoId);
+        if (pack == null)
+        {
+            ModLog.Warn($"Mood pack {dir}: voice pack '{packId}' is not installed, skipped.");
+            return;
+        }
+        AddMoodRoot(pack, dir, moods);
+    }
+
+    private static void AddMoodRoot(VoicePack pack, string dir, string declared)
+    {
+        // Moods = the declared list, else the sub folders of the first persona that has any (a pack's own folder).
+        var moods = new List<string>();
+        if (!string.IsNullOrWhiteSpace(declared))
+            moods.AddRange(declared.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(m => m.Trim().ToLowerInvariant()));
+        else
+            foreach (VoicePersona p in pack.Personas)
+            {
+                string folder = Path.Combine(dir, p.Id);
+                if (!Directory.Exists(folder)) continue;
+                moods.AddRange(Directory.GetDirectories(folder).Select(d => Path.GetFileName(d).ToLowerInvariant()).Where(Radio.Moods.IsMood));
+                if (moods.Count > 0) break;
+            }
+        if (moods.Count == 0 || pack.MoodRoots.Contains(dir, StringComparer.OrdinalIgnoreCase))
+            return;
+        pack.MoodRoots.Add(dir);
+        foreach (string m in moods)
+            pack.Moods.Add(m);
+        ModLog.Info($"Voice pack '{pack.Id}': moods {string.Join(",", moods)} from {dir}");
     }
 
     public static IEnumerable<string> ModFolders()

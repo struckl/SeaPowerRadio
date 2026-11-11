@@ -69,7 +69,12 @@ internal static class RtbMarker
     public static Noesis.SolidColorBrush Brush(MapPalette palette = null)
     {
         palette ??= Globals._mainGameViewModel?.Map?.DisplayMap?.Palette;
-        bool dark = palette == null || GameApi.IsDark(palette);
+        return Brush(palette == null || GameApi.IsDark(palette));
+    }
+
+    /// <summary>Yellow for night (dark) or day; a map symbol knows which one it is drawn in (day/night per position).</summary>
+    public static Noesis.SolidColorBrush Brush(bool dark)
+    {
 #endif
         if (dark)
             return night ??= new Noesis.SolidColorBrush(Noesis.Color.FromArgb(0xFF, 0xFF, 0xD2, 0x3C));

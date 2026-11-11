@@ -37,6 +37,14 @@ the mouse; the package holds **both DLLs**, the globe build needs Anchor Chain's
   logged its reasons for the F-4Es without a home base.
 - Not seen: the RTB yellow (no aircraft went bingo in that time), refusals, SAR calls. Not run: 0.8.7 with the flat build.
 
+### Result 2026-11-11 (Claude, on his go; game 0.9.0 build 261111, Radio 1.5.0 with the RTB fix, Dangerous Straits 1985)
+
+- Under Keel 0.4.0; log `Sea Power Radio 1.5.0 loaded. Features: … RtbHighlight …`, no `[Error  :SeaPowerRadio]`.
+- `rtb Joker 1-1` (perf director) sent the A-6E home to Souda Airbase; the ReturnToBase call was spoken.
+- **Map: Joker 1-1 turned yellow** (symbol, heading line and label), Joker 1-2 to 1-4 stayed blue (his screenshot, night
+  map). Before this fix the symbol kept its colour on every globe build since 261107.
+- Not checked: the formation manager rows, the day yellow, the symbol turning back after landing, the flat build.
+
 ## Roster and the new voices (2026-10-17)
 
 The game's own voice lines are now replaced: every unit speaks with its own voice and callsign, through a radio

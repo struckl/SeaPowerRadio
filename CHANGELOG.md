@@ -12,7 +12,7 @@
 - **Aircraft heading home turn yellow on the map again** (game 0.9.0). Since the globe build of 2026-11-07, the game
   colours map symbols in a different place, so the yellow never showed, though the formation manager rows still
   turned yellow. The symbol now turns yellow the moment the aircraft heads home and goes back to normal when it stops,
-  in the day or night yellow of where it is on the globe. The 0.8.7 build is unchanged.
+  in the day or night yellow of where it is on the globe. The 0.8.7 build is unchanged. Run in the game on 0.9.0: an A-6 sent home turned yellow, its wingmen stayed blue.
 - Compiled for both game versions; `python tools/modtool.py compat` passes. Not run in the game yet.
 
 ## 1.4.4 – 2026-11-11 – declared for game 0.9.0

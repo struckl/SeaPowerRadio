@@ -1,67 +1,101 @@
 [h1]R.A.T.S. Radio[/h1]
 [i]R.A.T.S. – Reconnaissance, Acoustics, Terrain & Signals[/i]
-[b]Bugs, ideas, questions:[/b] [url=https://hub.sewerlabs.dev/s/radio]R.A.T.S. feedback board[/url]
 
 [b]The radio net finally sounds like people.[/b]
-43 voices instead of a screen reader, and your units tell you why they aren't doing what you ordered. Turn the sound on: [url=https://youtu.be/pGwOIPXckpY]video of the radio net in a mission[/url].
+43 voices instead of a screen reader, and your units tell you why they aren't doing what you ordered.
 
-[h2]The highlights[/h2]
+[quote]▶ [b]Requires[/b] a mod loader: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3835527459]R.A.T.S. Keel[/url] or Anchor Chain, either one
+▶ [b]Watch:[/b] [url=https://youtu.be/pGwOIPXckpY]the radio net in a mission[/url] (sound on)
+✉ Bugs, ideas, questions: [url=https://hub.sewerlabs.dev/s/radio]R.A.T.S. feedback board[/url]
+⭐ A favourite helps other captains find it[/quote]
+
+[h2]✦ New in 1.5[/h2]
 [list]
-[*][b]A crew with a face.[/b] 43 voices based on real speakers, men and women with American, Canadian, English, Scottish, Irish, Northern Irish, Australian and New Zealand accents. Every ship, submarine, aircraft and helicopter gets its own voice
-[*][b]Accents follow the nation.[/b] Ship names and squadron words are spoken in the accent family of their country
-[*][b]Moods.[/b] Stressed when a missile comes in or the ship is hit, pleased after a splash or a rescue, low when a contact is lost or survivors are in the water. Switch it off in Options > Audio
-[*][b]A fresh mix every mission.[/b] The voices are shuffled at each new mission start (a reload keeps them)
-[*][b]Units explain refusals.[/b] "Negative, no radar lock", "Unable, target not in rear aspect", "Reloading, ready in four minutes". The game knows why an order fails and never says. Now your unit does
-[*][b]A net that behaves.[/b] Urgent calls cut in, a wingman just says "two, fox three", and the radio has hiss, mic click and squelch
-[*][b]Clickable messages.[/b] Every unit and track number in a message moves the camera there
+[*][b]Moods.[/b] Stressed when a missile comes in, pleased after a splash, low when a contact is lost; off in Options > Audio
+[*][b]Aircraft heading home turn yellow[/b] on the 3D globe too
+[*][b]Runs on 0.9.1[/b] and the flat map (0.8.7)
 [/list]
 
-[h2]Voice packs[/h2]
-Pick a pack per country in Options > Audio > Rats Radio > Voice packs. The 43 voices are the NATO (English) pack. Other countries keep the game's voice unless you pick NATO (English) for them. More languages are planned as separate Workshop items that plug into this mod: Russian, then Spanish, later Chinese and Japanese.
-
-[h2]How the net behaves[/h2]
+[h2]✦ Highlights[/h2]
 [list]
-[*]The stock voice lines are replaced: order acknowledgements, fox and missile away calls, splashes, hits, incoming missiles, launches, sonar and ROE. The unit that triggered the line is the one who says it
-[*]Ships use their name ("Iowa", "Pargo"), aircraft their squadron callsign ("Lancer 3-2"), everything else a generated NATO callsign ("Viper two-one")
-[*]Replies to your orders go ahead of routine reports. Calls that are too old get dropped, because a late "copy" is more confusing than none
-[*]Everything plays on the game's voice channel, so the voice volume slider still works
+[*][b]A crew with a face.[/b] 43 voices: American, Canadian, English, Scottish, Irish, Australian and New Zealand accents; every unit its own
+[*][b]Accents follow the nation.[/b] Ship names and squadron words in their country's accent family
+[*][b]Units explain refusals.[/b] "Negative, no radar lock", "Unable, target not in rear aspect", "Reloading, ready in four minutes"
+[*][b]A net that behaves.[/b] Urgent calls cut in, "two, fox three", hiss, mic click and squelch
+[*][b]Contact reports[/b] from the unit whose sensor found it, with the bearing; a raid is one call
+[*][b]Air ops and rescue.[/b] Joker, bingo, fuel emergency; survivors in the water, pickup, delivered
+[*][b]Clickable messages.[/b] A unit or track number moves the camera there
+[*][b]Order queue (F8).[/b] The selected unit's queued attacks, each with its own delete button
 [/list]
 
-[h2]Units explain refusals[/h2]
+[h2]▶ Quick start[/h2]
+[olist]
+[*]Subscribe, and a mod loader if you have none (Keel above)
+[*]Switch R.A.T.S. Radio on in Mods
+[*]Start a mission and give an order: the answer comes on the radio
+[/olist]
 [list]
-[*]Weapons: "outside launch envelope", "missile cannot reach the target", "inside minimum range", "seeker can't see the target"
-[*]Sensors: "no radar lock", "sonar contact only", "target below the radar horizon", "no line of sight"
-[*]Situation: "too low to launch", "turning, target not in the firing arc", "not cleared to engage", "reloading", "defending against a missile"
-[*]"Order dropped, no sensor can see the target" when the game silently deletes your order
-[*]A wingman told to VID who stays in formation says so. Optionally he breaks formation and does it
+[*][b]Watch it:[/b] [url=https://youtu.be/pGwOIPXckpY]the radio net in a mission[/url]
+[*][b]Settings:[/b] Options > Audio > Rats Radio; changes apply at once
 [/list]
 
-[h2]Order queue (F8)[/h2]
-A small window with the selected unit's queued attack orders, each with its own delete button, and what each is waiting for. The game only has cease fire, which throws away the whole queue.
-
-[h2]Contact reports and air operations[/h2]
+[h2]⚙ How the net behaves[/h2]
 [list]
-[*]New contacts are reported by the unit whose sensor found them, with the bearing; a raid is one call. Lost contacts are called only after a while, flickering ones "intermittent" once
-[*]Joker, bingo and fuel emergency calls against the nearest deck or airfield that can take the aircraft. Fuel calls work on the 3D globe beta build too
-[*]Aircraft heading home are yellow on the map and in the formation manager
-[*]Search and rescue: survivors in the water with a bearing, rescuer on the way, pickup complete, survivors delivered
-[*]Formation manager: each unit gets a line saying what it is (Destroyer, Missile Cruiser, ASW Helicopter, or CAP, Strike, SEAD for aircraft)
+[*][b]Stock lines replaced:[/b] acknowledgements, fox and missile away, splashes, hits, incoming, sonar, ROE; the unit that triggered it says it
+[*][b]Callsigns:[/b] ships by name ("Iowa"), aircraft by squadron ("Lancer 3-2"), the rest NATO style ("Viper two-one")
+[*][b]Replies first,[/b] old calls dropped: a late "copy" confuses more than none
+[*][b]A fresh mix[/b] of voices every mission; a reload keeps them
+[*][b]On the game's voice channel:[/b] its volume slider still works
 [/list]
 
-[h2]Settings[/h2]
-Options > Audio has a group called Rats Radio: female voices on or off (off by default), random voices each mission, static under the voices, radio volume, separate volumes for contact, combat, warning and reply calls, overlapping voices. Changes apply at once. The same values and more are in [i]<Sea Power>\BepInEx\config\dev.sewerlabs.seapowerradio.cfg[/i]; every feature can be turned off.
-A whole squadron can keep one voice gender: a text file, [i]BepInEx\config\SeaPowerRadio\squadrons.txt[/i], with lines like [i]Bear Aces = female[/i] or [i]Viper = male[/i] (the squadron name or its callsign; no menu entry).
+[h2]⚙ Units explain refusals[/h2]
+[list]
+[*][b]Weapons:[/b] outside the envelope, can't reach, inside minimum range, seeker can't see it
+[*][b]Sensors:[/b] no radar lock, sonar contact only, below the radar horizon, no line of sight
+[*][b]Situation:[/b] too low, not in the firing arc, not cleared to engage, reloading, defending
+[*][b]Dropped orders:[/b] "no sensor can see the target" when the game silently deletes one
+[/list]
 
-[h2]Install and game versions[/h2]
-[b]R.A.T.S. Keel[/b] is required: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3835527459]subscribe[/url] and switch it on in the Mods menu; its page has the one install step. It replaces Anchor Chain.
-Sea Power 0.8.x. The voices come with the mod (about 910 MB with their moods), no internet needed. Voice lines from other mods play as before. If a game update moves something the mod hooks into, only that feature turns off and the log says which one. No game files are changed. Works with Rats Topographic Map and Rats Pop-Out Windows. On the 3D globe public beta (build 261107) the mod starts and its calls play in a mission.
+[h2]⚙ Voice packs and settings[/h2]
+[list]
+[*][b]Per country[/b] in Options > Audio > Rats Radio > Voice packs; the 43 voices are NATO (English)
+[*][b]More languages planned[/b] as their own Workshop items: Russian, then Spanish
+[*][b]Options:[/b] female voices, random voices, static, volumes per call type, overlapping voices
+[*][b]Squadron voices:[/b] [i]BepInEx\config\SeaPowerRadio\squadrons.txt[/i], e.g. [i]Bear Aces = female[/i]
+[/list]
 
-[h2]Problems?[/h2]
-Post bugs and ideas on the [url=https://hub.sewerlabs.dev/s/radio]R.A.T.S. feedback board[/url]. For a bug, add [i]<Sea Power>\BepInEx\LogOutput.log[/i] (as a link). It lists the roster, every call and every refusal.
+[h2]⚠ Good to know[/h2]
+[list]
+[*][b]About 910 MB[/b] of voices with their moods, no internet needed
+[*][b]Other mods' voice lines[/b] play as before
+[*][b]If a game update moves a hook,[/b] only that feature turns off and the log says which
+[*][b]No game files are changed;[/b] every feature can be turned off
+[/list]
+
+[h2]⚙ Install and game versions[/h2]
+[list]
+[*][b]Run in the game on 0.9.1[/b] (build 261112): Red Sea Breakout, under R.A.T.S. Keel
+[*][b]0.8.7 (flat map):[/b] run there with earlier versions; the right build switches on by itself
+[*][b]More:[/b] [url=https://github.com/struckl/SeaPowerRadio]README on GitHub[/url]
+[/list]
+
+[h2]✉ Problems, feedback, ideas[/h2]
+[list]
+[*][url=https://hub.sewerlabs.dev/s/radio]R.A.T.S. feedback board[/url]
+[*][b]With Keel:[/b] Send report in its report window (Ctrl+Shift+K); the log lists the roster, every call and every refusal
+[*][b]Videos:[/b] [url=https://www.youtube.com/@SewerRatte]R.A.T.S. on YouTube[/url]
+[/list]
+
+[h2]Support[/h2]
+[list]
+[*]Radio is free and stays free. If you want to keep the rats fed: [url=https://ko-fi.com/kanalratte_sewerlabs]a cheese on Ko-fi[/url] or [url=https://www.patreon.com/cw/Kanalratte]Patreon[/url]
+[/list]
 
 [h2]Credits[/h2]
-Voices rendered with Chatterbox from speakers of the CSTR VCTK Corpus: Yamagishi, Veaux, MacDonald (2019), University of Edinburgh, The Centre for Speech Technology Research, [url=https://doi.org/10.7488/ds/2645]doi.org/10.7488/ds/2645[/url], licensed [url=https://creativecommons.org/licenses/by/4.0/]CC BY 4.0[/url]. The voice clips are CC BY 4.0 as well. Built on BepInEx and HarmonyX.
-
-Source code (MIT): [url=https://github.com/struckl/SeaPowerRadio]github.com/struckl/SeaPowerRadio[/url]
+[list]
+[*]Voices rendered with Chatterbox from speakers of the CSTR VCTK Corpus: Yamagishi, Veaux, MacDonald (2019), University of Edinburgh, [url=https://doi.org/10.7488/ds/2645]doi.org/10.7488/ds/2645[/url], [url=https://creativecommons.org/licenses/by/4.0/]CC BY 4.0[/url]; the voice clips are CC BY 4.0 as well
+[*]Built on BepInEx and HarmonyX
+[*]Source (MIT): https://github.com/struckl/SeaPowerRadio
+[/list]
 
 [i]R.A.T.S. – Ratte's Assorted Tactical Systems[/i]

@@ -24,10 +24,10 @@ public class Plugin : IAnchorChainMod
 #if FLATMAP
     // Anchor Chain skips a plugin whose GUID it has already seen, so the two builds register under different ones.
     public const string PluginGuid = Guid + ".flatmap";
-    public const string Name = "Sea Power Radio (flat map)";
+    public const string Name = "R.A.T.S. Radio";
 #else
     public const string PluginGuid = Guid;
-    public const string Name = "Sea Power Radio";
+    public const string Name = "R.A.T.S. Radio";
 #endif
 
     // Anchor Chain loads assemblies with Assembly.LoadFile, so the same DLL found in two folders would be two

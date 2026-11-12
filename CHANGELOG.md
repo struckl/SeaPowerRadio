@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Shows as just "R.A.T.S. Radio" in the game.** The game's mod list and the mod loader's list (Keel or Anchor Chain) now both say R.A.T.S. Radio, without "Sea Power" and the same name for both game versions (the flat-map build said "(flat map)").
+
 ## 1.5.0 – 2026-11-11 – moods
 
 - **Units sound the way the situation feels.** Every voice now also has stressed, happy and sad takes (60,169 more clips;

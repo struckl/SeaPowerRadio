@@ -1,2 +1,1 @@
-1.5.0: moods. Every voice now also sounds stressed, pleased or low when the situation calls for it: stressed under fire and for a minute after its own warning, pleased after a splash, a hit or a rescue, low after a failure or a lost contact. Switch: Options > Audio > Rats Radio > Moods. The download is about twice as big (the extra takes).
-Aircraft heading home turn yellow on the globe map again, the whole symbol, as before game build 261107.
+1.5.1: shows as "R.A.T.S. Radio" in the game's mod list and in the mod loader's list (Keel or Anchor Chain), the same name on every game version. Runs on Sea Power 0.9.1.

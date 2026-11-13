@@ -189,8 +189,7 @@ stays off when it is not the one it was made for (the log says which runs). Anch
 has already seen, so the flat build registers as `dev.sewerlabs.seapowerradio.flatmap`. `tools/package.ps1` builds and
 checks both (`tools/compat-check` in the workspace).
 
-Releases: [docs/workshop.md](docs/workshop.md) (`tools/package.ps1`), release posts:
-[workshop/promotion.md](workshop/promotion.md); in-game test checklists:
+Releases: [docs/workshop.md](docs/workshop.md) (`tools/package.ps1`); in-game test checklists:
 [docs/testing.md](docs/testing.md); the game systems the mod hooks into (stock voices, why a unit doesn't fire,
 mission lifecycle, contacts) and how to decompile the game: [docs/how-it-works.md](docs/how-it-works.md); the stock
 voice lines and where the game raises them: [docs/stock-voice-events.md](docs/stock-voice-events.md).

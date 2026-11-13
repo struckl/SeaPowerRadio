@@ -27,3 +27,6 @@ tools/voicegen/refs/
 
 # Sound/video sample for YouTube (workshop/radio-net.mp4) – too big for git
 workshop/*.mp4
+
+# Post drafts never go into this public repo: they live in the private workspace repo (posts/<mod>/)
+workshop/posts-*/

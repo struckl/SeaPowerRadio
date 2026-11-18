@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **No more "Mission seed fallback" warning** at mission start (43 player reports): each step of finding the mission's file is checked on its own; a mission outside a mod folder or a save without its first mission uses the full path, quietly
+
 - The mod folder carries this CHANGELOG.md, so R.A.T.S. Keel's What's new can show what changed when there are no Workshop notes (a local copy, the GitHub zip).
 
 ## 1.5.1 – 2026-11-12 – in-game name R.A.T.S. Radio

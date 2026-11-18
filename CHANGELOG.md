@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.5.2 – 2026-11-18 – fixes from player reports
 
 - **No more "Mission seed fallback" warning** at mission start (43 player reports): each step of finding the mission's file is checked on its own; a mission outside a mod folder or a save without its first mission uses the full path, quietly
 

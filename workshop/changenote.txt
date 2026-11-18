@@ -1,1 +1,1 @@
-1.5.1: shows as "R.A.T.S. Radio" in the game's mod list and in the mod loader's list (Keel or Anchor Chain), the same name on every game version. Runs on Sea Power 0.9.1.
+1.5.2: no more 'Mission seed fallback' warning at mission start (43 player reports); runs on Sea Power 0.9.3.

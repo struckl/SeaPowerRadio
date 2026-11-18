@@ -2,7 +2,7 @@
 
 **Bugs, ideas, questions:** [R.A.T.S. feedback board](https://hub.sewerlabs.dev/s/radio)
 
-> **Sea Power 0.9.1 (12 November 2026):** 1.5.1 shows as "R.A.T.S. Radio" in the game and declares 0.8.7 up to every 0.9.x in its `_info.ini`. 1.5.0 was run in the game on 0.9.1 (build 261112) on 12 November 2026; checked offline against 0.9.1.
+> **Sea Power 0.9.3 (16 November 2026):** 1.5.2 was run in the game on 0.9.3, public and beta, on 18 November 2026. It shows as "R.A.T.S. Radio" in the game and declares 0.8.7 up to every 0.9.x in its `_info.ini`.
 
 A mod for [Sea Power: Naval Combat in the Missile Age](https://store.steampowered.com/app/1286220/) that makes the
 radio net sound like people instead of a screen reader, and makes units tell you **why** they are not doing what you

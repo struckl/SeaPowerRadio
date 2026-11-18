@@ -278,9 +278,9 @@ docs/                     test checklists, stock voice inventory, Workshop relea
 
 ## Licenses and credits
 
-- **Code** (plugin and voice pipeline): [MIT](LICENSE).
-- **Voices** (the rendered clips in `mod/voices/`, shipped with releases): [CC BY 4.0](VOICES-LICENSE.md) – they
-  are derived from the CSTR VCTK Corpus, which is CC BY 4.0.
+- **Code and voices**: [R.A.T.S. Source License](LICENSE): read it, fork it, send fixes; no re-uploads, no reuse in other projects.
+- **Voice credits**: [VOICES-LICENSE.md](VOICES-LICENSE.md) (the VCTK Corpus they come from is CC BY 4.0).
+- Releases before 2026-11-18 stay MIT (code) and CC BY 4.0 (voices).
 
 Built on [BepInEx](https://github.com/BepInEx/BepInEx), [HarmonyX](https://github.com/BepInEx/HarmonyX) and
 [Anchor Chain](https://github.com/SeaPower-Modders/AnchorChain). Radio chain from

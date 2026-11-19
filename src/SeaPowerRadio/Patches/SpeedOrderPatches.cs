@@ -9,9 +9,8 @@ namespace SeaPowerRadio.Patches;
 /// </summary>
 internal static class SpeedOrderPatches
 {
-    public const string FeatureName = "SpeedKnots";
-
-    public static Feature Declare() => new Feature(FeatureName)
+    public static void Declare() => HookRegistry.Add("SpeedKnots", HookStage.Load,
+            "speed orders are not spoken in knots", optional: true)
         .Hook("SeapowerUI.ViewModels.ObjectSpeed", "RaiseSpeedAlert", new[] { typeof(ObjectBase), typeof(float) },
             typeof(SpeedOrderPatches), postfix: nameof(RaiseSpeedAlertPostfix));
 

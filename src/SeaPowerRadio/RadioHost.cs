@@ -1,18 +1,16 @@
 using System;
 using SeaPowerRadio.Air;
 using SeaPowerRadio.Contacts;
-using SeaPowerRadio.Core;
 using SeaPowerRadio.Radio;
 using SeaPowerRadio.WhyNot;
-using UnityEngine;
 
 namespace SeaPowerRadio;
 
 /// <summary>
-/// Persistent MonoBehaviour the mod hangs its per-frame work on: the radio net and the contact reporter. Lives on
-/// a DontDestroyOnLoad object created at load, so it survives scene changes between menu and missions.
+/// The persistent object the radio net's and the reporters' per-frame work hangs on (ModHost, in the shared skeleton), on a
+/// DontDestroyOnLoad object created at load, so it survives scene changes between menu and missions.
 /// </summary>
-internal sealed class RadioHost : MonoBehaviour
+internal sealed class RadioHost : ModHost
 {
     private RadioPlayer player;
     private ContactReporter contacts;
@@ -20,8 +18,9 @@ internal sealed class RadioHost : MonoBehaviour
     private FuelMonitor fuel;
     private SarReporter sar;
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         player = new RadioPlayer(this);
         contacts = new ContactReporter(player);
         whyNot = new WhyNotMonitor(player);
@@ -29,12 +28,10 @@ internal sealed class RadioHost : MonoBehaviour
         sar = new SarReporter(player);
         gameObject.AddComponent<QueueOverlay>();
         StockVoiceRouter.Player = player;
-        EventBus.MissionStarted += OnMissionStarted;
         Settings.FemaleVoices.SettingChanged += OnFemaleVoicesChanged;
-        EventBus.MissionEnded += OnMissionEnded;
     }
 
-    private void OnMissionStarted()
+    protected override void OnMissionReady()
     {
         player.Clear();
         whyNot.Clear();
@@ -52,7 +49,7 @@ internal sealed class RadioHost : MonoBehaviour
         ModLog.Info($"Female voices off: {changed} speaker(s) moved to a male voice.");
     }
 
-    private void OnMissionEnded()
+    protected override void OnMissionEnded()
     {
         contacts.Detach();
         player.Clear();
@@ -62,29 +59,20 @@ internal sealed class RadioHost : MonoBehaviour
         Moods.Reset();
     }
 
-    private void Update()
+    protected override void Tick()
     {
-        try
-        {
-            player.Tick();
-            contacts.Tick();
-            whyNot.Tick();
-            fuel.Tick();
-            sar.Tick();
-            RtbMarker.Tick();
-            Settings.FlushIfDue();
-            AlertLink.Tick();
-        }
-        catch (Exception ex)
-        {
-            ModLog.Error($"Radio tick failed: {ex}");
-        }
+        player.Tick();
+        contacts.Tick();
+        whyNot.Tick();
+        fuel.Tick();
+        sar.Tick();
+        RtbMarker.Tick();
+        AlertLink.Tick();
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
-        EventBus.MissionStarted -= OnMissionStarted;
-        EventBus.MissionEnded -= OnMissionEnded;
+        base.OnDestroy();
         Settings.FemaleVoices.SettingChanged -= OnFemaleVoicesChanged;
     }
 }

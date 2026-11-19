@@ -68,7 +68,7 @@ internal static class RtbMarker
     public static Noesis.SolidColorBrush Brush(MapPalette palette = null)
     {
         palette ??= Globals._mainGameViewModel?.Map?.DisplayMap?.Palette;
-        return Brush(palette == null || GameApi.IsDark(palette));
+        return Brush(palette == null || GameReflection.IsDark(palette));
     }
 #endif
 

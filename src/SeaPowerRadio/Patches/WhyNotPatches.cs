@@ -9,9 +9,8 @@ namespace SeaPowerRadio.Patches;
 /// </summary>
 internal static class WhyNotPatches
 {
-    public const string FeatureName = "WhyNot";
-
-    public static Feature Declare() => new Feature(FeatureName)
+    public static void Declare() => HookRegistry.Add("WhyNot", HookStage.Load,
+            "refusal reasons may repeat after a cease fire", optional: true)
         .Hook("SeaPower.ObjectBase", "CeaseFire", null, typeof(WhyNotPatches), prefix: nameof(CeaseFirePrefix));
 
     private static void CeaseFirePrefix(ObjectBase __instance) => WhyNotMonitor.MarkCleared(__instance);

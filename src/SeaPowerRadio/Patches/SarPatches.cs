@@ -12,11 +12,10 @@ namespace SeaPowerRadio.Patches;
 /// </summary>
 internal static class SarPatches
 {
-    public const string FeatureName = "SarCalls";
-
     [System.ThreadStatic] private static int inPickup;
 
-    public static Feature Declare() => new Feature(FeatureName)
+    public static void Declare() => HookRegistry.Add("SarCalls", HookStage.Load,
+            "search and rescue calls are not made", optional: true)
         .Hook("SeaPower.ObjectsManager", "AddObjectToItsTaskforce", null, typeof(SarPatches), postfix: nameof(Registered))
         .Hook("SeaPower.PatrolZone", "AssignSARRescueRoute", null, typeof(SarPatches), postfix: nameof(Assigned))
         .Hook("SeaPower.ObjectBase", "CheckForRaftPickUp", null, typeof(SarPatches),

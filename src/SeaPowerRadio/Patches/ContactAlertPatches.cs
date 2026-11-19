@@ -9,11 +9,10 @@ namespace SeaPowerRadio.Patches;
 /// </summary>
 internal static class ContactAlertPatches
 {
-    public const string FeatureName = "ContactAlerts";
-
     [System.ThreadStatic] private static int inStockContactReport;
 
-    public static Feature Declare() => new Feature(FeatureName)
+    public static void Declare() => HookRegistry.Add("ContactAlerts", HookStage.Load,
+            "the game's own contact messages are not filtered", optional: true)
         .Hook("SeaPower.Taskforce", "CheckNewContactMessage", System.Type.EmptyTypes, typeof(ContactAlertPatches),
             prefix: nameof(Enter), postfix: nameof(Leave))
         .Hook("SeaPower.Taskforce", "CheckContactClassifiedMessage", System.Type.EmptyTypes, typeof(ContactAlertPatches),

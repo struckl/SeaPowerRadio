@@ -207,7 +207,7 @@ internal sealed class FuelMonitor
 
     private static void Trace(ObjectBase unit, State s, Reading r, Level level)
     {
-        if (!Settings.VerboseLog.Value || Time.unscaledTime < s.NextTrace)
+        if (!ModSettings.Verbose || Time.unscaledTime < s.NextTrace)
             return;
         s.NextTrace = Time.unscaledTime + TraceInterval;
         ModLog.Debug($"[fuel] {unit.getName()}: {r.Fuel:0} km fuel, {(r.Deck != null ? $"{r.Deck.getName()} {r.Km:0} km" : "no deck")}, " +

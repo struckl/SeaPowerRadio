@@ -2,21 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using BepInEx;
 using BepInEx.Configuration;
 using UnityEngine;
 
 namespace SeaPowerRadio;
 
 /// <summary>
-/// BepInEx config at <c>BepInEx/config/dev.sewerlabs.seapowerradio.cfg</c>. Sections are numbered so they sort in
-/// the order a player would look for them.
+/// BepInEx config at <c>BepInEx/config/dev.sewerlabs.seapowerradio.cfg</c> (opened by ModSettings, shared skeleton, which
+/// binds "1. General" Enable mod and Verbose log). Sections are numbered so they sort in the order a player would look for them.
 /// </summary>
 internal static class Settings
 {
-    public static ConfigEntry<bool> Enabled;
-    public static ConfigEntry<bool> VerboseLog;
-
     public static ConfigEntry<bool> ReplaceStockVoices;
     public static ConfigEntry<float> Volume;
     public static ConfigEntry<float> RadioNoise;
@@ -63,24 +59,6 @@ internal static class Settings
     private static readonly Dictionary<string, ConfigEntry<string>> NationEntries =
         new Dictionary<string, ConfigEntry<string>>(StringComparer.OrdinalIgnoreCase);
 
-    private static ConfigFile file;
-    private static float saveAt = -1f;
-
-    /// <summary>
-    /// The options page changes values while a slider is dragged; the file is written once, a moment after the last
-    /// change, instead of on every step.
-    /// </summary>
-    public static void SaveSoon() => saveAt = Time.unscaledTime + 1f;
-
-    public static void FlushIfDue()
-    {
-        if (saveAt < 0f || Time.unscaledTime < saveAt)
-            return;
-        saveAt = -1f;
-        try { file?.Save(); }
-        catch (System.Exception ex) { ModLog.Warn($"Could not save the settings: {ex.Message}"); }
-    }
-
     /// <summary>
     /// The voice pack setting of one country (<see cref="Voices.VoicePacks.Auto"/>, <see cref="Voices.VoicePacks.GameVoice"/>
     /// or a pack id), bound on first use: the list of countries comes from the game, which is not loaded yet when the
@@ -90,7 +68,7 @@ internal static class Settings
     {
         if (NationEntries.TryGetValue(nation, out ConfigEntry<string> entry))
             return entry;
-        entry = file.Bind(VoicePackSection, nation, Voices.VoicePacks.Auto,
+        entry = ModSettings.File.Bind(VoicePackSection, nation, Voices.VoicePacks.Auto,
             $"Voice pack for the units of {nation}: Auto (the pack that lists the country, else the game's own voice), " +
             "Game voice (the mod stays silent and the game's own voice lines play) or the Id of an installed voice pack. " +
             "Takes effect at the next mission start. Also on the Audio page of the Options.");
@@ -100,7 +78,7 @@ internal static class Settings
 
     public static string NationChoice(string nation)
     {
-        if (string.IsNullOrEmpty(nation) || file == null)
+        if (string.IsNullOrEmpty(nation) || ModSettings.File == null)
             return Voices.VoicePacks.Auto;
         string value = NationEntry(nation).Value;
         return string.IsNullOrWhiteSpace(value) ? Voices.VoicePacks.Auto : value.Trim();
@@ -122,7 +100,7 @@ internal static class Settings
         try
         {
             bool inSection = false;
-            foreach (string raw in File.ReadAllLines(file.ConfigFilePath))
+            foreach (string raw in File.ReadAllLines(ModSettings.File.ConfigFilePath))
             {
                 string line = raw.Trim();
                 if (line.StartsWith("["))
@@ -138,19 +116,24 @@ internal static class Settings
         return found;
     }
 
-    public static void Init()
+    /// <summary>The mod's own entries, after ModSettings has opened the file and bound "1. General".</summary>
+    public static void Bind(ConfigFile file)
     {
-        file = new ConfigFile(Path.Combine(Paths.ConfigPath, Plugin.Guid + ".cfg"), saveOnInit: true);
-        file.SaveOnConfigSet = false;
-
-        Enabled = file.Bind("1. General", "Enable mod", true,
-            "Master switch. Needs a restart.");
-        VerboseLog = file.Bind("1. General", "Verbose log", false,
-            "Write debug detail to BepInEx/LogOutput.log.");
         ConfigMigration = file.Bind("1. General", "Config migration", 0,
             "Bookkeeping, leave as it is: the number of one-time settings migrations that have run (1 = Female voices " +
             "was reset to off once, 1.4.0). A setting you change afterwards is kept.");
+        BindRadio(file);
+        BindWhyNotAndOrders(file);
+        BindAirOpsAndRoles(file);
+        BindContacts(file);
+        BindCallVolumes(file);
+        BindDiagnostics(file);
+        BindNations();
+        ModSettings.Migrate(ConfigMigration, (1, ResetFemaleVoices));
+    }
 
+    private static void BindRadio(ConfigFile file)
+    {
         ReplaceStockVoices = file.Bind("2. Radio", "Replace stock voices", true,
             "Mute the game's voice lines and have every unit say them in its own voice and callsign.");
         Volume = file.Bind("2. Radio", "Volume", 1.0f,
@@ -190,7 +173,10 @@ internal static class Settings
             "playing (never the same unit twice at once). Off: one call at a time, the rest wait in the queue.");
         MaxOverlap = file.Bind("2. Radio", "Voices at once", 3,
             new ConfigDescription("Most calls playing at the same time when Overlapping voices is on.", new AcceptableValueRange<int>(2, 4)));
+    }
 
+    private static void BindWhyNotAndOrders(ConfigFile file)
+    {
         WhyNot = file.Bind("4. Why not", "Explain refusals", true,
             "Units say why an ordered engagement isn't happening (reloading, no radar track, out of envelope, sonar " +
             "contact only...), tell you their place in the queue, and why a wingman won't VID.");
@@ -201,7 +187,10 @@ internal static class Settings
             "Small window listing the selected unit's stacked attack orders, each with a delete button.");
         QueueOverlayKey = file.Bind("5. Order queue", "Toggle key", KeyCode.F8,
             "Shows / hides the order queue window.");
+    }
 
+    private static void BindAirOpsAndRoles(ConfigFile file)
+    {
         FuelCalls = file.Bind("6. Air ops", "Fuel calls", true,
             "Aircraft and helicopters call joker, bingo and fuel emergency against the nearest deck or airfield that " +
             "can take them: joker = at cruise speed only just enough fuel to get there, bingo = only just enough even " +
@@ -219,7 +208,10 @@ internal static class Settings
             "the mission an aircraft is loaded for (CAP, Strike, SEAD, AEW...), the helicopter type (ASW " +
             "Helicopter). Groups show the role their members share. Takes effect the next time the formation " +
             "manager opens.");
+    }
 
+    private static void BindContacts(ConfigFile file)
+    {
         ContactReports = file.Bind("3. Contacts", "Contact reports", true,
             "New, lost, intermittent and hostile contacts are called out by the unit that detected them.");
         FadeHysteresis = file.Bind("3. Contacts", "Lost after (seconds)", 20f,
@@ -230,7 +222,10 @@ internal static class Settings
             "A contact lost this often within a minute is called intermittent once, then stays quiet until stable.");
         AnnounceNeutral = file.Bind("3. Contacts", "Announce neutral classification", false,
             "Also call out contacts classified neutral (merchant traffic can be a lot).");
+    }
 
+    private static void BindCallVolumes(ConfigFile file)
+    {
         VolumeContacts = file.Bind("8. Call volumes", "Contacts and tracks", 1.0f,
             new ConfigDescription("Volume of new / lost / identified contact and track calls (multiplier, 1 = default).",
                                   new AcceptableValueRange<float>(0f, 2f)));
@@ -245,31 +240,25 @@ internal static class Settings
         VolumeOther = file.Bind("8. Call volumes", "Air ops and other", 1.0f,
             new ConfigDescription("Volume of launch / recovery, fuel, search and rescue, mission and everything else.",
                                   new AcceptableValueRange<float>(0f, 2f)));
+    }
 
+    private static void BindDiagnostics(ConfigFile file)
+    {
         LogRoster = file.Bind("9. Diagnostics", "Log roster", true,
             "On mission start, log every player element with its callsign and voice.");
         LogStockVoice = file.Bind("9. Diagnostics", "Log stock voice events", true,
             "Log every voice line the game asks for (key, speaker, number).");
         LogRadio = file.Bind("9. Diagnostics", "Log radio calls", true,
             "Log every call the mod queues and speaks.");
-        BindNations();
-        Migrate();
-        file.Save();   // writes the entries a config from an older version did not have yet
     }
 
-    /// <summary>
-    /// One-time changes of a saved config. 1.4.0: Female voices now defaults to off; a config saved by an older version
-    /// that still says true is switched to false once. The marker keeps a player who turns it back on afterwards.
-    /// </summary>
-    private static void Migrate()
+    // 1.4.0: Female voices now defaults to off; a config saved by an older version that still says true is switched to false
+    // once. The step counter keeps a player who turns it back on afterwards.
+    private static void ResetFemaleVoices()
     {
-        if (ConfigMigration.Value >= 1)
+        if (!FemaleVoices.Value)
             return;
-        if (FemaleVoices.Value)
-        {
-            FemaleVoices.Value = false;
-            ModLog.Info("Config: 'Female voices' was on (the old default); switched to off once, as in 1.4.0.");
-        }
-        ConfigMigration.Value = 1;
+        FemaleVoices.Value = false;
+        ModLog.Info("Config: 'Female voices' was on (the old default); switched to off once, as in 1.4.0.");
     }
 }

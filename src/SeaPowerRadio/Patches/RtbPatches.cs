@@ -16,11 +16,10 @@ namespace SeaPowerRadio.Patches;
 /// </summary>
 internal static class RtbPatches
 {
-    public const string FeatureName = "RtbHighlight";
-
-    public static Feature Declare()
+    public static void Declare()
     {
-        var feature = new Feature(FeatureName);
+        var feature = HookRegistry.Add("RtbHighlight", HookStage.Load,
+            "returning aircraft are not marked yellow", optional: true);
 #if FLATMAP
         feature.Hook("SeapowerUI.MapContactVisuals", "Resolve", new[] { typeof(IUnit) }, typeof(RtbPatches),
             postfix: nameof(ResolvePostfix));
@@ -35,7 +34,7 @@ internal static class RtbPatches
                 new[] { typeof(object[]), typeof(System.Type), typeof(object), typeof(System.Globalization.CultureInfo) },
                 typeof(RtbPatches), postfix: nameof(SymbolBrushPostfix));
 #endif
-        return feature.Hook("SeapowerUI.FormationManagerView", ".ctor", System.Type.EmptyTypes, typeof(RtbPatches),
+        feature.Hook("SeapowerUI.FormationManagerView", ".ctor", System.Type.EmptyTypes, typeof(RtbPatches),
             postfix: nameof(ViewPostfix));
     }
 

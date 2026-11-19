@@ -188,8 +188,10 @@ the default build is for the globe game (`SeaPowerRadio.dll`), `-p:GameBuild=Fla
 `Sea Power_Data\Managed` (`-p:FlatManagedDir=...`, default `..\_gamerefs\SeaPower-0.8.7-public\Managed` next to the mod
 folders in the workspace) into `SeaPowerRadioFlat.dll`. The package holds both; each looks at the game it runs on and
 stays off when it is not the one it was made for (the log says which runs). Anchor Chain skips a plugin whose GUID it
-has already seen, so the flat build registers as `dev.sewerlabs.seapowerradio.flatmap`. `tools/package.ps1` builds and
-checks both (`tools/compat-check` in the workspace).
+has already seen, so the flat build registers as `dev.sewerlabs.seapowerradio.flatmap`. The start, the hook registry, the
+config file, the log and the host object are the workspace's shared skeleton (`SeaPowerKeel\shared`, compiled into the DLL
+as linked source; the csproj imports its `Rats.Mod.props`). `tools/package.ps1` builds and checks both
+(`tools/compat-check` in the workspace).
 
 Releases: [docs/workshop.md](docs/workshop.md) (`tools/package.ps1`); in-game test checklists:
 [docs/testing.md](docs/testing.md); the game systems the mod hooks into (stock voices, why a unit doesn't fire,
@@ -253,11 +255,13 @@ python -m venv .venv && .venv/Scripts/python -m pip install -r tools/voicegen/re
 
 ```
 src/SeaPowerRadio/        C# plugin (netstandard2.1, BepInEx 5 / HarmonyX via Anchor Chain)
-  Plugin.cs               Anchor Chain entry point
+  Plugin.cs, ModInfo.cs   Anchor Chain entry point; what the shared skeleton reads (GUID, name, version, log source)
   RadioApi.cs, RatsBus.cs what other mods call: rats.radio.say and line packs (docs/rats-bus.md)
-  PatchRegistry.cs        every game hook, grouped by feature; a missing target disables only that feature
-  Core/EventBus.cs        normalized game events (mission start/end, launches)
-  Patches/                Harmony patches (stock voice capture, launching weapon, mission lifecycle)
+  Hooks.cs                every game hook, grouped by feature (shared HookRegistry); a missing target disables only that
+                          feature, except the mission and launch hooks the roster needs (then the mod stays off)
+  RadioHost.cs, Settings.cs  the host object (shared ModHost) and the config entries (shared ModSettings)
+  Core/EventBus.cs        the aircraft-launched event (mission start/end come from the shared MissionHooks)
+  Patches/                Harmony patches (stock voice capture, launching weapon, speed orders, aircraft launch, alerts, options)
   Roster/                 player elements + hangar slots → callsign + voice
   Voices/                 callsign generator, voice assignment, voice library loader
   Radio/                  Catalog (catalog.txt / stockmap.txt), TransmissionBuilder (callsign + phrase + number

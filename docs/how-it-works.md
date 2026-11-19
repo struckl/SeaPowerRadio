@@ -4,7 +4,7 @@ Research notes from building the mod, against **Sea Power 0.8.6** (Unity 6000.0.
 game does; where the plugin uses it, the file is named. Class and method names
 come from the game's `Sea Power_Data/Managed/Seapower-Scripts.dll`; `File.cs:NNN` references point into a local
 decompile of it (see [Decompiling](#decompiling)) and drift with every game update. The patch targets the plugin
-really uses are listed in `src/SeaPowerRadio/PatchRegistry.cs`; a target a game update removes switches off only its
+really uses are listed in `src/SeaPowerRadio/Hooks.cs` and `Patches/` (registered through the shared HookRegistry); a target a game update removes switches off only its
 feature.
 
 ## Mod loading
@@ -243,7 +243,8 @@ paths: placed aircraft, air support, save loads; every object that joins a task 
 ## Patch rules
 
 Never patch `DM.I/D/E` (empty logging stubs, inlined), coroutines or ECS job lambdas. Every target is resolved
-through `PatchRegistry` before anything is patched; a missing one disables its feature and logs, never crashes.
+through the HookRegistry before anything is patched; a missing one disables its feature and logs, never crashes (the
+mission and launch hooks are required: without them the roster cannot be built and the mod stays off).
 
 ## Decompiling
 

@@ -35,7 +35,7 @@ Which nations speak which language, from the game's own `voice.ini` `[VoiceProfi
   and its rules for numbers and callsigns (Soviet altitudes in metres and numeric callsigns; Spanish "rumbo cero
   nueve cero", Argentine flight callsigns).
 - The player side's nation picks the language; no pack installed -> English, exactly as now.
-- `package.ps1 -Pack <language>` stages a pack; `tools/workshop-upload` already uploads to any item id.
+- `package.ps1 -Pack <language>` stages a pack; the workspace's `modtool workshop` uploads to any item id.
 - Released as a normal Workshop update. English-only players notice nothing; the in-game test is the 1.0.x checklist.
 
 ## Phase 2 - Russian (~ 3 days of work + 1 day of unattended rendering)

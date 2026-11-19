@@ -233,10 +233,12 @@ edge-tts (`generate.py`) remains as a fallback engine.
 | `phrases.py` | phrase catalog (stock keys, why-not reasons, callouts, T3 identification causes) as *takes*: every clip is cut out of a whole sentence (phrases after a carrier callsign, callsign words / flight-position pairs / number pieces each in the slot they're used in), so stitched pieces keep the voice's own melody and pauses. `{trk}`/`{brg}`/`{num}`/`{alt}`/`{count}` slots split a phrase around a number. `STOCK_MAP` maps every stock voice key to its replacement |
 | `chatterbox_render.py` | renders the library into `mod/voices/<persona>/` on the GPU; phrase urgency -> `exaggeration`/`cfg_weight`; hallucinated or unalignable takes are re-rolled; resumable |
 | `align.py` | CTC forced aligner (wav2vec2) giving word timestamps, since Chatterbox reports none |
-| `radio.py` | the radio sound, split into the *voice* half (baked per clip) and the *transmission* half (hiss, click, crackle, squelch - once per transmission, at runtime) |
+| `radio.py` | the radio sound, split into the *voice* half (baked per clip) and the *transmission* half (hiss, click, crackle, squelch, loudness gain and soft limiter - once per transmission, at runtime); its `transmission()` follows the plugin's RadioFx step for step |
 | `reel.py` | stitches clips into transmissions like the plugin will, pauses at numbers closed up the same way -> `tools/voicegen/samples/` (`--as-cut`: joins as cut, for comparison; `--library`: another checkout's voices) |
 | `names.py` | in-game names: ship/shore short names and squadron callsign words from the game's language files, each bound to a few voices -> `mod/voices/names.txt` |
-| `check_sync.py` | checks callsign lists (Python vs. C#) and that every stock key is mapped - run before a render |
+| `rules.py` | the one source of the rules plugin and tools share: callsign words, clip number ranges, pauses at numbers, phrase groups (call volumes, moods), priority thresholds, the radio sound table |
+| `rules_cs.py` | writes `rules.py`, the named variants and a few phrase facts into `src/SeaPowerRadio/Radio/ClipRules.g.cs` |
+| `check_sync.py` | checks that `ClipRules.g.cs`, `catalog.txt` and `stockmap.txt` are current, that every phrase group and named variant exists, and that every stock key is mapped - run before a build and a render |
 | `check_library.py` | lists takes still missing from the rendered library |
 | `full_render.ps1` | detached, game-aware full render (pauses while a game runs), verify, re-roll, deploy |
 | `generate.py`, `edge_cast.py` | edge-tts fallback engine and its cast |
@@ -264,7 +266,7 @@ python -m venv .venv && .venv/Scripts/python -m pip install -r tools/voicegen/re
 src/SeaPowerRadio/        C# plugin (netstandard2.1, BepInEx 5 / HarmonyX via Anchor Chain)
   Plugin.cs               Anchor Chain entry point
   PatchRegistry.cs        every game hook, grouped by feature; a missing target disables only that feature
-  Core/EventBus.cs        normalized game events (stock voice requests, mission start/end, launches)
+  Core/EventBus.cs        normalized game events (mission start/end, launches)
   Patches/                Harmony patches (stock voice capture, launching weapon, mission lifecycle)
   Roster/                 player elements + hangar slots → callsign + voice
   Voices/                 callsign generator, voice assignment, voice library loader
@@ -282,10 +284,10 @@ src/SeaPowerRadio/        C# plugin (netstandard2.1, BepInEx 5 / HarmonyX via An
                           to the formation manager's row templates when the view is built)
 mod/                      files shipped next to the DLL (voices/: personas.txt, catalog.txt, stockmap.txt,
                           names.txt, rendered clips; _info.ini; rats-radio-aliases.txt = default hull prefixes)
-tools/voicegen/           offline voice pipeline (cast.py = the persona list)
+tools/voicegen/           offline voice pipeline (cast.py = the persona list; rules.py = the clip and sound rules the
+                          plugin shares, written to Radio/ClipRules.g.cs by rules_cs.py; check_sync.py checks both sides)
 tools/package.ps1         release build → dist/SeaPowerRadio/ (+ release zip)
 tools/shot-director/      dev-only plugin that drives the game for the Workshop screenshots (never shipped)
-tools/workshop-upload/    dev-only: updates the Workshop item through the Steam client, no game UI (never shipped)
 docs/                     test checklists, stock voice inventory, Workshop release
 ```
 

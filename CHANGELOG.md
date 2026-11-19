@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- Fixed: a call that filled the voice clip cache could throw away clips of a call still being put together, which
+  then played broken or not at all.
+- Changed (internal): one rules table (`tools/voicegen/rules.py`, read by the plugin as `ClipRules.g.cs`) for callsign
+  words, clip number ranges, the variants the plugin picks by name, call-volume and mood groups and the radio sound;
+  `check_sync.py` checks it all. The shipped clips and their names are unchanged.
+- Changed (internal): listening samples (`reel.py`) mix like the game again: the same joins, crossfade, loudness gain
+  and soft limiter; low altitudes use the rendered clips.
+- Changed (internal): the order the game calls in (appended pieces, launch line, messages in the same frame) is
+  written down in one place (`CallOrder`); long functions split; unused code and fields and the per-repo Workshop
+  uploader removed.
+
 ## 1.5.2 - 2026-11-18 - fixes from player reports
 
 Run in the test VM on game 0.9.3 public and beta on 2026-11-18: Red Sea Breakout with radio calls, no seed warning, no Radio error.

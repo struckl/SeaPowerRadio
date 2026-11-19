@@ -284,17 +284,17 @@ src/SeaPowerRadio/        C# plugin (netstandard2.1, BepInEx 5 / HarmonyX)
   Core/                   GameMessage (the one way a report raises its message bottom right), Distance (map units, km, nm,
                           bearing), OrderText (weapon and track names of an order)
   Patches/                Harmony patches (stock voice capture, launching weapon, aircraft launch, reports, options)
-  Roster/                 player elements + hangar slots → callsign + voice
+  Roster/                 player elements + hangar slots -> callsign + voice
   Voices/                 callsign generator, voice assignment, voice library and packs,
                           squadron voices (squadrons.txt)
   Radio/                  Catalog (catalog.txt / stockmap.txt), TransmissionBuilder (callsign + phrase + number
                           pieces, how much pause each join keeps), ClipLibrary (on-demand loading, LRU), RadioFx
                           (joins the clips, hiss, click, crackle, squelch),
-                          RadioPlayer (priority queue, up to 4 channels for overlapping voices), CallCategory (call kind → volume),
-                          Moods, NameAliases, StockVoiceRouter (stock line → own voice), SpokenReport (queues a report's call with its messages),
+                          RadioPlayer (priority queue, up to 4 channels for overlapping voices), CallCategory (call kind -> volume),
+                          Moods, NameAliases, StockVoiceRouter (stock line -> own voice), SpokenReport (queues a report's call with its messages),
                           AlertLink and MessageLinker (messages kept until spoken, clickable units and tracks)
   Contacts/               ContactReporter: new / lost / intermittent / hostile calls with hysteresis and cooldowns
-  WhyNot/                 WhyNotMonitor (engage states, reload ETA, sonar-only, dropped orders → spoken + alert),
+  WhyNot/                 WhyNotMonitor (engage states, reload ETA, sonar-only, dropped orders -> spoken + alert),
                           QueueOverlay (selected unit's stacked attack orders with delete buttons, F8)
   Ui/                     OptionsPage: the "Rats Radio" group in the Options menu's Audio tab (code-built Noesis controls)
   Air/                    FuelMonitor (joker / bingo calls), RtbMarker (RTB yellow + sorting), SarReporter,
@@ -305,7 +305,7 @@ mod/                      files shipped next to the DLL (voices/: personas.txt, 
                           names.txt, rendered clips; _info.ini; rats-radio-aliases.txt = default hull prefixes)
 tools/voicegen/           offline voice pipeline (cast.py = the persona list; rules.py = the clip and sound rules the
                           plugin shares, written to Radio/ClipRules.g.cs by rules_cs.py; check_sync.py checks both sides)
-tools/package.ps1         release build → dist/SeaPowerRadio/ (+ release zip)
+tools/package.ps1         release build -> dist/SeaPowerRadio/ (+ release zip)
 tools/shot-director/      dev-only plugin that drives the game for the Workshop screenshots (never shipped)
 docs/                     test checklists, stock voice inventory, Workshop release
 ```

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Static at 0 % is really clean now** (player report): the mic click and the squelch pop at the end of every line follow the static setting too; at 100 % they sound as before, above it only hiss and crackle grow
+
 - Fixed: a call that filled the voice clip cache could throw away clips of a call still being put together, which
   then played broken or not at all.
 - Changed (internal): one rules table (`tools/voicegen/rules.py`, read by the plugin as `ClipRules.g.cs`) for callsign

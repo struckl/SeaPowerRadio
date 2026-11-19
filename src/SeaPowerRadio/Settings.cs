@@ -152,8 +152,8 @@ internal static class Settings
             "Say the unit's name at the start of every call. Off: only when a different unit talks than the one " +
             "before - the same unit again just goes on, a wingman of the same flight only gives its number.");
         RadioNoise = file.Bind("2. Radio", "Radio noise", 1.0f,
-            new ConfigDescription("Static: how much hiss and crackle sits under the voices. 1 = the default amount, 0 = clean " +
-                                  "voice. Also on the Audio page of the game's Options (0-150 %). Applies from the next call.",
+            new ConfigDescription("Static: how much hiss and crackle sits under the voices, and how loud the mic click and squelch are. 1 = the default " +
+                                  "amount, 0 = clean voice without click or squelch. Also on the Audio page of the game's Options (0-150 %). Applies from the next call.",
                                   new AcceptableValueRange<float>(0f, 3f)));
         FemaleVoices = file.Bind("2. Radio", "Female voices", false,
             "On: women's voices are picked for units too. Off (the default since 1.4.0): only male voices. Takes effect at the " +

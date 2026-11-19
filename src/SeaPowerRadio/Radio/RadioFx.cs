@@ -28,7 +28,7 @@ internal static class RadioFx
 
         float[] speech = JoinVoice(parts, maxPause, rate);
         BandLimit(speech, rate, p.Hp, p.Lp);
-        float[] mix = Key(rng, rate, speech);
+        float[] mix = Key(rng, rate, speech, Math.Min(1f, Math.Max(0f, noiseScale)));
         AddNoiseBed(mix, rng, rate, p, noiseScale);
 
         // Hiss and crackle get the same gain as the voice, so the noise/voice balance stays the one from the approved
@@ -98,15 +98,18 @@ internal static class RadioFx
         return rest;
     }
 
-    /// <summary>The keyed transmission: hiss-only preroll, mic click, the voice, a short hang, the squelch tail.</summary>
-    private static float[] Key(System.Random rng, int rate, float[] speech)
+    /// <summary>
+    /// The keyed transmission: hiss-only preroll, mic click, the voice, a short hang, the squelch tail. Click and tail follow the
+    /// static setting up to the default amount (0 = a clean line, players asked for it); above it only hiss and crackle grow.
+    /// </summary>
+    private static float[] Key(System.Random rng, int rate, float[] speech, float keyLevel)
     {
         int preroll = (int)(rate * Range(rng, ClipRules.FxPrerollMin, ClipRules.FxPrerollMax));
         float[] click = Burst(rng, rate, Range(rng, ClipRules.FxClickSecondsMin, ClipRules.FxClickSecondsMax),
-            Range(rng, ClipRules.FxClickLevelMin, ClipRules.FxClickLevelMax), ClipRules.FxClickHp, ClipRules.FxClickLp, exponential: true);
+            Range(rng, ClipRules.FxClickLevelMin, ClipRules.FxClickLevelMax) * keyLevel, ClipRules.FxClickHp, ClipRules.FxClickLp, exponential: true);
         int hang = (int)(rate * Range(rng, ClipRules.FxHangMin, ClipRules.FxHangMax));
         float[] tail = Burst(rng, rate, Range(rng, ClipRules.FxTailSecondsMin, ClipRules.FxTailSecondsMax),
-            Range(rng, ClipRules.FxTailLevelMin, ClipRules.FxTailLevelMax), ClipRules.FxTailHp, ClipRules.FxTailLp, exponential: false);
+            Range(rng, ClipRules.FxTailLevelMin, ClipRules.FxTailLevelMax) * keyLevel, ClipRules.FxTailHp, ClipRules.FxTailLp, exponential: false);
 
         var mix = new float[preroll + click.Length + speech.Length + hang + tail.Length];
         int at = preroll;

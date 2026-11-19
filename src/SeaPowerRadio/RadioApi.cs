@@ -18,13 +18,12 @@ namespace SeaPowerRadio;
 /// </summary>
 internal static class RadioApi
 {
-    public static RadioPlayer Player;
-
     public static bool Say(object unit, string[] phrases, int[] numbers)
     {
         try
         {
-            if (Player == null || phrases == null || phrases.Length == 0)
+            RadioPlayer player = RadioHost.Player;
+            if (player == null || phrases == null || phrases.Length == 0)
                 return false;
             Roster.Roster roster = RosterService.Current;
             if (roster == null)
@@ -44,7 +43,7 @@ internal static class RadioApi
             if (!any)
                 return false;
             t.Alerts.AddRange(AlertLink.TakeFor(obj ?? speaker.Unit));
-            Player.Submit(t);
+            player.Submit(t);
             return true;
         }
         catch (Exception ex)

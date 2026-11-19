@@ -48,7 +48,7 @@ internal sealed class CampaignMemory
             string id = NotId.Replace((cut > 0 ? seed.Substring(0, cut) : seed).ToLowerInvariant(), "_").Trim('_');
             if (id.Length == 0)
                 id = "campaign";
-            string path = Path.Combine(Paths.ConfigPath, "SeaPowerRadio", "campaigns", id + ".txt");
+            string path = UserFiles.PathOf("campaigns", id + ".txt");
             return new CampaignMemory(id, path);
         }
         catch (Exception ex)

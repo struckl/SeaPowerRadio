@@ -11,13 +11,14 @@ namespace SeaPowerRadio;
 /// </summary>
 internal sealed class RadioHost : MonoBehaviour
 {
+    /// <summary>The radio net. Null while no host runs (mod off): the stock voice router and RadioApi then stand aside.</summary>
+    public static RadioPlayer Player { get; private set; }
+
     private RadioPlayer player;
 
     private void Awake()
     {
-        player = new RadioPlayer(this);
-        StockVoiceRouter.Player = player;
-        RadioApi.Player = player;
+        Player = player = new RadioPlayer(this);
         gameObject.AddComponent<Ui.UpgradeNotice>();
         EventBus.MissionStarted += OnMissionStarted;
         Settings.FemaleVoices.SettingChanged += OnFemaleVoicesChanged;
@@ -64,5 +65,7 @@ internal sealed class RadioHost : MonoBehaviour
         EventBus.MissionStarted -= OnMissionStarted;
         EventBus.MissionEnded -= OnMissionEnded;
         Settings.FemaleVoices.SettingChanged -= OnFemaleVoicesChanged;
+        if (Player == player)
+            Player = null;
     }
 }

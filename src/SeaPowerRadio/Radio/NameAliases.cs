@@ -33,7 +33,7 @@ internal static class NameAliases
     private static readonly List<string> prefixes = new List<string>();         // lower case, longest first
     private static readonly HashSet<string> warned = new HashSet<string>();
 
-    public static string UserFile => Path.Combine(Paths.ConfigPath, "SeaPowerRadio", "aliases.txt");
+    public static string UserFile => UserFiles.PathOf("aliases.txt");
 
     public static void Reload()
     {
@@ -189,13 +189,9 @@ internal static class NameAliases
             ModLog.Warn($"[aliases] {a.Source}: {unitName} speaks with the '{pack.Id}' pack, which has no voice \"{a.Voice}\"; voice chosen as usual");
     }
 
-    private static void EnsureUserFile()
-    {
-        try
-        {
-            if (File.Exists(UserFile)) return;
-            Directory.CreateDirectory(Path.GetDirectoryName(UserFile));
-            File.WriteAllText(UserFile,
+    private static void EnsureUserFile() => UserFiles.Ensure(UserFile, Template, "aliases");
+
+    private const string Template =
 @"# Rats Radio: your own ship names. Read at every mission start. Workshop updates never touch this file.
 #
 #   game name = name to say | voice
@@ -213,11 +209,5 @@ internal static class NameAliases
 # HMS Bristol = Bristol | gb_m_06
 # CVN-68* = Nimitz
 # *prefix HNoMS, HSwMS
-");
-        }
-        catch (Exception ex)
-        {
-            ModLog.Warn($"[aliases] could not create {UserFile}: {ex.Message}");
-        }
-    }
+";
 }

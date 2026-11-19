@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using SeaPower;
 using SeapowerUI.ViewModels;
+using SeaPowerRadio.Core;
 using SeaPowerRadio.Radio;
 using SeaPowerRadio.Roster;
-using UnityEngine;
 
 namespace SeaPowerRadio.Air;
 
@@ -62,8 +62,6 @@ internal sealed class SarReporter
         catch (Exception ex) { ModLog.Debug($"[sar] rafts: {ex.Message}"); }
     }
 
-    // --- events from the hooks --------------------------------------------------------------------------------
-
     public void RaftAppeared(ObjectBase raft)
     {
         if (raft == null || raft._taskforce != Globals._playerTaskforce || Now < QuietAfterStart)
@@ -100,7 +98,7 @@ internal sealed class SarReporter
             : $"${{Name}}: Picked up {people}";
 
         RosterElement e = RosterService.Current?.Resolve(rescuer);
-        Raise(rescuer, null, text);
+        GameMessage.RaiseLogged("sar", rescuer, null, text);
         List<Alert> alerts = AlertLink.TakeFor(rescuer);
         if (e == null)
             return;
@@ -110,10 +108,8 @@ internal sealed class SarReporter
             : TransmissionBuilder.Append(t, "SarPickupMany", null);
         if (full)
             said |= TransmissionBuilder.Append(t, "SarFull", null);
-        if (!said)
-            return;
-        t.Alerts.AddRange(alerts);
-        player.Submit(t);
+        if (said)
+            SpokenReport.Submit(player, t, alerts);
     }
 
     public void Landed(ObjectBase unit, ObjectBase deck)
@@ -127,8 +123,6 @@ internal sealed class SarReporter
         Say(unit, deck, $"${{Name}}: On deck {(deck != null ? "${Target}" : "")} - {people} delivered", "SarDelivered", null);
     }
 
-    // --- reports ----------------------------------------------------------------------------------------------
-
     private void ReportRafts()
     {
         List<ObjectBase> rafts = newRafts.Where(r => r != null && !r.IsDestroyed).ToList();
@@ -140,7 +134,7 @@ internal sealed class SarReporter
         // A sinking ship puts out its rafts one at a time over a minute or more: the first ones are the news, the
         // rafts that follow them into the same patch of water are not (five "survivors in the water" in a row).
         reported.RemoveAll(r => Now - r.when > ReportedMemory);
-        int known = reported.FindIndex(r => Nm(r.at, first._geoPosition) < SameGroupNm);
+        int known = reported.FindIndex(r => Distance.Nm(r.at, first._geoPosition) < SameGroupNm);
         if (known >= 0)
         {
             reported[known] = (first._geoPosition, Now);
@@ -153,7 +147,7 @@ internal sealed class SarReporter
         ObjectBase from = speaker?.Unit;
         if (from == null)
             return;
-        int bearing = Bearing(from, first);
+        int bearing = Distance.Bearing(from._geoPosition, first._geoPosition);
         int people = rafts.Sum(r => Math.Max(0, r._obp?.CurrentTransportedOnBoard.Value ?? 0));
         string what = rafts.Count == 1 ? "raft" : $"{rafts.Count} rafts";
         string souls = people > 0 ? $", {people} aboard" : "";
@@ -164,34 +158,11 @@ internal sealed class SarReporter
     private void Say(ObjectBase unit, ObjectBase about, string text, string phrase, int? number, RosterElement e = null)
     {
         e ??= RosterService.Current?.Resolve(unit);
-        Raise(unit, about, text);
+        GameMessage.RaiseLogged("sar", unit, about, text);
         List<Alert> alerts = AlertLink.TakeFor(unit);
-        if (e == null)
-            return;
-        Transmission t = TransmissionBuilder.Build(e, phrase, number);
-        if (t == null)
-            return;                                 // not rendered for this voice yet: the message has to do
-        t.Alerts.AddRange(alerts);
-        player.Submit(t);
+        if (e != null)
+            SpokenReport.Say(player, e, phrase, number, alerts);    // no clip for this voice yet: the message has to do
     }
-
-    private static void Raise(ObjectBase unit, ObjectBase about, string text)
-    {
-        ModLog.Info($"[sar] {text.Replace("${Name}", unit.getName()).Replace("${Target}", about != null ? about.getName() : "").Replace("${TrackId}", "?")}");
-        try
-        {
-            if (about != null)
-                Globals._mainGameViewModel?.RaiseAlert(unit, about, text);
-            else
-                Globals._mainGameViewModel?.RaiseAlert(unit, text);
-        }
-        catch (Exception ex)
-        {
-            ModLog.Debug($"[sar] alert failed: {ex.Message}");
-        }
-    }
-
-    // --- helpers ----------------------------------------------------------------------------------------------
 
     private static bool Own(ObjectBase unit) =>
         unit != null && !unit.IsDestroyed && unit._taskforce == Globals._playerTaskforce;
@@ -214,13 +185,5 @@ internal sealed class SarReporter
             .FirstOrDefault() ?? roster.CommandVoice();
     }
 
-    private static int Bearing(ObjectBase from, ObjectBase to)
-    {
-        float heading = from._geoPosition.HeadingToPosition(to._geoPosition);
-        return Mathf.RoundToInt(((heading % 360f) + 360f) % 360f) % 360;
-    }
-
-    private static float Nm(ObjectBase from, ObjectBase to) => Nm(from._geoPosition, to._geoPosition);
-
-    private static float Nm(GeoPosition a, GeoPosition b) => (float)a.GetDistance(b) * 0.036285132f;
+    private static float Nm(ObjectBase from, ObjectBase to) => Distance.Nm(from._geoPosition, to._geoPosition);
 }

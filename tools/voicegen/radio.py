@@ -9,8 +9,9 @@ every fragment would click mid-sentence. So the chain is split:
 * TRANSMISSION half (once per transmission, at runtime in the plugin's RadioFx): open-carrier hiss that starts a
   beat before the mic click, velvet-noise crackle, mic click, squelch tail, the odd dropout.
 
-`transmission()` below renders the transmission half offline as well, with the same parameters the plugin will
-use, so the listening sample sounds exactly like the game will.
+`transmission()` below renders the transmission half offline as well, step for step like the plugin's RadioFx and
+from the same table (rules.py: profiles, joins, loudness gain, soft limiter), so a listening sample sounds like the
+game. Only the random numbers (click, tail, noise) come from another generator.
 """
 
 from __future__ import annotations
@@ -22,6 +23,10 @@ import sys
 from array import array
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from rules import DEFAULT_PROFILE, FX, PROFILES  # noqa: E402
+
 SAMPLE_RATE = 24000
 OUT_SAMPLE_RATE = 22050
 
@@ -30,13 +35,6 @@ VOICE_CEILING = 0.62
 
 VOICE = dict(hp=300, lp=3300, presence=4.0, ratio=5, makeup=4, drive=0.72)
 
-# Transmission flavours, picked per element at runtime: a ship's mast antenna is clean, a jet at range is thin.
-TRANSMISSION_PROFILES = {
-    "station": dict(hiss=0.040, crackle=0.05, lp=3400, hp=280),
-    "near": dict(hiss=0.060, crackle=0.08, lp=3300, hp=300),
-    "far": dict(hiss=0.120, crackle=0.18, lp=2600, hp=420),
-    "cockpit_hot": dict(hiss=0.070, crackle=0.10, lp=3100, hp=320),
-}
 
 
 def run_ffmpeg(args: list[str], what: str) -> None:
@@ -92,106 +90,177 @@ def voice_chain(src: Path, dest: Path, start: float | None = None, end: float | 
     part.replace(dest)
 
 
-# Silence at a join, in 10 ms frames -- the plugin's RadioFx.SoundRms / OnsetRms.
-SOUND_RMS = 0.01        # -40 dBFS: speech; breath and room tone sit below it, under the hiss bed
-ONSET_RMS = 0.0018      # -55 dBFS: the start of a digit ("s", "th", "f") after the band-limit
-FRAME_SECONDS = 0.010
-
-
-def quiet_edges(clip: Path) -> tuple[int, int, int]:
-    """(silent samples at the start, at the end, total samples) of a clip at OUT_SAMPLE_RATE.
-
-    End: frames below SOUND_RMS. Start: everything before the frames above ONSET_RMS that run into the first frame
-    above SOUND_RMS, so the weak "s" of "seven" stays and a breath before it goes (RadioFx.LeadingSilence).
-    """
+def decode(clip: Path) -> array:
+    """A clip as mono float samples at OUT_SAMPLE_RATE, the way the game loads it."""
     raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(clip), "-f", "f32le", "-ac", "1",
                           "-ar", str(OUT_SAMPLE_RATE), "-"], capture_output=True, check=True).stdout
     x = array("f")
     x.frombytes(raw)
-    frame = int(FRAME_SECONDS * OUT_SAMPLE_RATE)
-    rms = [math.sqrt(sum(s * s for s in x[f * frame:(f + 1) * frame]) / frame) for f in range(len(x) // frame)]
-    first = next((f for f, r in enumerate(rms) if r >= SOUND_RMS), None)
-    if first is None:
-        return 0, 0, len(x)
-    while first > 0 and rms[first - 1] >= ONSET_RMS:
-        first -= 1
-    # Frames for the end are counted from the end of the clip, like the plugin does.
-    tail = [math.sqrt(sum(s * s for s in x[len(x) - (f + 1) * frame:len(x) - f * frame]) / frame)
-            for f in range(len(x) // frame)]
-    return first * frame, next((f for f, r in enumerate(tail) if r >= SOUND_RMS), 0) * frame, len(x)
+    return x
 
 
-def close_up(parts: list[tuple[Path, float]]) -> list[tuple[int, int]]:
-    """The slice (start, end sample) of every clip once the silence at each join is cut back to what it allows.
+def rms(x, start: int, count: int) -> float:
+    if count <= 0:
+        return 0.0
+    return math.sqrt(sum(s * s for s in x[start:start + count]) / count)
+
+
+def trailing_silence(x, rate: int) -> int:
+    """Silence at the end of a clip in samples: whole frames below the speech level (RadioFx.TrailingSilence)."""
+    frame = max(1, int(FX["frame"] * rate))
+    for f in range(len(x) // frame):
+        if rms(x, len(x) - (f + 1) * frame, frame) >= FX["sound_rms"]:
+            return f * frame
+    return 0
+
+
+def leading_silence(x, rate: int) -> int:
+    """Silence at the start: everything before the frames above the onset level that run into the first frame of
+    speech, so the weak "s" of "seven" stays and a breath before it goes (RadioFx.LeadingSilence)."""
+    frame = max(1, int(FX["frame"] * rate))
+    frames, f = len(x) // frame, 0
+    while f < frames and rms(x, f * frame, frame) < FX["sound_rms"]:
+        f += 1
+    if f == frames:
+        return 0
+    while f > 0 and rms(x, (f - 1) * frame, frame) >= FX["onset_rms"]:
+        f -= 1
+    return f * frame
+
+
+def append_joined(voice: list[float], nxt, rate: int) -> None:
+    """Butt nxt on, or cross-fade it in where both sides of the seam are loud (RadioFx.AppendJoined)."""
+    edge = int(FX["edge"] * rate)
+    fade = min(int(FX["crossfade"] * rate), min(len(voice), len(nxt)) // 3)
+    if fade < 8 or len(voice) < edge or len(nxt) < edge:
+        voice.extend(nxt)
+        return
+    half = rate // 2
+    hot_end = rms(voice, len(voice) - edge, edge) > FX["hot_edge_ratio"] * rms(
+        voice, max(0, len(voice) - half), min(len(voice), half))
+    hot_start = rms(nxt, 0, edge) > FX["hot_edge_ratio"] * rms(nxt, 0, min(len(nxt), half))
+    if not hot_end and not hot_start:
+        voice.extend(nxt)
+        return
+    start = len(voice) - fade
+    for i in range(fade):
+        t = (i + 0.5) / fade
+        voice[start + i] = voice[start + i] * math.cos(t * math.pi * 0.5) + nxt[i] * math.sin(t * math.pi * 0.5)
+    voice.extend(nxt[fade:])
+
+
+def join_voice(parts: list[tuple[Path, float]], rate: int) -> list[float]:
+    """Clips back to back, the silence at each join cut back to what it allows (RadioFx.JoinVoice).
 
     parts: (clip, most silence in seconds where it joins the one before -- the plugin's TransmissionBuilder.MaxPause;
-    the first is ignored). Each side keeps up to half of it, the rest is cut from the middle of the pause, exactly
-    like the plugin's RadioFx.Build.
+    the first is ignored; float("inf") = as cut).
     """
-    edges = [quiet_edges(clip) for clip, _ in parts]
-    slices = [[0, total] for _, _, total in edges]
-    for i in range(1, len(parts)):
-        if math.isinf(parts[i][1]):
-            continue
-        trailing = min(edges[i - 1][1], slices[i - 1][1] - slices[i - 1][0])
-        leading = edges[i][0]
-        keep = int(parts[i][1] * OUT_SAMPLE_RATE)
-        if trailing + leading <= keep:
-            continue
-        keep_end = min(trailing, keep // 2)
-        keep_start = min(leading, keep - keep_end)
-        keep_end = min(trailing, keep - keep_start)
-        slices[i - 1][1] -= trailing - keep_end
-        slices[i][0] = leading - keep_start
-    return [(a, b) for a, b in slices]
+    voice: list[float] = []
+    trailing = 0
+    for i, (clip, max_pause) in enumerate(parts):
+        data = decode(clip)
+        end_quiet = trailing_silence(data, rate)
+        if i == 0:
+            voice.extend(data)
+        else:
+            keep = int(min(max_pause, 10.0) * rate)
+            leading = leading_silence(data, rate)
+            if trailing + leading > keep:
+                keep_end = min(trailing, keep // 2)
+                keep_start = min(leading, keep - keep_end)
+                keep_end = min(trailing, keep - keep_start)
+                del voice[len(voice) - (trailing - keep_end):]
+                data = data[leading - keep_start:]
+                end_quiet = min(end_quiet, len(data))
+            append_joined(voice, data, rate)
+        trailing = end_quiet
+    return voice
 
 
-def transmission(parts: list[tuple[Path, float]], dest: Path, profile: str, seed: str) -> None:
-    """Stitch fragments into one transmission and add the transmission half.
+def band_limit(x: list[float], rate: int, hp: float, lp: float) -> None:
+    """Two-pole high-pass and low-pass (cascaded one-poles), in place (RadioFx.BandLimit)."""
+    a_lp = 1 - math.exp(-2 * math.pi * lp / rate)
+    a_hp = 1 - math.exp(-2 * math.pi * hp / rate)
+    l1 = l2 = h1 = h2 = 0.0
+    for i, s in enumerate(x):
+        l1 += a_lp * (s - l1)
+        l2 += a_lp * (l1 - l2)
+        h1 += a_hp * (l2 - h1)
+        y = l2 - h1
+        h2 += a_hp * (y - h2)
+        x[i] = y - h2
 
-    parts: (clip, most silence where it joins the one before, see close_up; float("inf") = as cut).
+
+def between(rng: random.Random, name: str) -> float:
+    return rng.uniform(FX[name + "_min"], FX[name + "_max"])
+
+
+def noise(rng: random.Random, length: int, level: float) -> list[float]:
+    return [(rng.random() * 2 - 1) * level for _ in range(length)]
+
+
+def burst(rng: random.Random, rate: int, name: str, exponential: bool) -> list[float]:
+    """Mic click or squelch tail: band-limited noise under a falling envelope (RadioFx.Burst)."""
+    seconds, level = between(rng, name + "_seconds"), between(rng, name + "_level")
+    count = max(1, int(seconds * rate))
+    b = noise(rng, count, 1.0)
+    band_limit(b, rate, FX[name + "_hp"], FX[name + "_lp"])
+    for i in range(count):
+        x = i / count
+        b[i] *= (math.exp(-5 * x) if exponential else 1 - math.log10(1 + 9 * x)) * level
+    return b
+
+
+def speech_rms(speech: list[float]) -> float:
+    """RMS over the voiced part only (pauses between words would drag the average down)."""
+    voiced = [s * s for s in speech if abs(s) >= FX["speech_gate"]]
+    return max(1e-4, math.sqrt(sum(voiced) / len(voiced))) if voiced else FX["target_speech_rms"]
+
+
+def soft_limit(x: float) -> float:
+    knee = FX["limit_knee"]
+    a = abs(x)
+    if a <= knee:
+        return x
+    room = FX["limit_ceiling"] - knee
+    y = knee + room * math.tanh((a - knee) / room)
+    return -y if x < 0 else y
+
+
+def transmission(parts: list[tuple[Path, float]], dest: Path, profile: str, seed: str,
+                 noise_scale: float = 1.0, level: float = 1.0) -> None:
+    """Stitch fragments into one transmission and add the transmission half, step for step like the plugin's
+    RadioFx.Build with the same table (rules.py). Only the random numbers differ (another generator).
+
+    parts: see join_voice. noise_scale and level: the plugin's radio static setting and call level (1 = default).
     """
     rng = random.Random(seed)
-    p = TRANSMISSION_PROFILES[profile]
-    inputs: list[str] = []
-    for clip, _ in parts:
-        inputs += ["-i", str(clip)]
+    p = PROFILES.get(profile, PROFILES[DEFAULT_PROFILE])
+    rate = OUT_SAMPLE_RATE
+    speech = join_voice(parts, rate)
+    band_limit(speech, rate, p["hp"], p["lp"])
 
-    # Body: fragments back to back, the silence at every join closed up like the plugin does.
-    labels = []
-    graph = []
-    for i, (start, end) in enumerate(close_up(parts)):
-        graph.append(f"[{i}:a]aresample={OUT_SAMPLE_RATE},atrim=start_sample={start}:end_sample={end},"
-                     f"asetpts=PTS-STARTPTS,aresample={SAMPLE_RATE}[p{i}]")
-        labels.append(f"[p{i}]")
-    graph.append(f"{''.join(labels)}concat=n={len(parts)}:v=0:a=1[speech]")
+    preroll = int(rate * between(rng, "preroll"))
+    click = burst(rng, rate, "click", exponential=True)
+    hang = int(rate * between(rng, "hang"))
+    tail = burst(rng, rate, "tail", exponential=False)
+    mix = [0.0] * preroll + click + speech + [0.0] * hang + tail
 
-    click_dur = round(rng.uniform(0.022, 0.045), 3)
-    click_level = round(rng.uniform(0.14, 0.26), 3)
-    tail_dur = round(rng.uniform(0.09, 0.18), 3)
-    tail_level = round(rng.uniform(0.18, 0.32), 3)
-    hang = round(rng.uniform(0.05, 0.14), 3)
-    preroll_ms = rng.randint(80, 200)
-    density = round(rng.uniform(0.02, 0.05) * (1.6 if p["hiss"] > 0.1 else 1.0), 4)
-    seeds = [rng.randrange(1, 2**31) for _ in range(4)]
+    hiss = noise(rng, len(mix), p["hiss"] * noise_scale)
+    band_limit(hiss, rate, FX["hiss_hp"], FX["hiss_lp"])
+    weak = FX["weak_signal_density"] if p["hiss"] > FX["weak_signal_hiss"] else 1
+    density = between(rng, "crackle_density") * weak
+    crackle = [((1 if rng.random() < 0.5 else -1) * p["crackle"] * noise_scale if rng.random() < density else 0.0)
+               for _ in range(len(mix))]
+    band_limit(crackle, rate, FX["crackle_hp"], FX["crackle_lp"])
 
-    graph += [
-        f"[speech]lowpass=f={p['lp']},highpass=f={p['hp']},apad=pad_dur={hang}[voice]",
-        f"anoisesrc=c=white:r={SAMPLE_RATE}:a=1:d={click_dur}:s={seeds[0]},highpass=f=700,lowpass=f=3200,"
-        f"afade=t=out:st=0:d={click_dur}:curve=exp,volume={click_level}[click]",
-        f"anoisesrc=c=white:r={SAMPLE_RATE}:a=1:d={tail_dur}:s={seeds[1]},highpass=f=500,lowpass=f=3400,"
-        f"afade=t=out:st=0.015:d={round(tail_dur - 0.015, 3)}:curve=log,volume={tail_level}[tail]",
-        f"[click][voice][tail]concat=n=3:v=0:a=1,adelay={preroll_ms}:all=1[body]",
-        f"anoisesrc=c=white:r={SAMPLE_RATE}:a=1:d=60:s={seeds[2]},highpass=f=400,lowpass=f=2600,"
-        f"volume={p['hiss']}[hiss]",
-        f"anoisesrc=c=velvet:density={density}:r={SAMPLE_RATE}:a=1:d=60:s={seeds[3]},highpass=f=600,"
-        f"lowpass=f=3200,volume={p['crackle']}[crackle]",
-        f"[body][hiss][crackle]amix=inputs=3:duration=first:normalize=0,"
-        f"alimiter=limit=0.8:level=disabled,aresample={OUT_SAMPLE_RATE}[out]",
-    ]
-    run_ffmpeg([*inputs, "-filter_complex", ";".join(graph), "-map", "[out]",
-                "-c:a", "libmp3lame", "-q:a", "4", "-ar", str(OUT_SAMPLE_RATE), "-ac", "1", str(dest)],
-               dest.name)
+    gain = min(max(FX["target_speech_rms"] * level / speech_rms(speech), FX["gain_min"]), FX["gain_max"])
+    out = array("f", (soft_limit((m + h + c) * gain) for m, h, c in zip(mix, hiss, crackle)))
+    result = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "f32le", "-ar", str(rate),
+                             "-ac", "1", "-i", "-", "-c:a", "libmp3lame", "-q:a", "4", str(dest)],
+                            input=out.tobytes(), capture_output=True)
+    if result.returncode != 0:
+        sys.exit(f"ffmpeg failed on {dest.name}:\n{result.stderr.decode(errors='replace')}")
 
 
 def silence(dest: Path, seconds: float) -> None:

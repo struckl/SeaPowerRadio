@@ -9,13 +9,11 @@ namespace SeaPowerRadio.Radio;
 
 /// <summary>
 /// Ties radio calls to the messages bottom right (MainGameViewModel.TopAlerts):
-/// <list type="bullet">
-/// <item>The game raises a message and the matching voice line for the same unit in the same frame; the mod's own
-/// why-not messages do the same. A call takes the messages raised for its speaker in the frame it was queued.</item>
-/// <item>While the call waits or plays, its messages stay fully visible (their fade timer is held), and a new
-/// message pushes out an older one that isn't waiting instead of a waiting one – the game keeps only three.</item>
-/// <item>The message being spoken right now gets a thin amber bar in front of it.</item>
-/// </list>
+/// - The game raises a message and the matching voice line for the same unit in the same frame; the mod's own
+/// why-not messages do the same. A call takes the messages raised for its speaker in the frame it was queued.
+/// - While the call waits or plays, its messages stay fully visible (their fade timer is held), and a new
+/// message pushes out an older one that isn't waiting instead of a waiting one - the game keeps only three.
+/// - The message being spoken right now gets a thin amber bar in front of it.
 /// </summary>
 internal static class AlertLink
 {

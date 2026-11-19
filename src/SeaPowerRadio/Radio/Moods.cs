@@ -10,13 +10,11 @@ namespace SeaPowerRadio.Radio;
 /// How a call is spoken: neutral (the base library), stressed, happy or sad. The mood clips come from a mood pack
 /// (<c>moodpack.ini</c>, see <see cref="VoicePacks"/>) as <c>&lt;persona&gt;/&lt;mood&gt;/&lt;key&gt;.mp3</c>. A clip the mood lacks is
 /// spoken neutral, so a mood that covers only some phrases (happy, sad) mixes with the neutral callsign.
-/// <list type="bullet">
-/// <item>The call's own event decides first: a kill, a hit, a rescue, mission success → happy; a failure, survivors in the water,
-/// out of weapons, a lost contact → sad.</item>
-/// <item>Otherwise warnings and weapons calls are stressed, and so is everything a unit says for a while after its own warning
-/// (missile inbound, we are hit, flooding ...): the danger carries over into its next calls.</item>
-/// <item>A confirmation shortly after a success sounds pleased.</item>
-/// </list>
+/// - The call's own event decides first: a kill, a hit, a rescue, mission success -> happy; a failure, survivors in the water,
+/// out of weapons, a lost contact -> sad.
+/// - Otherwise warnings and weapons calls are stressed, and so is everything a unit says for a while after its own warning
+/// (missile inbound, we are hit, flooding ...): the danger carries over into its next calls.
+/// - A confirmation shortly after a success sounds pleased.
 /// </summary>
 internal static class Moods
 {

@@ -64,7 +64,7 @@ internal sealed class Names
     public GameName SquadronWord(string word) =>
         string.IsNullOrEmpty(word) ? null : byKey.TryGetValue("sq_" + Slug(word), out GameName n) ? n : null;
 
-    /// <summary>"Lancer 3" → (Lancer, 3, 0); "Lancer 3-2" → (Lancer, 3, 2). False if it isn't callsign-shaped.</summary>
+    /// <summary>"Lancer 3" -> (Lancer, 3, 0); "Lancer 3-2" -> (Lancer, 3, 2). False if it isn't callsign-shaped.</summary>
     public static bool TryParseAircraft(string name, out string word, out int number, out int position)
     {
         word = null;

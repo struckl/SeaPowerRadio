@@ -14,7 +14,7 @@ namespace SeaPowerRadio.Formation;
 internal static class UnitRole
 {
     // Loadout families (keys of loadout_names.ini) and the text that names them. Variants are matched by prefix and
-    // share the family's name: StrikeLongRange / StrikePrecision → Strike, ASWHunter → ASW, SEADAdvanced → SEAD.
+    // share the family's name: StrikeLongRange / StrikePrecision -> Strike, ASWHunter -> ASW, SEADAdvanced -> SEAD.
     // First match wins, so AirToAirIntercept sits before AirToAir.
     private static readonly (string prefix, string section, string key)[] Missions =
     {
@@ -85,7 +85,7 @@ internal static class UnitRole
     }
 
     // _typeFullName comes from the "Type=" line of vessel_names / aircraft_names in the game's language
-    // ("DD,Destroyer" → Destroyer, "ASW Helicopter" → ASW Helicopter).
+    // ("DD,Destroyer" -> Destroyer, "ASW Helicopter" -> ASW Helicopter).
     private static string TypeName(ObjectBaseParameters p)
     {
         string name = Usable(p._typeFullName) ? p._typeFullName : Usable(p._typeAbbr) ? p._typeAbbr : "";

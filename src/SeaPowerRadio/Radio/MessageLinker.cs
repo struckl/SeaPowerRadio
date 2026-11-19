@@ -8,7 +8,7 @@ using SeapowerUI.ViewModels;
 namespace SeaPowerRadio.Radio;
 
 /// <summary>
-/// Makes every unit and track a message mentions clickable – bottom right and in the message log. The game links
+/// Makes every unit and track a message mentions clickable - bottom right and in the message log. The game links
 /// at most the unit that raised a message and one track; whatever it wrote as plain text ("Track 23", a ship or
 /// squadron name, "Rebasing to Kitty Hawk") stays dead text. After the game has built a message, its plain text is
 /// searched for track numbers of the player's plot and for the names of own units and identified contacts, and

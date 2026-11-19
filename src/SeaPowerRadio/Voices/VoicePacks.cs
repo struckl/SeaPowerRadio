@@ -9,7 +9,7 @@ namespace SeaPowerRadio.Voices;
 
 /// <summary>
 /// Finds the installed voice packs and says which one speaks for a country. Discovery scans every folder the game
-/// loads mods from – <c>StreamingAssets/&lt;folder&gt;</c> and the Steam Workshop items of the game – plus the base
+/// loads mods from - <c>StreamingAssets/&lt;folder&gt;</c> and the Steam Workshop items of the game - plus the base
 /// mod's own folder, for a <c>voicepack.ini</c> at the top level or in <c>voices/</c>. It reads the folders
 /// itself instead of asking the game's FileManager (whose API differs between the two game versions).
 /// </summary>

@@ -12,7 +12,7 @@ using UnityEngine;
 namespace SeaPowerRadio.Air;
 
 /// <summary>
-/// Aircraft on their way home stand out: yellow on the map (Patches/RtbPatches → MapContactVisuals.Resolve) and in
+/// Aircraft on their way home stand out: yellow on the map (Patches/RtbPatches -> MapContactVisuals.Resolve) and in
 /// the formation manager, and returning groups sink to the bottom of the formation manager so the ones still
 /// working stay on top. "On the way home" = the game's ReturnToBase state, which bingo and winchester derive from.
 /// </summary>

@@ -11,14 +11,12 @@ namespace SeaPowerRadio.Air;
 
 /// <summary>
 /// Search and rescue on the net, the way a SAR crew reports it:
-/// <list type="bullet">
-/// <item><b>Survivors in the water</b> – own life rafts appear (a ship sank, aircrew went down): the closest own
-/// unit calls them with the bearing, once per group of rafts.</item>
-/// <item><b>Proceeding to the survivors</b> – a SAR zone sent a helicopter or ship to a raft.</item>
-/// <item><b>Pickup complete, N souls aboard</b> – survivors taken aboard (the game's raft pickup); with
-/// <b>cabin full</b> when a helicopter has no room left (a SAR zone then sends it home).</item>
-/// <item><b>Survivors delivered</b> – it lands with survivors aboard.</item>
-/// </list>
+/// - Survivors in the water - own life rafts appear (a ship sank, aircrew went down): the closest own
+/// unit calls them with the bearing, once per group of rafts.
+/// - Proceeding to the survivors - a SAR zone sent a helicopter or ship to a raft.
+/// - Pickup complete, N souls aboard - survivors taken aboard (the game's raft pickup); with
+/// cabin full when a helicopter has no room left (a SAR zone then sends it home).
+/// - Survivors delivered - it lands with survivors aboard.
 /// Hooks: Patches/SarPatches. Each call also gets a message bottom right (unit, raft and deck are links).
 /// </summary>
 internal sealed class SarReporter
@@ -201,7 +199,7 @@ internal sealed class SarReporter
     private static bool IsRaft(ObjectBase unit) =>
         unit._obp?._unitRoles != null && unit._obp._unitRoles.Contains(ObjectBaseParameters.UnitRoles.LifeRaft);
 
-    /// <summary>" (Track 23)" when the player's plot has the raft – the message turns it into a link.</summary>
+    /// <summary>" (Track 23)" when the player's plot has the raft - the message turns it into a link.</summary>
     private static string TrackOf(ObjectBase raft) =>
         raft.GetMapVehicle(Globals._playerTaskforce) != null ? " (Track ${TrackId})" : "";
 

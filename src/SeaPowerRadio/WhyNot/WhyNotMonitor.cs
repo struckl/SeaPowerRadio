@@ -10,16 +10,14 @@ namespace SeaPowerRadio.WhyNot;
 
 /// <summary>
 /// Says why an ordered engagement isn't happening. The game decides this every frame but never tells the player:
-/// <list type="bullet">
-/// <item>A weapon system working on the order sits in a blocking <c>WeaponSystem.EngageState</c> (target not in
-/// rear aspect, out of envelope, no radar track, nose not on target…) for more than <c>StateHold</c> s - also
-/// while the ship still turns to bring a fixed launcher to bear.</item>
-/// <item>An order waits with no weapon system taking it: every tube/launcher for that ammunition is reloading
+/// - A weapon system working on the order sits in a blocking <c>WeaponSystem.EngageState</c> (target not in
+/// rear aspect, out of envelope, no radar track, nose not on target...) for more than <c>StateHold</c> s - also
+/// while the ship still turns to bring a fixed launcher to bear.
+/// - An order waits with no weapon system taking it: every tube/launcher for that ammunition is reloading
 /// ("ready in four minutes"), the target is held by sonar only while the weapon needs a radar track, or nothing
-/// is left to fire.</item>
-/// <item>An order disappears without anything being launched (the game dropped it).</item>
-/// <item>A fighter told to shoot is busy defending against a missile.</item>
-/// </list>
+/// is left to fire.
+/// - An order disappears without anything being launched (the game dropped it).
+/// - A fighter told to shoot is busy defending against a missile.
 /// Each reason is spoken by the unit itself (as a reply, so it is in front of the net), raised as a game alert and
 /// logged; the same reason from the same unit at most once per <c>Cooldown</c> s, about the same target at most
 /// once per <c>TargetCooldown</c> s - an order waiting until the ship closes the range keeps its reason for minutes.
@@ -127,7 +125,7 @@ internal sealed class WhyNotMonitor
 
         // Weapon systems working on an order, stuck in a blocking state. A ship that has to turn for a fixed
         // launcher (Harpoon, Tomahawk boxes) hands the order to an alignment task first: its weapon system already
-        // has the state the game shows in the status bar ("Engaging … with RGM-84C (Target too far)") but hasn't
+        // has the state the game shows in the status bar ("Engaging ... with RGM-84C (Target too far)") but hasn't
         // taken the order yet - left out, the order looked untaken and got a wrong guess ("sonar contact only").
         var working = new Dictionary<WeaponSystem, EngageTask>();
         foreach (WeaponSystem w in systems)

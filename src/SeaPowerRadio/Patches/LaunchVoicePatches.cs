@@ -4,7 +4,7 @@ using SeaPowerRadio.Radio;
 namespace SeaPowerRadio.Patches;
 
 /// <summary>
-/// A launch line ("ASHMFired", "WeaponAway"…) only carries the launching unit. <c>WeaponBase.LaunchVoiceover</c>
+/// A launch line ("ASHMFired", "WeaponAway"...) only carries the launching unit. <c>WeaponBase.LaunchVoiceover</c>
 /// asks for it right away, so the prefix notes the weapon and the stock voice router, called in the same frame,
 /// picks the line that fits it (Radio/StockVoiceRouter.LaunchPhrase). Missing hook = the stock key decides, as before.
 /// </summary>

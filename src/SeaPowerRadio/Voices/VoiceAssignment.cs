@@ -20,7 +20,7 @@ internal sealed class VoicePersona
 /// <summary>
 /// Gives every element of a mission its own voice. Named units (a ship's in-game name, a squadron callsign) can
 /// only use the few voices their name was rendered in, so they ask for those first; everyone else gets the next
-/// unused voice of a per-mission shuffle. Deterministic per mission (same seed and order → same voices after a
+/// unused voice of a per-mission shuffle. Deterministic per mission (same seed and order -> same voices after a
 /// reload) and unique while the pool lasts; after that voices are shared.
 /// </summary>
 internal sealed class VoiceAssignment
@@ -114,7 +114,7 @@ internal sealed class VoiceAssignment
 
     /// <summary>
     /// A voice from <paramref name="candidates"/> (the voices a name was rendered in): the first one nobody uses
-    /// yet, else the first one even if shared – saying the right name matters more than a unique voice.
+    /// yet, else the first one even if shared - saying the right name matters more than a unique voice.
     /// Falls back to <see cref="For"/> when no candidate is in the library.
     /// </summary>
     public VoicePersona Prefer(string elementKey, IEnumerable<string> candidates, string[] accents = null, string gender = null)

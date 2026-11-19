@@ -110,7 +110,7 @@ internal static class RadioFx
 
         // Loudness: the game's own voice lines are mastered hot (about -11 LUFS, peaks at -6 dBFS) while the
         // rendered clips sit around -26 LUFS. Bring the voice up to the stock level and catch the peaks with a soft
-        // limiter – which also adds a little more transmitter grit. Hiss and crackle get the same gain, so the
+        // limiter - which also adds a little more transmitter grit. Hiss and crackle get the same gain, so the
         // noise/voice balance stays the one from the approved samples.
         float gain = Mathf.Clamp(TargetSpeechRms * level / SpeechRms(speech), 0.25f, 12f);
         for (int i = 0; i < length; i++)
@@ -139,10 +139,10 @@ internal static class RadioFx
     }
 
     /// <summary>
-    /// Silence at the start of a clip in samples: everything before the onset of the first word – the frames above
+    /// Silence at the start of a clip in samples: everything before the onset of the first word - the frames above
     /// OnsetRms that run into the first frame above SoundRms. The weak "s" of "seven" stays, a breath before it goes.
     /// Measured against word errors of a speech recognizer over every voice: cutting at SoundRms here too ate those
-    /// onsets ("seven" → "even"), this doesn't.
+    /// onsets ("seven" -> "even"), this doesn't.
     /// </summary>
     private static int LeadingSilence(float[] x, int rate)
     {

@@ -19,7 +19,7 @@ internal enum CallsignKind
 /// <summary>
 /// Generated NATO-style voice callsigns, unique within a mission. Aircraft get "word + flight-position"
 /// ("Viper two-one"); ships and subs get a single word. Every word comes from a fixed list because each one has to
-/// exist as a pre-rendered audio fragment in every voice — adding a word here means adding it to the phrase catalog.
+/// exist as a pre-rendered audio fragment in every voice - adding a word here means adding it to the phrase catalog.
 /// </summary>
 internal sealed class Callsigns
 {
@@ -68,7 +68,7 @@ internal sealed class Callsigns
         return callsign;
     }
 
-    /// <summary>Lowest flight number 1–9 not yet taken for this word, or -1 when all nine are in use.</summary>
+    /// <summary>Lowest flight number 1-9 not yet taken for this word, or -1 when all nine are in use.</summary>
     public int NextFlightNumber(string flightWord)
     {
         for (int n = 1; n < 10; n++)
@@ -78,7 +78,7 @@ internal sealed class Callsigns
     }
 
     /// <summary>
-    /// Callsigns for <paramref name="count"/> aircraft flying together: flights of at most four, numbers 1–9, a
+    /// Callsigns for <paramref name="count"/> aircraft flying together: flights of at most four, numbers 1-9, a
     /// fresh word when a word's nine flights are used up. Only those combinations exist as audio fragments.
     /// </summary>
     public List<string> Flight(CallsignKind kind, int count)

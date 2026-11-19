@@ -16,7 +16,7 @@ internal sealed class Transmission
     public readonly List<string> Clips = new List<string>();   // clip keys; null = short pause between phrases
     public int CallsignClips;                                  // how many of the first clips are the callsign
     public string Phrase;                                      // main phrase key (for queue rules / logs)
-    public int Priority;                                       // 1 = most urgent … 7 = acknowledgement
+    public int Priority;                                       // 1 = most urgent ... 7 = acknowledgement
     public string Profile;                                     // radio flavour, see RadioFx
     public float SubmittedAt;
     public string Text;                                        // human-readable, for the log
@@ -27,8 +27,8 @@ internal sealed class Transmission
     public bool Urgent => Role == CallRole.Alert;
 
     /// <summary>
-    /// Queue order: alerts first, then units answering the player – an order should be acknowledged right away,
-    /// like the stock system's command channel – then reports by priority.
+    /// Queue order: alerts first, then units answering the player - an order should be acknowledged right away,
+    /// like the stock system's command channel - then reports by priority.
     /// </summary>
     public int Rank => Role == CallRole.Alert ? -1000 + Priority : Role == CallRole.Reply ? -100 : Priority;
 }
@@ -36,15 +36,15 @@ internal sealed class Transmission
 /// <summary>
 /// Turns "Viper 2-1 says EngageTrack 7034" into the clip sequence the voice library holds. Mirrors the assembly
 /// rules of tools/voicegen/reel.py: callsign word + flight-position, phrase part a, number pieces, phrase part b.
-/// Every clip carries its half of the pause it was cut in, so they are joined back to back – with the pauses at
+/// Every clip carries its half of the pause it was cut in, so they are joined back to back - with the pauses at
 /// a number closed up (<see cref="MaxPause"/>).
 /// </summary>
 internal static class TransmissionBuilder
 {
-    // Most silence left where two clips join. The takes speak a pause at every cut, so the cut falls into silence –
+    // Most silence left where two clips join. The takes speak a pause at every cut, so the cut falls into silence -
     // also where nobody pauses ("bearing, | two seven three"): there the two halves added up to a quarter to half a
     // second, which is what made the numbers sound read off a card.
-    private const float NumberPause = 0.05f;   // word ↔ number, no pause in the text: "bearing two seven three"
+    private const float NumberPause = 0.05f;   // word <-> number, no pause in the text: "bearing two seven three"
     private const float GroupPause = 0.08f;    // between the digit groups: "seven zero, three four"
     private const float SpokenPause = 0.25f;   // a pause the speaker makes anyway (after the callsign, at a comma)
 
@@ -87,7 +87,7 @@ internal static class TransmissionBuilder
 
     /// <summary>
     /// The callsign as the game shows it right now: a ship's short name ("Pargo"), an aircraft's squadron callsign
-    /// ("Lancer 3", a wingman "Lancer 3-2" – read live, because formations rename aircraft). Falls back to the
+    /// ("Lancer 3", a wingman "Lancer 3-2" - read live, because formations rename aircraft). Falls back to the
     /// generated NATO callsign when the name wasn't rendered in this voice (custom mission names, mod ships,
     /// squadrons without callsigns).
     /// </summary>
@@ -169,7 +169,7 @@ internal static class TransmissionBuilder
         return true;
     }
 
-    /// <summary>"Viper 2-1" → cs_viper + fp_21; "Sentinel" or "Sentinel 2" → cs_sentinel.</summary>
+    /// <summary>"Viper 2-1" -> cs_viper + fp_21; "Sentinel" or "Sentinel 2" -> cs_sentinel.</summary>
     public static IEnumerable<string> Callsign(string callsign)
     {
         if (string.IsNullOrEmpty(callsign))

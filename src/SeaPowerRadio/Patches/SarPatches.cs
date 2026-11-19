@@ -6,7 +6,7 @@ namespace SeaPowerRadio.Patches;
 /// <summary>
 /// Search-and-rescue events for Air/SarReporter: a life raft is registered (ObjectsManager.AddObjectToItsTaskforce),
 /// a SAR zone sends a unit to a raft (PatrolZone.AssignSARRescueRoute), a unit picks survivors up
-/// (ObjectBase.CheckForRaftPickUp – the count is the change of the task force's rescued total; the game's own
+/// (ObjectBase.CheckForRaftPickUp - the count is the change of the task force's rescued total; the game's own
 /// one-line "Picked up survivors" message is replaced by the mod's, which says how many and how full), an aircraft
 /// lands (FlightDeck.createRecoveryTask, at the end of the landing circuit).
 /// </summary>
@@ -60,7 +60,7 @@ internal static class SarPatches
         catch (System.Exception ex) { ModLog.Debug($"[sar] pickup: {ex.Message}"); }
     }
 
-    // The game's "Picked up survivors." – raised inside CheckForRaftPickUp – gives way to the mod's message.
+    // The game's "Picked up survivors." - raised inside CheckForRaftPickUp - gives way to the mod's message.
     private static bool Filter() => inPickup == 0 || !Active;
 
     private static void Recovering(FlightDeck __instance, ObjectBase objectToRecover)

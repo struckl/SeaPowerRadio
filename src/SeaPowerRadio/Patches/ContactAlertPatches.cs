@@ -4,7 +4,7 @@ namespace SeaPowerRadio.Patches;
 
 /// <summary>
 /// The game's own contact messages (new / classified / faded) come from three Taskforce methods. While the mod
-/// reports contacts itself – with anti-spam and links to the track – the messages those methods raise are
+/// reports contacts itself - with anti-spam and links to the track - the messages those methods raise are
 /// swallowed; the methods themselves still run, so their bookkeeping stays intact.
 /// </summary>
 internal static class ContactAlertPatches

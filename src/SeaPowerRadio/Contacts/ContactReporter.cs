@@ -14,18 +14,16 @@ namespace SeaPowerRadio.Contacts;
 
 /// <summary>
 /// Contact calls, replacing the game's (which has no hysteresis and repeats "contact faded" on every flicker):
-/// <list type="bullet">
-/// <item>New contact: spoken by the unit whose sensor found it, with the bearing from that unit. Several new
-/// contacts within a few seconds → one "multiple contacts" call. Contacts that keep turning up one by one in the
+/// - New contact: spoken by the unit whose sensor found it, with the bearing from that unit. Several new
+/// contacts within a few seconds -> one "multiple contacts" call. Contacts that keep turning up one by one in the
 /// same place (a raid found aircraft by aircraft) are one group: called once, once more as "multiple contacts" when
-/// it reaches three, then only messages.</item>
-/// <item>Faded: only after the contact stayed lost for <c>FadeHysteresis</c> s (regained earlier = silence), at most
-/// once per contact per <c>ContactCooldown</c> s. Several fades together → "lost N contacts".</item>
-/// <item>Flicker: a contact that drops out <c>FlickerCount</c> times within a minute is called "intermittent" once,
-/// then stays quiet until it has been stable for two minutes.</item>
-/// <item>Classified hostile: "track 7034, hostile" plus what identified it (visual, ESM, sonar, radar…), and the
-/// log line says which unit and sensor.</item>
-/// </list>
+/// it reaches three, then only messages.
+/// - Faded: only after the contact stayed lost for <c>FadeHysteresis</c> s (regained earlier = silence), at most
+/// once per contact per <c>ContactCooldown</c> s. Several fades together -> "lost N contacts".
+/// - Flicker: a contact that drops out <c>FlickerCount</c> times within a minute is called "intermittent" once,
+/// then stays quiet until it has been stable for two minutes.
+/// - Classified hostile: "track 7034, hostile" plus what identified it (visual, ESM, sonar, radar...), and the
+/// log line says which unit and sensor.
 /// All of these are low priority, so the radio drops them first when the net is busy.
 /// </summary>
 internal sealed class ContactReporter
@@ -310,8 +308,6 @@ internal sealed class ContactReporter
         }
         pendingFaded.Clear();
     }
-
-    // --------------------------------------------------------------------------------------------------------
 
     private static string NewContactPhrase(Vehicle v)
     {

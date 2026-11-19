@@ -11,16 +11,14 @@ namespace SeaPowerRadio.Radio;
 /// <summary>
 /// The radio net: highest priority first, one voice at a time - or, with "Overlapping voices", up to a few stations
 /// talking over each other like a busy net.
-/// <list type="bullet">
-/// <item>Urgent calls (priority ≤ 2: missile inbound, we're hit, bingo) cut into a routine call (when every channel is busy).</item>
-/// <item>Replies to the player's orders go before routine reports – and are mixed louder and cleaner.</item>
-/// <item>Calls go stale: replies after 6 s, contact reports after 8 s, the rest after 15 s – a late "copy" is worse than none.</item>
-/// <item>The same phrase from several units at once (a whole flight acknowledging) is said at most twice.</item>
-/// <item>A short, varying gap between calls, like a real net. Overlapping: a new call starts 0.6–1.4 s after the
-/// last start, on its own channel (panned a little left / right), never for a unit that is already talking.</item>
-/// <item>Every call has a category (<see cref="CallCategory"/>) with its own volume; the master volume and the
-/// category volume of the options page apply to the playing call at once, the noise level from the next call.</item>
-/// </list>
+/// - Urgent calls (priority 1 or 2: missile inbound, we're hit, bingo) cut into a routine call (when every channel is busy).
+/// - Replies to the player's orders go before routine reports - and are mixed louder and cleaner.
+/// - Calls go stale: replies after 6 s, contact reports after 8 s, the rest after 15 s - a late "copy" is worse than none.
+/// - The same phrase from several units at once (a whole flight acknowledging) is said at most twice.
+/// - A short, varying gap between calls, like a real net. Overlapping: a new call starts 0.6-1.4 s after the
+/// last start, on its own channel (panned a little left / right), never for a unit that is already talking.
+/// - Every call has a category (<see cref="CallCategory"/>) with its own volume; the master volume and the
+/// category volume of the options page apply to the playing call at once, the noise level from the next call.
 /// Plays on the game's "Voice" mixer group, so the game's voice volume slider still applies.
 /// </summary>
 internal sealed class RadioPlayer
@@ -237,7 +235,7 @@ internal sealed class RadioPlayer
 
     /// <summary>
     /// The callsign only when someone else is talking than before: the same unit again just goes on ("fox three"),
-    /// a wingman of the same flight gives its number only ("two, fox three") – like a real net once everyone
+    /// a wingman of the same flight gives its number only ("two, fox three") - like a real net once everyone
     /// knows who is up. The message bottom right still names the unit.
     /// </summary>
     private void Abbreviate(Transmission t)

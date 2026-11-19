@@ -11,20 +11,18 @@ using UnityEngine;
 namespace SeaPowerRadio.Air;
 
 /// <summary>
-/// Fuel calls against the nearest place the aircraft can land – its home base or any friendly deck or airfield
+/// Fuel calls against the nearest place the aircraft can land - its home base or any friendly deck or airfield
 /// that would take it (ObjectBase.CanAcceptAircraft, the game's own rebase check):
-/// <list type="bullet">
-/// <item><b>Joker</b> – at cruise speed only just enough fuel left to get there: time to think about going home.</item>
-/// <item><b>Bingo</b> – only just enough even at the most economical speed: it has to go now.</item>
-/// <item><b>Fuel emergency</b> – not enough at all, even flying economy: tanker or it goes in the water.</item>
-/// </list>
+/// - Joker - at cruise speed only just enough fuel left to get there: time to think about going home.
+/// - Bingo - only just enough even at the most economical speed: it has to go now.
+/// - Fuel emergency - not enough at all, even flying economy: tanker or it goes in the water.
 /// The game itself only knows "bingo" against the home base: once fuel only just covers the way home at best
 /// efficiency it turns the aircraft home (BingoFuel state) and says no more than "returning to base". That moment
-/// is a bingo call too – the game can get there first when another deck is nearer than home, or at high time
+/// is a bingo call too - the game can get there first when another deck is nearer than home, or at high time
 /// compression between two scans. Aircraft nothing in the mission can take have no home base: the game drops a
 /// mission's HomeBase when that field's air group doesn't carry the type (SceneCreator.RebaseAircraft), never sends
 /// them home and lets them fall out of the sky when the tank runs dry. They call all the same, against the nearest
-/// friendly field or deck they would call home – where the player sees the range circle stop reaching – and by
+/// friendly field or deck they would call home - where the player sees the range circle stop reaching - and by
 /// the share of a full tank when there is none.
 /// Fuel model as in the game: <c>RangeInKm</c> is the fuel left, in km at best efficiency; a km flown costs the
 /// consumption coefficient of the speed and altitude flown (Aircraft.UpdateFuelConsumption,
@@ -43,7 +41,7 @@ internal sealed class FuelMonitor
 
     private const float ScanInterval = 0.5f;       // real seconds: at high time compression a lot happens in between
     private const float TraceInterval = 30f;       // verbose log: each aircraft's sums this often
-    private const int CruiseSpeedIndex = 2;        // "Cruise" – what the game uses for "can it reach the tanker"
+    private const int CruiseSpeedIndex = 2;        // "Cruise" - what the game uses for "can it reach the tanker"
     private const float JokerMargin = 1.10f, JokerReserveKm = 10f;
     private const float BingoMargin = 1.05f, BingoReserveKm = 5f;
     // Nowhere to land: share of a full tank.
@@ -252,14 +250,12 @@ internal sealed class FuelMonitor
     /// Fuel per km flown, in the unit of <c>RangeInKm</c> ("km at best efficiency"): at cruise and at the cheapest speed.
     /// Two game models, both reached by reflection so that one DLL loads and stays quiet on every build (a member missing on
     /// one build must never be named in a method that is JIT-compiled there):
-    /// <list type="bullet">
-    /// <item>Builds from 261107: the game keeps <c>_fuelPerKmCruise</c> (best-range speed / cruise step) and
+    /// - Builds from 261107: the game keeps <c>_fuelPerKmCruise</c> (best-range speed / cruise step) and
     /// <c>_fuelPerKmNow</c> (at the speed flown), kg per km, and reckons the way home with the cruise rate
     /// (Aircraft/Helicopter.UpdateFuelConsumption). economy = that cruise rate, cruise = the greater of it and the rate at
-    /// the speed flown; both go through <c>ObjectBase.CruiseKmForFuel</c> into the units of <c>RangeInKm</c>.</item>
-    /// <item>Older builds (0.8.7, globe 26223125): the altitude and range-multiplier curves, and the hover share of the
-    /// helicopter, as before.</item>
-    /// </list>
+    /// the speed flown; both go through <c>ObjectBase.CruiseKmForFuel</c> into the units of <c>RangeInKm</c>.
+    /// - Older builds (0.8.7, globe 26223125): the altitude and range-multiplier curves, and the hover share of the
+    /// helicopter, as before.
     /// If neither model can be read: false, no fuel calls, nothing thrown.
     /// </summary>
     private static bool Burn(ObjectBase unit, out float cruise, out float economy)

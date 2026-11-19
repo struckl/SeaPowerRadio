@@ -12,12 +12,10 @@ namespace SeaPowerRadio.Radio;
 /// <summary>
 /// Decides, for every voice line the game asks for, whether the mod speaks it instead. Called synchronously from
 /// the VoiceMessage prefix; returning true mutes the stock line.
-/// <list type="bullet">
-/// <item>Known key with a phrase → the speaking unit's own voice and callsign say it.</item>
-/// <item>Known key without a phrase (contact report building blocks…) → muted; the mod reports contacts itself.</item>
-/// <item>Pieces the game appends to a call it already made ("…track 7034", "salvo") → muted with the call.</item>
-/// <item>Unknown key (another mod's lines) → the stock system plays it as before.</item>
-/// </list>
+/// - Known key with a phrase -> the speaking unit's own voice and callsign say it.
+/// - Known key without a phrase (contact report building blocks...) -> muted; the mod reports contacts itself.
+/// - Pieces the game appends to a call it already made ("...track 7034", "salvo") -> muted with the call.
+/// - Unknown key (another mod's lines) -> the stock system plays it as before.
 /// </summary>
 internal static class StockVoiceRouter
 {
@@ -41,7 +39,7 @@ internal static class StockVoiceRouter
 
         if (!catalog.TryStock(request.Key, out string phrase, out string numberKind))
             // Unknown key. A piece appended to a task force report is one of the game's contact building blocks
-            // built at runtime – swallow it with the rest of that report. Anything else (other mods' lines) plays.
+            // built at runtime - swallow it with the rest of that report. Anything else (other mods' lines) plays.
             return request.Appended && request.Speaker == null && !passAppended;
         if (request.Appended && request.Key != "SplashedTrack")
             return !passAppended;
@@ -77,7 +75,7 @@ internal static class StockVoiceRouter
     }
 
     /// <summary>
-    /// The speed slider (ships, submarines, aircraft) sets knots and only raises a message – the game has no voice
+    /// The speed slider (ships, submarines, aircraft) sets knots and only raises a message - the game has no voice
     /// line for it. Called after that message (Patches/SpeedOrderPatches), so the call takes it along.
     /// </summary>
     public static void SpeedInKnots(ObjectBase unit, float knots)
@@ -119,16 +117,14 @@ internal static class StockVoiceRouter
 
     /// <summary>
     /// Say what is actually going to happen instead of the stock acknowledgement:
-    /// <list type="bullet">
-    /// <item>A speed or altitude order: which way it goes (<see cref="SpeedPhrase"/>, <see cref="AltitudePhrase"/>).</item>
-    /// <item>A launch: the line that fits the weapon (<see cref="LaunchPhrase"/>).</item>
-    /// <item>An attack order stacked behind earlier ones: "copy, queued, number three in line" (the stock line is
-    /// played before the order joins the queue, so the queue holds the earlier ones).</item>
-    /// <item>A VID order to a wingman flying in formation: "unable, holding formation on lead". The aircraft state
+    /// - A speed or altitude order: which way it goes (<see cref="SpeedPhrase"/>, <see cref="AltitudePhrase"/>).
+    /// - A launch: the line that fits the weapon (<see cref="LaunchPhrase"/>).
+    /// - An attack order stacked behind earlier ones: "copy, queued, number three in line" (the stock line is
+    /// played before the order joins the queue, so the queue holds the earlier ones).
+    /// - A VID order to a wingman flying in formation: "unable, holding formation on lead". The aircraft state
     /// machine only starts a visual ID from its default state, never from formation flight, so the order would sit
-    /// there unnoticed (docs/recon.md section 6). With "Detach wingman for VID" on, the wingman is released from the
-    /// formation and the VID goes ahead instead.</item>
-    /// </list>
+    /// there unnoticed (docs/how-it-works.md, "VID acknowledged, wingman stays in formation"). With "Detach wingman
+    /// for VID" on, the wingman is released from the formation and the VID goes ahead instead.
     /// </summary>
     private static string Refine(string phrase, StockVoiceRequest request, string voice, ref int? number, ref int variant)
     {
@@ -178,7 +174,7 @@ internal static class StockVoiceRouter
     /// the step ("coming up to two thirds", "slowing to one third"), so the direction comes from the setting before.
     /// Picked in the menu, the line is asked for before the new setting is applied (<c>getTelegraph()</c> is still
     /// the old one); by keyboard, after it (the old one is in <c>_previousTelegraphSetting</c>). Without this,
-    /// 1/3 → 2/3 said "slowing down". A voice without the step lines says the direction only.
+    /// 1/3 -> 2/3 said "slowing down". A voice without the step lines says the direction only.
     /// </summary>
     private static string SpeedPhrase(string phrase, string key, ObjectBase unit, string voice, ref int variant)
     {
@@ -213,7 +209,7 @@ internal static class StockVoiceRouter
     /// <summary>
     /// "SetAltitude" comes once the new altitude is set (<c>DesiredAltitude</c>: preset menu, slider, helicopter
     /// keys), so the direction is where the aircraft is now against where it is told to go: "climbing, angels
-    /// twenty" below it, "descending, angels five" above it, "leveling off, …" at the altitude it already holds (or
+    /// twenty" below it, "descending, angels five" above it, "leveling off, ..." at the altitude it already holds (or
     /// on the way down in a voice without the descending line). Picked at random, a descent said "climbing" half the
     /// time.
     /// </summary>

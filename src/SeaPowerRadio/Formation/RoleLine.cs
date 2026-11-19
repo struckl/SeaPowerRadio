@@ -9,7 +9,7 @@ namespace SeaPowerRadio.Formation;
 /// <summary>
 /// A third line in every formation manager row that says what the unit is (<see cref="UnitRole"/>). The view's row
 /// templates (group, unit, group member) each lay out a grid: name in row 0, class or group summary in row 1, a thin
-/// spacer in row 2. When a FormationManagerView is built — before it has made a single row — each template's grid
+/// spacer in row 2. When a FormationManagerView is built - before it has made a single row - each template's grid
 /// gets a row under the class line with a text bound to the role: same column and font, a bit smaller and dimmer.
 /// The templates are the view's own, so every row it makes from then on has the line, right-click and double-click
 /// work on it as on the rest of the row, and the RTB colouring (Air/RtbMarker) covers it too.
@@ -126,7 +126,7 @@ internal static class RoleLine
         return new Noesis.Binding { Converter = RoleText.Instance };
     }
 
-    /// <summary>The row (or the unit in a station) → its role. With several values the first is the row, the rest
+    /// <summary>The row (or the unit in a station) -> its role. With several values the first is the row, the rest
     /// are only there so the text is worked out again when they change.</summary>
     private sealed class RoleText : Noesis.IValueConverter, Noesis.IMultiValueConverter
     {

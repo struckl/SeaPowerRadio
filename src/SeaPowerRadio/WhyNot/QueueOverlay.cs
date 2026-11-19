@@ -11,7 +11,7 @@ namespace SeaPowerRadio.WhyNot;
 /// which throws away the whole queue; here orders 3 and 4 can go while 1, 2 and 5 stay. Each row also shows what
 /// the order is waiting for (the weapon's engage state, or the reload time left).
 /// Toggle with the configured key (F8).
-/// <para>Clicks: IMGUI mouse events never reach this window in the game (the game's UI, Noesis, takes them – a
+/// <para>Clicks: IMGUI mouse events never reach this window in the game (the game's UI, Noesis, takes them - a
 /// lower GUI depth didn't help). So the delete buttons are hit-tested against the mouse read straight from the Input
 /// System in Update; the IMGUI click stays as a second path, and a frame guard keeps one click from deleting
 /// twice.</para>
@@ -124,7 +124,7 @@ internal sealed class QueueOverlay : MonoBehaviour
             y += 24f;
         }
         GUI.DragWindow(new Rect(0, 0, 10000, 20));
-        // Whatever is left of a click inside the window is ours – not a click on the game's UI or the map below.
+        // Whatever is left of a click inside the window is ours - not a click on the game's UI or the map below.
         Event rest = Event.current;
         if ((rest.type == EventType.MouseDown || rest.type == EventType.MouseUp)
             && new Rect(0, 0, window.width, window.height).Contains(rest.mousePosition))

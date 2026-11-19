@@ -264,18 +264,26 @@ internal sealed class RadioPlayer
             t.Text = "(same unit)" + t.Text.Substring(t.CallsignTextLength);
             return;
         }
-        if (unit != null && last != null
-            && Names.TryParseAircraft(unit.Name.Value, out string word, out int number, out int position)
-            && Names.TryParseAircraft(last.Name.Value, out string lastWord, out int lastNumber, out _)
-            && position > 0 && number == lastNumber && string.Equals(word, lastWord, System.StringComparison.OrdinalIgnoreCase)
-            && TransmissionBuilder.CallsignNumberClip(position) is string positionClip
-            && ClipLibrary.Exists(t.Voice, positionClip))
+        if (FlightmateClip(t.Voice, unit, last, out int position) is string positionClip)
         {
             t.Clips.RemoveRange(0, t.CallsignClips);
             t.Clips.Insert(0, positionClip);
             t.CallsignClips = 1;
             t.Text = $"({position})" + t.Text.Substring(t.CallsignTextLength);
         }
+    }
+
+    /// <summary>The number clip ("two") of a wingman of the flight that spoke last; null when it is none.</summary>
+    private static string FlightmateClip(string voice, ObjectBase unit, ObjectBase last, out int position)
+    {
+        position = 0;
+        if (unit == null || last == null
+            || !Names.TryParseAircraft(unit.Name.Value, out string word, out int number, out position)
+            || !Names.TryParseAircraft(last.Name.Value, out string lastWord, out int lastNumber, out _)
+            || position <= 0 || number != lastNumber || !string.Equals(word, lastWord, System.StringComparison.OrdinalIgnoreCase))
+            return null;
+        string clip = TransmissionBuilder.CallsignNumberClip(position);
+        return clip != null && ClipLibrary.Exists(voice, clip) ? clip : null;
     }
 
     private void Finish(Channel c)

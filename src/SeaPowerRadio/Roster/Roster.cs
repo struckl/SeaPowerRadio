@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using SeaPower;
-using SeaPowerRadio.Core;
 using SeaPowerRadio.Radio;
 using SeaPowerRadio.Voices;
 
@@ -497,22 +496,23 @@ internal sealed class Roster
     private static CallsignKind KindOf(VehicleTypeOnBoard type) =>
         type._type == VehicleType.Helicopter ? CallsignKind.Helicopter : KindOfAircraft(type._unitRoles);
 
+    // The first group with a role the aircraft has decides its callsign kind; none = fighter.
+    private static readonly (CallsignKind kind, ObjectBaseParameters.UnitRoles[] roles)[] RoleKinds =
+    {
+        (CallsignKind.Support, new[] { ObjectBaseParameters.UnitRoles.AEW, ObjectBaseParameters.UnitRoles.EW, ObjectBaseParameters.UnitRoles.ESM,
+            ObjectBaseParameters.UnitRoles.Recon, ObjectBaseParameters.UnitRoles.Transport, ObjectBaseParameters.UnitRoles.Targeting }),
+        (CallsignKind.Patrol, new[] { ObjectBaseParameters.UnitRoles.MPA, ObjectBaseParameters.UnitRoles.ASW }),
+        (CallsignKind.Fighter, new[] { ObjectBaseParameters.UnitRoles.Fighter, ObjectBaseParameters.UnitRoles.AAW }),
+        (CallsignKind.Attack, new[] { ObjectBaseParameters.UnitRoles.Attack, ObjectBaseParameters.UnitRoles.Bomber,
+            ObjectBaseParameters.UnitRoles.HeavyBomber, ObjectBaseParameters.UnitRoles.SEAD, ObjectBaseParameters.UnitRoles.ASuW }),
+    };
+
     private static CallsignKind KindOfAircraft(List<ObjectBaseParameters.UnitRoles> roles)
     {
         if (roles == null) return CallsignKind.Fighter;
-        bool Has(ObjectBaseParameters.UnitRoles r) => roles.Contains(r);
-        if (Has(ObjectBaseParameters.UnitRoles.AEW) || Has(ObjectBaseParameters.UnitRoles.EW)
-            || Has(ObjectBaseParameters.UnitRoles.ESM) || Has(ObjectBaseParameters.UnitRoles.Recon)
-            || Has(ObjectBaseParameters.UnitRoles.Transport) || Has(ObjectBaseParameters.UnitRoles.Targeting))
-            return CallsignKind.Support;
-        if (Has(ObjectBaseParameters.UnitRoles.MPA) || Has(ObjectBaseParameters.UnitRoles.ASW))
-            return CallsignKind.Patrol;
-        if (Has(ObjectBaseParameters.UnitRoles.Fighter) || Has(ObjectBaseParameters.UnitRoles.AAW))
-            return CallsignKind.Fighter;
-        if (Has(ObjectBaseParameters.UnitRoles.Attack) || Has(ObjectBaseParameters.UnitRoles.Bomber)
-            || Has(ObjectBaseParameters.UnitRoles.HeavyBomber) || Has(ObjectBaseParameters.UnitRoles.SEAD)
-            || Has(ObjectBaseParameters.UnitRoles.ASuW))
-            return CallsignKind.Attack;
+        foreach (var (kind, group) in RoleKinds)
+            if (group.Any(roles.Contains))
+                return kind;
         return CallsignKind.Fighter;
     }
 }

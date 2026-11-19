@@ -18,6 +18,19 @@ namespace SeaPowerRadio;
 /// </summary>
 internal static class RadioApi
 {
+    /// <summary>The call for these phrases (each with its number or -1); null when the voice can say none of them.</summary>
+    private static Transmission Build(RosterElement speaker, string[] phrases, int[] numbers)
+    {
+        Transmission t = TransmissionBuilder.Start(speaker);
+        bool any = false;
+        for (int i = 0; i < phrases.Length; i++)
+        {
+            int n = numbers != null && i < numbers.Length ? numbers[i] : -1;
+            any |= TransmissionBuilder.Append(t, phrases[i], n >= 0 ? n : (int?)null);
+        }
+        return any ? t : null;
+    }
+
     public static bool Say(object unit, string[] phrases, int[] numbers)
     {
         try
@@ -33,14 +46,8 @@ internal static class RadioApi
             if (speaker?.Voice == null)
                 return false;
 
-            Transmission t = TransmissionBuilder.Start(speaker);
-            bool any = false;
-            for (int i = 0; i < phrases.Length; i++)
-            {
-                int n = numbers != null && i < numbers.Length ? numbers[i] : -1;
-                any |= TransmissionBuilder.Append(t, phrases[i], n >= 0 ? n : (int?)null);
-            }
-            if (!any)
+            Transmission t = Build(speaker, phrases, numbers);
+            if (t == null)
                 return false;
             t.Alerts.AddRange(AlertLink.TakeFor(obj ?? speaker.Unit));
             player.Submit(t);

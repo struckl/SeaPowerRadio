@@ -10,9 +10,8 @@ namespace SeaPowerRadio.Patches;
 /// </summary>
 internal static class LaunchVoicePatches
 {
-    public const string FeatureName = "LaunchLine";
-
-    public static Feature Declare() => new Feature(FeatureName)
+    public static void Declare() => HookRegistry.Add("LaunchLine", HookStage.Load,
+            "the stock voice key decides the launch line", optional: true)
         .Hook("SeaPower.WeaponBase", "LaunchVoiceover", System.Type.EmptyTypes, typeof(LaunchVoicePatches),
             prefix: nameof(LaunchVoiceoverPrefix));
 

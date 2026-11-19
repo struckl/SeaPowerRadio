@@ -81,7 +81,6 @@ internal sealed class UpgradeNotice : MonoBehaviour
         {
             closed = true;
             Settings.ShowUpgradeNotice.Value = false;
-            Settings.SaveSoon();
         }
         GUILayout.EndHorizontal();
         GUI.DragWindow(new Rect(0, 0, 10000, 20));

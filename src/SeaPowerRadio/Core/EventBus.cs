@@ -23,17 +23,13 @@ internal sealed class AircraftLaunch
 }
 
 /// <summary>
-/// Normalized game events. Harmony patches publish, the radio/diagnostics layers subscribe. Handlers run inside game
-/// code, so every invoke is guarded: a broken subscriber must never break the game method it was called from.
+/// Game events the shared hooks do not carry (mission start and end are MissionHooks). A Harmony patch publishes, the roster
+/// subscribes. Handlers run inside game code, so every invoke is guarded: a broken subscriber must never break the game method it was called from.
 /// </summary>
 internal static class EventBus
 {
-    public static event Action MissionStarted;
-    public static event Action MissionEnded;
     public static event Action<AircraftLaunch> AircraftLaunched;
 
-    public static void PublishMissionStarted() => Safe(MissionStarted, nameof(MissionStarted));
-    public static void PublishMissionEnded() => Safe(MissionEnded, nameof(MissionEnded));
     public static void PublishAircraftLaunched(AircraftLaunch launch) => Safe(AircraftLaunched, launch, nameof(AircraftLaunched));
 
     private static void Safe<T>(Action<T> handlers, T arg, string name)
@@ -42,16 +38,6 @@ internal static class EventBus
         foreach (Action<T> handler in handlers.GetInvocationList())
         {
             try { handler(arg); }
-            catch (Exception ex) { ModLog.Error($"{name} handler failed: {ex}"); }
-        }
-    }
-
-    private static void Safe(Action handlers, string name)
-    {
-        if (handlers == null) return;
-        foreach (Action handler in handlers.GetInvocationList())
-        {
-            try { handler(); }
             catch (Exception ex) { ModLog.Error($"{name} handler failed: {ex}"); }
         }
     }

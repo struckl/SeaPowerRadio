@@ -13,9 +13,8 @@ namespace SeaPowerRadio.Patches;
 /// </summary>
 internal static class StockVoicePatches
 {
-    public const string FeatureName = "StockVoice";
-
-    public static Feature Declare() => new Feature(FeatureName)
+    public static void Declare() => HookRegistry.Add("StockVoice", HookStage.Load,
+            "the game's own voice lines play", optional: true)
         .Hook("SeaPower.VoiceMessage", "SubmitMessage",
             new[] { typeof(string), typeof(ObjectBase), typeof(string), typeof(int), typeof(string), typeof(bool), typeof(bool) },
             typeof(StockVoicePatches), prefix: nameof(SubmitPrefix))

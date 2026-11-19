@@ -1,34 +1,28 @@
 using System;
-using SeaPowerRadio.Core;
 using SeaPowerRadio.Radio;
-using UnityEngine;
 
 namespace SeaPowerRadio;
 
 /// <summary>
-/// Persistent MonoBehaviour the mod hangs its per-frame work on: the radio net. Lives on
-/// a DontDestroyOnLoad object created at load, so it survives scene changes between menu and missions.
+/// The persistent object the radio net's per-frame work hangs on (ModHost, in the shared skeleton), on a DontDestroyOnLoad
+/// object created at load, so it survives scene changes between menu and missions.
 /// </summary>
-internal sealed class RadioHost : MonoBehaviour
+internal sealed class RadioHost : ModHost
 {
     /// <summary>The radio net. Null while no host runs (mod off): the stock voice router and RadioApi then stand aside.</summary>
     public static RadioPlayer Player { get; private set; }
 
     private RadioPlayer player;
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         Player = player = new RadioPlayer(this);
         gameObject.AddComponent<Ui.UpgradeNotice>();
-        EventBus.MissionStarted += OnMissionStarted;
         Settings.FemaleVoices.SettingChanged += OnFemaleVoicesChanged;
-        EventBus.MissionEnded += OnMissionEnded;
     }
 
-    private void OnMissionStarted()
-    {
-        player.Clear();
-    }
+    protected override void OnMissionReady() => player.Clear();
 
     private static void OnFemaleVoicesChanged(object sender, EventArgs args)
     {
@@ -38,7 +32,7 @@ internal sealed class RadioHost : MonoBehaviour
         ModLog.Info($"Female voices off: {changed} speaker(s) moved to a male voice.");
     }
 
-    private void OnMissionEnded()
+    protected override void OnMissionEnded()
     {
         player.Clear();
         AlertLink.Clear();
@@ -46,24 +40,15 @@ internal sealed class RadioHost : MonoBehaviour
         Moods.Reset();
     }
 
-    private void Update()
+    protected override void Tick()
     {
-        try
-        {
-            player.Tick();
-            Settings.FlushIfDue();
-            AlertLink.Tick();
-        }
-        catch (Exception ex)
-        {
-            ModLog.Error($"Radio tick failed: {ex}");
-        }
+        player.Tick();
+        AlertLink.Tick();
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
-        EventBus.MissionStarted -= OnMissionStarted;
-        EventBus.MissionEnded -= OnMissionEnded;
+        base.OnDestroy();
         Settings.FemaleVoices.SettingChanged -= OnFemaleVoicesChanged;
         if (Player == player)
             Player = null;

@@ -11,9 +11,8 @@ namespace SeaPowerRadio.Patches;
 /// </summary>
 internal static class AlertPatches
 {
-    public const string FeatureName = "AlertLink";
-
-    public static Feature Declare() => new Feature(FeatureName)
+    public static void Declare() => HookRegistry.Add("AlertLink", HookStage.Load,
+            "messages are not kept until their call is spoken", optional: true)
         .Hook("SeapowerUI.ViewModels.MainGameViewModel", "set_AlertyMcAlertFace", new[] { typeof(Alert) },
             typeof(AlertPatches), prefix: nameof(SetPrefix));
 

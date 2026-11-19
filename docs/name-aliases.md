@@ -1,7 +1,7 @@
 # Name aliases (mod ships)
 
 A ship or shore unit says its in-game short name only if that name was rendered as a clip in its voice. The names come
-from the base game's language files (`tools/voicegen/names.py` → `voices/names.txt`, about 3,000 names, each in three
+from the base game's language files (`tools/voicegen/names.py` -> `voices/names.txt`, about 3,000 names, each in three
 voices). Mod ships often carry a hull prefix ("USS Pargo") or a name of their own, find no clip, and fall back to a
 generated callsign. Aliases fix the first case completely and the second as far as a base-game name fits.
 
@@ -30,7 +30,7 @@ CVN-68* = Nimitz
   anything but letters and digits counts as one `_`), so case and punctuation do not matter. A trailing `*` matches every
   name that starts with it; the longest match wins.
 - **name to say**: a name from `names.txt` (any pack's), or one of the standalone callsign words (the ship, submarine and
-  shore lists in `Callsigns.Words`: Bulwark … Courage, Shadow … Barracuda, Castle … Lighthouse). A callsign word becomes
+  shore lists in `Callsigns.Words`: Bulwark ... Courage, Shadow ... Barracuda, Castle ... Lighthouse). A callsign word becomes
   the unit's callsign for every mission (`Akira O-ren = Victory`): it is reserved before the others are handed out, so no
   other unit gets it, and it wins over a campaign's remembered callsign and over the unit's own name. A word that is
   also a unit name in `names.txt` is said as that name. Optional when a voice is given.
@@ -39,12 +39,12 @@ CVN-68* = Nimitz
   the name has no clip in that voice, the unit keeps the voice and says its generated callsign. A voice of another pack than
   the one the unit's country uses is ignored (logged).
 - **`*prefix`**: comma- or space-separated hull prefixes. A name without its own clip and without an alias is tried again
-  with the prefix removed (`USS Pargo`, `USS. Pargo`, `USS-Pargo` → `Pargo`).
+  with the prefix removed (`USS Pargo`, `USS. Pargo`, `USS-Pargo` -> `Pargo`).
 
 ## Lookup
 
 For a ship (aircraft are not aliased: formations rename them; a squadron's voice gender has its own file, [squadron-voices.md](squadron-voices.md)), with its short name, then its full name:
-alias → its name to say (a callsign word: no name, the unit says that callsign); else the name itself; else the name without a prefix. The first that has a clip in the unit's
+alias -> its name to say (a callsign word: no name, the unit says that callsign); else the name itself; else the name without a prefix. The first that has a clip in the unit's
 pack is the one it says (`Roster.NameOf`). The voice pin is applied when the roster is built, before the campaign memory.
 
 ## Log

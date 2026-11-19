@@ -2,7 +2,7 @@
 
 Every persona is one person on the net: a Microsoft Edge neural voice (edge-tts, same engine as Ratten Chatter)
 plus a fixed rate and pitch offset. Base voices are reused with clearly different offsets to get more distinct
-people than there are base voices — the plugin hands every element of a mission its own persona, so the pool size
+people than there are base voices - the plugin hands every element of a mission its own persona, so the pool size
 is the number of elements that can talk before anyone has to share.
 
 Accents are spread on purpose (US, UK, Canada, Australia, New Zealand, Ireland): a NATO task group is not staffed

@@ -5,8 +5,8 @@
 .DESCRIPTION
     Release builds without the automatic deploy, then dist\SeaPowerRadio\ with exactly what players get:
     SeaPowerRadio.dll (the 3D-globe game) and SeaPowerRadioFlat.dll (Sea Power 0.8.7's flat map), the same sources
-    built against each game's assemblies, each staying off on the other game; _info.ini, rats-radio-aliases.txt (default hull prefixes), LICENSE.txt, CHANGELOG.md, CREDITS.txt (the voices' CC BY 4.0 attribution), voices\ – the
-    catalog files and the rendered library from mod\voices\ (not in git; rendered with tools\voicegen) – and
+    built against each game's assemblies, each staying off on the other game; _info.ini, rats-radio-aliases.txt (default hull prefixes), LICENSE.txt, CHANGELOG.md, CREDITS.txt (the voices' CC BY 4.0 attribution), voices\ - the
+    catalog files and the rendered library from mod\voices\ (not in git; rendered with tools\voicegen) - and
     preview.jpg, the Workshop preview (workshop\preview.jpg, if present): the game's upload screen only browses
     StreamingAssets for it. Refuses to stage a library with personas missing.
     The flat build needs a copy of 0.8.7's Sea Power_Data\Managed (-FlatManagedDir; default: _gamerefs next to the mod
@@ -18,7 +18,7 @@
     for a GitHub release.
     -Pack <id> stages a voice pack instead of the base: the folder with that voicepack.ini Id (looked up in mod\voices and
     in packs\*, e.g. a pack under work) goes to dist\pack-<id>\ as it is (voicepack.ini, personas.txt, catalog.txt, names.txt, clips;
-    plus the pack's own _info.ini and CREDITS if it has them) – the folder to upload to that pack's Workshop item. No
+    plus the pack's own _info.ini and CREDITS if it has them) - the folder to upload to that pack's Workshop item. No
     build, no DLL: packs never carry code. -Zip also writes dist\SeaPowerRadio-pack-<id>-<version>.zip.
 #>
 param(

@@ -39,7 +39,6 @@ class ForcedAligner:
         self.model = Wav2Vec2ForCTC.from_pretrained(MODEL_ID).to(device).eval()
         vocab = self.processor.tokenizer.get_vocab()
         self.blank = vocab[self.processor.tokenizer.pad_token]
-        self.sep = vocab["|"]
         self.vocab = vocab
 
     def word_times(self, wav: torch.Tensor, sr: int, text: str) -> list[tuple[float, float]]:

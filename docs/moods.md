@@ -22,11 +22,11 @@ Decided 2026-11-11: moods stay in the voice pack, no separate Moods item (a plan
 ## Which mood a call gets (`Radio/Moods.cs`)
 
 1. The call's own event: SplashOne, SplashTrack, TargetDestroyed, Shack, HitTrack, MissionComplete, ObjectiveComplete,
-   SAR pickups and deliveries, recoveries, ContactRegained → **happy**; MissionFailed, ObjectiveFailed, SarFull,
-   SarSurvivors, Winchester, BatteryLow, NeedToCharge, DeckDamaged, ContactFaded(s) → **sad**.
-2. Warnings (missile/torpedo inbound, we're hit, flooding, bingo, emergencies) and weapons calls → **stressed**; the unit
+   SAR pickups and deliveries, recoveries, ContactRegained -> **happy**; MissionFailed, ObjectiveFailed, SarFull,
+   SarSurvivors, Winchester, BatteryLow, NeedToCharge, DeckDamaged, ContactFaded(s) -> **sad**.
+2. Warnings (missile/torpedo inbound, we're hit, flooding, bingo, emergencies) and weapons calls -> **stressed**; the unit
    stays stressed 60 s after its own warning and 20 s after its own weapons call, for every call it makes.
-3. An acknowledgement within 40 s after the unit's own success → **happy**.
+3. An acknowledgement within 40 s after the unit's own success > **happy**.
 4. Else neutral. Per clip: a key the mood has no take for plays neutral (so a happy "splash one" keeps the neutral
    callsign). State is per roster element and cleared at mission end. Setting `2. Radio` / `Moods` (default on).
 

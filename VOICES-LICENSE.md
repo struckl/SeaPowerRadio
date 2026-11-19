@@ -1,4 +1,4 @@
-# R.A.T.S. Radio – voice license and credits
+# R.A.T.S. Radio - voice license and credits
 
 ## License
 
@@ -14,6 +14,6 @@
 
 > Yamagishi, Junichi; Veaux, Christophe; MacDonald, Kirsten (2019). CSTR VCTK Corpus: English Multi-speaker Corpus
 > for CSTR Voice Cloning Toolkit (version 0.92). University of Edinburgh. The Centre for Speech Technology Research
-> (CSTR). https://doi.org/10.7488/ds/2645 – licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+> (CSTR). https://doi.org/10.7488/ds/2645 - licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 
 - Changes made: new lines rendered in the speakers' voices, cut into phrases, filtered to sound like military radio.

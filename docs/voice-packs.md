@@ -80,7 +80,7 @@ in both builds' Noesis.
 
 ## Testing
 
-- Offline: a **dummy pack** (`Id=test-dummy`, 2–3 English voices copied and relabelled, `Nations=Soviet`) in a
+- Offline: a **dummy pack** (`Id=test-dummy`, 2-3 English voices copied and relabelled, `Nations=Soviet`) in a
   scratch mod folder outside the repo, **never published or committed** with audio. Log output shows discovery,
   the resolved pack per country and the per-unit voice in the roster log.
 - In the game (only with Lukas's OK, see `docs/game-testing.md`): the 1.1.0 checklist on 0.8.7 and the globe build,
@@ -124,7 +124,7 @@ Added 2026-11-01 (Lukas): in a campaign every unit keeps the same voice and call
 ## Implementation notes (1.2.0, found while building it)
 
 - **Where the nation comes from.** Player units: `ObjectBase.getNation()` (`Nation.Value`), the raw id (`US`, `Soviet`,
-  `North_Korea`). The stock voice profile (`getVoiceoverNation()`, `us_male_1`…) is *not* used. The nation list of the game is the
+  `North_Korea`). The stock voice profile (`getVoiceoverNation()`, `us_male_1`...) is *not* used. The nation list of the game is the
   `[Nations]` section of `language_<lang>/nations.ini` (merged virtual file: `LocalizationLoader.OpenVirtualLocalizationFile(
   "language_xx", "nations", "nations")?.GetSectionKeyValues("Nations")`), identical in `decomp-0.8.7` and `decomp-beta`. The mod
   drops `Undefined`, `All`, `Civilian`, `Pirates`, `Terrorists` (no countries) and shows the rest, 73 ids in the 0.8.7 game
@@ -157,10 +157,10 @@ A scratch folder outside the repo built like the game's Workshop folder: the bui
 catalog files and four real persona folders) as item `3826433579`, a dummy pack `test-dummy` (Nations=Soviet, three English
 voices relabelled `test_m_01..03`, no `stockmap.txt`, version 1.1.0), a lower-version duplicate of it, and a pack whose
 `MinBaseVersion=9.0.0`. A small console harness loads the DLL and drives it by reflection (BepInEx config in the scratch folder).
-Result (all passing): both packs found, duplicate keeps 1.1.0, newer-base pack skipped with a warning; `US`/`UK` Auto → `nato-en`,
-`Soviet` Auto → `test-dummy`, `Poland` Auto → game voice, `Game voice`, an explicit pack, and an uninstalled pack id (acts as Auto,
+Result (all passing): both packs found, duplicate keeps 1.1.0, newer-base pack skipped with a warning; `US`/`UK` Auto -> `nato-en`,
+`Soviet` Auto -> `test-dummy`, `Poland` Auto -> game voice, `Game voice`, an explicit pack, and an uninstalled pack id (acts as Auto,
 logs once); the dummy voice finds a phrase and its number clips, a phrase the pack lacks gives no variant (so the router leaves it to
-the game), the pack without `stockmap.txt` uses the base's; voice assignment has one pool per pack (`test-dummy/test_m_02`, …).
+the game), the pack without `stockmap.txt` uses the base's; voice assignment has one pool per pack (`test-dummy/test_m_02`, ...).
 The dummy's audio was never committed or staged anywhere but the scratch folder. **Not testable offline:** the roster (needs game
 objects), `StockVoiceRouter.Handle` end to end, the options page and playback.
 
@@ -199,7 +199,7 @@ back to 1.1.0 and the dummy and its campaign memory were deleted.
 - **Soviet side, test-dummy:** after reloading the mission, the roster used `test-dummy` voices, and `NewTasking` was spoken in a
   dummy voice.
 - **Campaign** (Strike Group Molniya, mission 1): `[campaign] ... 4 units remembered`. The memory file holds `t:p1`..`t:p4`
-  (the four ships' `CampaignTag`). Missions 2–5 use the same tags `p1`..`p4`, so the ships keep their voices there. **Not run:**
+  (the four ships' `CampaignTag`). Missions 2-5 use the same tags `p1`..`p4`, so the ships keep their voices there. **Not run:**
   mission 2 itself (needs mission 1 finished). Aircraft without a tag (the Yak-38 and Ka-25 placed in the mission) are not
   remembered, as designed. Left with Accept: no campaign save was written.
 - No Radio exception in the log. **Not run:** the globe build, a dropdown change surviving a restart.

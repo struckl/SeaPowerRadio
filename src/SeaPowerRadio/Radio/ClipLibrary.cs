@@ -27,6 +27,9 @@ internal static class ClipLibrary
     private static readonly Dictionary<string, bool> Known = new Dictionary<string, bool>();   // file checks, per session
     private static long cachedBytes;
     private static long tick;
+    // The tick each running LoadAll started at: clips used since the oldest of them belong to a call still being put
+    // together, so Trim keeps them even above the limit; destroying one would hand RadioFx.Build a dead clip.
+    private static readonly List<long> loading = new List<long>();
 
     /// <summary>File of a clip. <paramref name="voice"/> is <c>packId/personaId</c>; null when the pack is not installed.</summary>
     public static string PathOf(string voice, string key) =>
@@ -43,12 +46,21 @@ internal static class ClipLibrary
     /// <summary>Load every clip of a transmission; missing clips come back null and are skipped by the caller.</summary>
     public static IEnumerator LoadAll(string voice, IList<string> keys, AudioClip[] result)
     {
-        for (int i = 0; i < keys.Count; i++)
+        long since = tick + 1;
+        loading.Add(since);
+        try
         {
-            if (keys[i] == null)
-                continue;
-            int index = i;
-            yield return Load(voice, keys[i], clip => result[index] = clip);
+            for (int i = 0; i < keys.Count; i++)
+            {
+                if (keys[i] == null)
+                    continue;
+                int index = i;
+                yield return Load(voice, keys[i], clip => result[index] = clip);
+            }
+        }
+        finally
+        {
+            loading.Remove(since);
         }
     }
 
@@ -96,9 +108,12 @@ internal static class ClipLibrary
 
     private static void Trim()
     {
+        long keepFrom = loading.Count > 0 ? loading.Min() : long.MaxValue;
         while (cachedBytes > CacheLimitBytes && Cache.Count > 1)
         {
-            var oldest = Cache.OrderBy(p => p.Value.LastUsed).First();
+            var oldest = Cache.Where(p => p.Value.LastUsed < keepFrom).OrderBy(p => p.Value.LastUsed).FirstOrDefault();
+            if (oldest.Value == null)
+                return;
             Cache.Remove(oldest.Key);
             cachedBytes -= oldest.Value.Bytes;
             if (oldest.Value.Clip != null)

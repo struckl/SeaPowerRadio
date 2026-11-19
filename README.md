@@ -11,7 +11,7 @@ yours talks in its own voice and callsign, and says why it is not doing what you
 | Get it | [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579) (about 910 MB) |
 | Settings | Options > Audio > Rats Radio, or `BepInEx\config\dev.sewerlabs.seapowerradio.cfg` |
 | Feedback | [R.A.T.S. feedback board](https://hub.sewerlabs.dev/s/radio) |
-| Video | [YouTube, 1:49](https://youtu.be/pGwOIPXckpY) (the 1.0.0 video: [YouTube](https://youtu.be/g7P1pg2J0Lk)) |
+| Video | [YouTube, 1:49](https://youtu.be/pGwOIPXckpY) |
 | Source | R.A.T.S. Source License, see `LICENSE` |
 
 ![The message log full of radio calls over the Aegean](workshop/screenshots/01-radio-net.jpg)
@@ -35,7 +35,7 @@ Full detail: [docs/features.md](docs/features.md).
 ## Install
 
 1. Install a mod loader, either one: [R.A.T.S. Keel](https://steamcommunity.com/sharedfiles/filedetails/?id=3835527459)
-   (subscribe, switch it on in the Mods menu, copy its stub file once; it runs on the 3D-globe public beta) or
+   (subscribe, switch it on in the Mods menu, run its setup once) or
    [Anchor Chain](https://steamcommunity.com/sharedfiles/filedetails/?id=3380210757) with its
    [installation guide](https://seapower-modders.github.io/AnchorChain/install-anchor-chain.html).
 2. Subscribe to [Sea Power: R.A.T.S. Radio](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579) on the Workshop.

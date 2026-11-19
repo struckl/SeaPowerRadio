@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using BepInEx;
 using SeaPowerRadio.Voices;
 
 namespace SeaPowerRadio.Radio;
@@ -103,52 +102,59 @@ internal static class NameAliases
             string line = lines[i].Trim();
             if (line.Length == 0 || line.StartsWith("#") || line.StartsWith(";")) continue;
             string where = $"{Path.GetFileName(Path.GetDirectoryName(file))}/{Path.GetFileName(file)}:{i + 1}";
-
             if (line.StartsWith("*prefix", StringComparison.OrdinalIgnoreCase))
-            {
-                foreach (string p in line.Substring("*prefix".Length).Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries))
-                    if (!prefixes.Contains(p.ToLowerInvariant()))
-                        prefixes.Add(p.ToLowerInvariant());
-                continue;
-            }
-
-            int eq = line.IndexOf('=');
-            if (eq <= 0)
-            {
-                ModLog.Warn($"[aliases] {where}: no '=' in \"{line}\", skipped");
-                continue;
-            }
-            string left = line.Substring(0, eq).Trim();
-            string right = line.Substring(eq + 1);
-            int bar = right.IndexOf('|');
-            string say = (bar >= 0 ? right.Substring(0, bar) : right).Trim();
-            string voice = bar >= 0 ? right.Substring(bar + 1).Trim() : "";
-
-            bool startsWith = left.EndsWith("*");
-            if (startsWith) left = left.TrimEnd('*').Trim();
-            if (Names.Slug(left) == ClipRules.SlugEmpty || (say.Length == 0 && voice.Length == 0))   // nothing but punctuation
-            {
-                ModLog.Warn($"[aliases] {where}: \"{line}\" needs a game name and a name or voice, skipped");
-                continue;
-            }
-
-            var alias = new NameAlias
-            {
-                Match = Names.Slug(left),
-                Say = say.Length > 0 ? say : null,
-                Voice = voice.Length > 0 ? voice : null,
-                Source = where,
-            };
-            CheckTargets(alias);
-            if (startsWith)
-            {
-                starts.RemoveAll(s => s.Match == alias.Match);
-                starts.Add(alias);
-            }
+                AddPrefixes(line.Substring("*prefix".Length));
             else
-            {
-                exact[alias.Match] = alias;
-            }
+                ReadAlias(line, where);
+        }
+    }
+
+    private static void AddPrefixes(string list)
+    {
+        foreach (string p in list.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries))
+            if (!prefixes.Contains(p.ToLowerInvariant()))
+                prefixes.Add(p.ToLowerInvariant());
+    }
+
+    /// <summary>"game name[*] = name to say | voice".</summary>
+    private static void ReadAlias(string line, string where)
+    {
+        int eq = line.IndexOf('=');
+        if (eq <= 0)
+        {
+            ModLog.Warn($"[aliases] {where}: no '=' in \"{line}\", skipped");
+            return;
+        }
+        string left = line.Substring(0, eq).Trim();
+        string right = line.Substring(eq + 1);
+        int bar = right.IndexOf('|');
+        string say = (bar >= 0 ? right.Substring(0, bar) : right).Trim();
+        string voice = bar >= 0 ? right.Substring(bar + 1).Trim() : "";
+
+        bool startsWith = left.EndsWith("*");
+        if (startsWith) left = left.TrimEnd('*').Trim();
+        if (Names.Slug(left) == ClipRules.SlugEmpty || (say.Length == 0 && voice.Length == 0))   // nothing but punctuation
+        {
+            ModLog.Warn($"[aliases] {where}: \"{line}\" needs a game name and a name or voice, skipped");
+            return;
+        }
+
+        var alias = new NameAlias
+        {
+            Match = Names.Slug(left),
+            Say = say.Length > 0 ? say : null,
+            Voice = voice.Length > 0 ? voice : null,
+            Source = where,
+        };
+        CheckTargets(alias);
+        if (startsWith)
+        {
+            starts.RemoveAll(s => s.Match == alias.Match);
+            starts.Add(alias);
+        }
+        else
+        {
+            exact[alias.Match] = alias;
         }
     }
 

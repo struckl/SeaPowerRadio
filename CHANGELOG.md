@@ -2,6 +2,9 @@
 
 ## 2.0.0 - unreleased - Radio is the radio; voices and tools are items of their own
 
+> **Not released.** 2.0 is held back (his decision 2026-11-19): `main` stays on 1.x, which is still developed. This branch lives as a pull request until 2.0 is picked up again; merge `main` into it then, do not merge it into `main`.
+
+
 - **Voices are items of their own.** The 43 English voices, with their mood takes, are now **R.A.T.S. Radio English**
   (the same pack, `nato-en` 2.0.0); Radio itself carries no voices (it has a small `data/` folder with the country groups and the map of the game's
   voice lines). Every language and accent pack after it works the same way.

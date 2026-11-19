@@ -27,23 +27,25 @@ from __future__ import annotations
 
 import hashlib
 import re
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-GAME_LANGUAGE = Path(r"E:\Games\steamapps\common\Sea Power\Sea Power_Data\StreamingAssets\original\language_en")
-NAMES_FILE = Path(__file__).resolve().parents[2] / "mod" / "voices" / "names.txt"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import rules  # noqa: E402
+from paths import GAME_DIR, VOICES  # noqa: E402
+from spoken import number_words  # noqa: E402
+
+GAME_LANGUAGE = GAME_DIR / "Sea Power_Data" / "StreamingAssets" / "original" / "language_en"
+NAMES_FILE = VOICES / "names.txt"
 
 SHIP_VOICES = 3          # old binding (names without a nation)
 SQUADRON_VOICES = 8
 SHIP_MEN, SHIP_WOMEN = 3, 1                 # nation-bound ship name: men + women of the accent family
 SQUADRON_MIN_MEN, SQUADRON_WOMEN = 3, 1     # nation-bound squadron word: SQUADRON_VOICES voices, at least these
-ACCENTS_FILE = Path(__file__).resolve().parents[2] / "mod" / "voices" / "accents.txt"
+ACCENTS_FILE = VOICES / "accents.txt"
 SKIP_SECTIONS = ("civ_", "all_", "sea_", "test", "tgt_")
-
-ONES = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
-TEENS = ["ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen",
-         "nineteen"]
-TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
 
 
 @dataclass(frozen=True)
@@ -55,19 +57,9 @@ class Name:
 
 
 def slug(text: str) -> str:
-    """Must match Radio/Names.cs Slug()."""
-    s = re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
-    return s or "x"
-
-
-def number_words(n: int) -> str:
-    if n < 10:
-        return ONES[n]
-    if n < 20:
-        return TEENS[n - 10]
-    if n < 100:
-        return TENS[n // 10] + ("-" + ONES[n % 10] if n % 10 else "")
-    return " ".join(ONES[int(c)] for c in str(n))
+    """The clip key part of a name; the plugin's Names.Slug uses the same rule (rules.py)."""
+    s = re.sub(rules.SLUG_NOT, "_", text.lower()).strip("_")
+    return s or rules.SLUG_EMPTY
 
 
 def spoken(text: str) -> str:
@@ -103,8 +95,7 @@ def read_sections(path: Path) -> list[tuple[str, list[str]]]:
     return sections
 
 
-# ---- nation of a name -----------------------------------------------------------------------------------------------
-# The game files group their sections under banner lines ("[*** Canada ***]"); a section prefix or a hull prefix in a
+# Nation of a name: the game files group their sections under banner lines ("[*** Canada ***]"); a section prefix or a hull prefix in a
 # full name is more exact. Nation ids are the ones of language_en/nations.ini. No nation = civil / generic.
 
 BANNER_NATION = {
@@ -200,14 +191,6 @@ def squadron_words_by_nation() -> dict[str, set[str]]:
     return words
 
 
-def unit_names() -> list[str]:
-    return sorted(unit_names_by_nation())
-
-
-def squadron_words() -> list[str]:
-    return sorted(squadron_words_by_nation())
-
-
 def read_accents() -> dict[str, list[str]]:
     """mod/voices/accents.txt: nation id -> accents, best first."""
     out: dict[str, list[str]] = {}
@@ -221,9 +204,13 @@ def read_accents() -> dict[str, list[str]]:
 
 
 def bound_voices(key: str, personas: list[str], count: int) -> list[str]:
-    """`count` distinct personas for a name, stable across runs (rendezvous hashing)."""
-    ranked = sorted(personas, key=lambda p: hashlib.sha1(f"{key}|{p}".encode()).hexdigest())
-    return ranked[:count]
+    """`count` distinct personas for a name."""
+    return ranked(key, personas)[:count]
+
+
+def ranked(key: str, personas: list[str]) -> list[str]:
+    """Personas in a stable order per name (rendezvous hashing): every run ranks them the same for that name."""
+    return sorted(personas, key=lambda p: hashlib.sha1(f"{key}|{p}".encode()).hexdigest())
 
 
 def persona_parts(persona_id: str) -> tuple[str, str]:
@@ -235,17 +222,16 @@ def persona_parts(persona_id: str) -> tuple[str, str]:
 def family_voices(key: str, personas: list[str], accents: list[str], count: int, men: int, women: int) -> list[str]:
     """Voices of an accent family for a name, stable across runs (the same rendezvous rank as bound_voices):
     `men` men and `women` women (as far as the family has them), then filled up to `count` by rank."""
-    pool = [p for p in personas if persona_parts(p)[0] in accents]
-    ranked = sorted(pool, key=lambda p: hashlib.sha1(f"{key}|{p}".encode()).hexdigest())
-    m = [p for p in ranked if persona_parts(p)[1] == "m"]
-    f = [p for p in ranked if persona_parts(p)[1] == "f"]
+    order = ranked(key, [p for p in personas if persona_parts(p)[0] in accents])
+    m = [p for p in order if persona_parts(p)[1] == "m"]
+    f = [p for p in order if persona_parts(p)[1] == "f"]
     chosen = m[:men] + f[:women]
-    for p in ranked:
+    for p in order:
         if len(chosen) >= count:
             break
         if p not in chosen:
             chosen.append(p)
-    return sorted(chosen, key=ranked.index)
+    return sorted(chosen, key=order.index)
 
 
 def name_family(nations: set[str], accents: dict[str, list[str]]) -> list[str] | None:
@@ -316,41 +302,9 @@ def stats() -> None:
         print(f"  {count:5}  {', '.join(combo) or '(none)'}")
 
 
-def read_previous_binding() -> dict[str, list[str]]:
-    previous: dict[str, list[str]] = {}
-    if NAMES_FILE.exists():
-        for raw in NAMES_FILE.read_text(encoding="utf-8").splitlines():
-            if raw and not raw.startswith("#"):
-                f = raw.split("|")
-                if len(f) >= 4:
-                    previous[f[0]] = f[3].split(",")
-    return previous
-
-
-def write_rerender_list(personas: list[str], previous: dict[str, list[str]], out: Path) -> int:
-    """voice|key for every bound clip that is not rendered yet: new against the previous names.txt and not on disk."""
-    voices_dir = NAMES_FILE.parent
-    pairs = sorted((v, k) for k, vs in bindings(personas).items() for v in vs)
-    new_pairs = [(v, k) for v, k in pairs if v not in previous.get(k, [])]
-    missing = [(v, k) for v, k in new_pairs if not (voices_dir / v / f"{k}.mp3").exists()]
-    lines = ["# voice|key -- name clips bound by names.py (1.4.0 nation binding) that are not rendered yet.",
-             f"# {len(missing)} clips ({len(new_pairs)} bindings are new against the previous names.txt). The render tool renders",
-             "# every bound clip that is missing, so `chatterbox_render.py --voices all` picks these up without this list."]
-    lines += [f"{v}|{k}" for v, k in missing]
-    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    return len(missing)
-
-
 if __name__ == "__main__":
-    import sys
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
     from cast import CAST
-    ids = [p.id for p in CAST]
     if "--stats" in sys.argv:
         stats()
     else:
-        previous = read_previous_binding()
-        write_names_file(ids)
-        out = Path(__file__).resolve().parent / "rerender_names_1.4.txt"
-        count = write_rerender_list(ids, previous, out)
-        print(f"{count} clips to render, listed in {out.name}")
+        write_names_file([p.id for p in CAST])

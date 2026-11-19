@@ -37,7 +37,8 @@ namespace ShotDirector;
 /// pin NAME METRES                        hold a unit at this altitude (negative = depth) until unpin
 /// tc FACTOR | pause | unpause            time compression
 /// topo SETTING VALUE                     a SeaPowerTopo config entry, e.g. topo LegendOpen true
-/// radio SETTING VALUE                    a SeaPowerRadio config entry, e.g. radio LogRadioCalls true
+/// radio SETTING VALUE                    a SeaPowerRadio config entry, e.g. radio LogRadio true
+/// get TYPE.MEMBER | set TYPE.MEMBER VALUE | call TYPE.METHOD ARGS   read, write or call a static game member
 /// window formation|eventlog|unitstatus|camera   toggle one of the game's windows
 /// contacts                               log the player side's contacts (track id, side, object)
 /// ammo NAME                              log the ammunition names a unit can engage with
@@ -450,7 +451,7 @@ internal sealed class Director : MonoBehaviour
     {
         string line = $"{DateTime.Now:HH:mm:ss} {message}";
         try { File.AppendAllText(LogFile, line + System.Environment.NewLine); }
-        catch (IOException) { }
+        catch (IOException) { }   // the log file is busy (another reader): the Unity log still has the line
         UnityEngine.Debug.Log("[ShotDirector] " + message);
     }
 }

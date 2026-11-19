@@ -24,17 +24,8 @@ internal static class Moods
     private const float StressAfterCombat = 20f;    // ... after its own weapons call
     private const float HappyAfterSuccess = 40f;    // ... pleased after a kill, a rescue, mission success
 
-    private static readonly HashSet<string> HappyEvents = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-    {
-        "SplashOne", "SplashTrack", "TargetDestroyed", "Shack", "HitTrack", "MissionComplete", "ObjectiveComplete",
-        "SarPickup", "SarPickupCount", "SarPickupMany", "SarDelivered", "HeloRecovered", "AllAircraftRecovered", "ContactRegained",
-    };
-
-    private static readonly HashSet<string> SadEvents = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-    {
-        "MissionFailed", "ObjectiveFailed", "SarFull", "SarSurvivors", "Winchester", "BatteryLow", "NeedToCharge",
-        "DeckDamaged", "ContactFaded", "ContactsFaded",
-    };
+    private static readonly HashSet<string> HappyEvents = CallCategories.PhraseSet(ClipRules.Happy);
+    private static readonly HashSet<string> SadEvents = CallCategories.PhraseSet(ClipRules.Sad);
 
     private sealed class State
     {
@@ -85,36 +76,34 @@ internal static class Moods
     private static string Pick(Transmission t, VoicePack pack)
     {
         float now = Time.unscaledTime;
-        State s = null;
+        // A call without a speaker carries no mood over: its state is thrown away.
+        State s = new State();
         if (t.Speaker != null && !States.TryGetValue(t.Speaker, out s))
             States[t.Speaker] = s = new State();
-
-        CallCategory category = CallCategories.Of(t.Phrase, t.Role);
-        string phrase = t.Phrase ?? "";
-
-        string mood;
-        if (HappyEvents.Contains(phrase))
-        {
-            mood = Happy;
-            if (s != null) s.HappyUntil = now + HappyAfterSuccess;
-        }
-        else if (SadEvents.Contains(phrase))
-        {
-            mood = Sad;
-        }
-        else if (category == CallCategory.Warnings || category == CallCategory.Combat)
-        {
-            mood = Stressed;
-            if (s != null)
-                s.StressedUntil = Math.Max(s.StressedUntil, now + (category == CallCategory.Combat ? StressAfterCombat : StressAfterWarning));
-        }
-        else if (s != null && now < s.StressedUntil)
-            mood = Stressed;
-        else if (s != null && now < s.HappyUntil && t.Role == CallRole.Reply)
-            mood = Happy;
-        else
-            mood = null;
-
+        string mood = EventMood(t, s, now) ?? CarriedMood(t, s, now);
         return mood != null && pack.Moods.Contains(mood) ? mood : null;
     }
+
+    /// <summary>The mood of the call's own event; marks how long it carries over into the speaker's next calls.</summary>
+    private static string EventMood(Transmission t, State s, float now)
+    {
+        string phrase = t.Phrase ?? "";
+        if (HappyEvents.Contains(phrase))
+        {
+            s.HappyUntil = now + HappyAfterSuccess;
+            return Happy;
+        }
+        if (SadEvents.Contains(phrase))
+            return Sad;
+        CallCategory category = CallCategories.Of(t.Phrase, t.Role);
+        if (category != CallCategory.Warnings && category != CallCategory.Combat)
+            return null;
+        s.StressedUntil = Math.Max(s.StressedUntil, now + (category == CallCategory.Combat ? StressAfterCombat : StressAfterWarning));
+        return Stressed;
+    }
+
+    private static string CarriedMood(Transmission t, State s, float now) =>
+        now < s.StressedUntil ? Stressed
+        : now < s.HappyUntil && t.Role == CallRole.Reply ? Happy
+        : null;
 }

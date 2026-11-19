@@ -15,33 +15,13 @@ internal enum CallCategory
 
 internal static class CallCategories
 {
-    private static readonly HashSet<string> Contacts = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-    {
-        "NewContactAir", "NewContactLand", "NewContactSubsurface", "NewContactSurface", "NewContactsMultiple",
-        "ContactFaded", "ContactIntermittent", "ContactRegained", "ContactsFaded",
-        "IdByDatalink", "IdByEsm", "IdByFiredUpon", "IdByIntel", "IdByRadar", "IdBySonar", "IdByVisual",
-        "TrackFriendly", "TrackHostile", "TrackNeutral",
-        "BanditBandit", "BuoyContact", "MadContact", "EsmContact", "RadarEmission", "MerchantTraffic",
-    };
+    // Phrase groups of tools/voicegen/rules.py, checked against the phrase catalog by check_sync.py.
+    private static readonly HashSet<string> Contacts = PhraseSet(ClipRules.Contacts);
+    private static readonly HashSet<string> Combat = PhraseSet(ClipRules.Combat);
+    private static readonly HashSet<string> MissionAlerts = PhraseSet(ClipRules.MissionAlerts);
+    private static readonly HashSet<string> OtherWarnings = PhraseSet(ClipRules.OtherWarnings);
 
-    private static readonly HashSet<string> Combat = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-    {
-        "AAM_ARS_Fired", "AAM_IR_Fired", "AAM_SARH_Fired", "AshmAway", "AsumAway", "BombsAway", "BuoyAway",
-        "ChaffOut", "DecoyOut", "GunsGuns", "Magnum", "SalvoFire", "SamAway", "SamReady", "Shack",
-        "SplashOne", "SplashTrack", "HitTrack", "TargetDestroyed", "TorpedoAwayAir", "WeaponAway", "Winchester",
-        "LaunchTransient",
-    };
-
-    // Urgent calls that are about the mission, not about danger to the unit, count as "other".
-    private static readonly HashSet<string> MissionAlerts = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-    {
-        "MissionComplete", "MissionFailed", "NewIntel", "NewTasking", "ObjectiveComplete", "ObjectiveFailed",
-    };
-
-    private static readonly HashSet<string> OtherWarnings = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-    {
-        "BeingJammed", "DeckDamaged",
-    };
+    public static HashSet<string> PhraseSet(string[] phrases) => new HashSet<string>(phrases, StringComparer.OrdinalIgnoreCase);
 
     public static CallCategory Of(string phrase, CallRole role)
     {

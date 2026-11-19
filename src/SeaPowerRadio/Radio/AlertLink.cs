@@ -19,6 +19,9 @@ internal static class AlertLink
 {
     private const int TopAlertsKept = 3;   // the game's own limit
     private const int TopAlertsMax = 6;    // never grow beyond this, even if everything is waiting
+    // A message older than this many frames has missed its call (the call takes only this frame's, see CallOrder).
+    private const int RecentFrames = 2;
+    private static readonly Noesis.Color Amber = Noesis.Color.FromArgb(0xFF, 0xF0, 0xB0, 0x28);
 
     private static readonly List<(Alert alert, int frame)> Recent = new List<(Alert, int)>();
     private static readonly HashSet<Alert> Waiting = new HashSet<Alert>();
@@ -36,7 +39,7 @@ internal static class AlertLink
         value.AlertTextOpacity = 100f;
         value.alertTextSetTime = Time.time;
         Recent.Add((value, Time.frameCount));
-        Recent.RemoveAll(r => Time.frameCount - r.frame > 2);
+        Recent.RemoveAll(r => Time.frameCount - r.frame > RecentFrames);
         while (top.Count > TopAlertsKept)
         {
             int index = -1;
@@ -119,7 +122,7 @@ internal static class AlertLink
                 return;
             if (on && !Markers.ContainsKey(a))
             {
-                highlight ??= new Noesis.SolidColorBrush(Noesis.Color.FromArgb(0xFF, 0xF0, 0xB0, 0x28));
+                highlight ??= new Noesis.SolidColorBrush(Amber);
                 var bar = new Noesis.Border
                 {
                     Width = 3f,

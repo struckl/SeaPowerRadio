@@ -5,8 +5,14 @@
 > **Sea Power 0.9.3 (16 November 2026):** 1.5.2 was run in the game on 0.9.3, public and beta, on 18 November 2026. It shows as "R.A.T.S. Radio" in the game and declares 0.8.7 up to every 0.9.x in its `_info.ini`.
 
 A mod for [Sea Power: Naval Combat in the Missile Age](https://store.steampowered.com/app/1286220/) that makes the
-radio net sound like people instead of a screen reader, and makes units tell you **why** they are not doing what you
-ordered.
+radio net sound like people instead of a screen reader.
+
+> **2.0: Radio is the radio itself.** The voices are Workshop items of their own (**R.A.T.S. Radio English** today,
+> more languages and accents to come), and the reports and tools that came with Radio (why-not, contact, fuel and
+> search-and-rescue reports, order queue, clickable messages, unit roles, RTB highlight) are **R.A.T.S. Command Tools**,
+> which also works without Radio. Radio lists both as Required Items and speaks Command Tools' reports. Players who had
+> Radio before see a short note in the main menu once, with buttons to subscribe what is missing. Other mods can talk
+> over the radio too: [docs/rats-bus.md](docs/rats-bus.md).
 
 **[Get it on the Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579)** - needs a mod loader, either one: [R.A.T.S. Keel](https://steamcommunity.com/sharedfiles/filedetails/?id=3835527459) or [Anchor Chain](https://steamcommunity.com/sharedfiles/filedetails/?id=3380210757).
 
@@ -68,37 +74,16 @@ ordered.
   still playing. Up to 3 at once, panned a little left and right, never the same unit twice. Off: one voice at a time.
 - The message of a call stays bottom right until it has been spoken, with a thin marker on the one being spoken.
 
-### Reports
+### With other mods
 
-- Why-not: the reasons the game knows but never says, spoken by the unit, as a message and in the log.
-  - Not in rear aspect, outside the launch envelope, can't reach, inside minimum range, no radar lock, no sensor track,
-    sonar contact only, below the radar horizon, no line of sight, too low or too high, not in the firing arc, seeker
-    can't see the target, wrong speed, not cleared, reloading (with the time left), nothing left to fire, defending
-    against a missile, order dropped by the game.
-  - A wingman holding formation instead of flying a VID (optionally released from formation, so the VID happens).
-  - Who identified a contact and with what sensor.
-  - A reason about a target is said once, not again while the ship closes the range, and once for a whole formation.
-- Contacts without spam: faded and regained contacts with hysteresis, cooldowns and flicker detection. A raid found
-  aircraft by aircraft is called once, and once more as "multiple contacts".
-- Fuel: joker, bingo and fuel emergency against the nearest deck or airfield that can take the aircraft.
-  - Joker: only just enough at cruise speed. Bingo: only just enough at the most economical speed. Emergency: not
-    enough at all.
-  - Bingo comes no later than the game turning the aircraft home on its own.
-  - Aircraft the game gives no home base (no field in the mission carries the type) call against the nearest friendly
-    field, or at 25 / 15 / 5 % of a full tank without one.
-- Search and rescue: survivors in the water (bearing, once per group of rafts), rescuer proceeding, pickup complete
-  with souls aboard, cabin full, survivors delivered on deck.
-
-### On the map and in the windows
-
-- Every unit and track a message mentions is a link that moves the camera there: own units, contacts, track numbers.
-- Aircraft on their way home are yellow on the map and in the formation manager; returning groups sink to the bottom
-  of the formation manager.
-- A small line under every unit in the formation manager says what it is, in the game's own words and language: ship
-  type (Destroyer, Frigate, Attack Submarine), the mission an aircraft is loaded for (CAP, Strike, SEAD, Anti Ship,
-  ASW, AEW), helicopter type. Groups show the role their members share.
-- Order queue window (F8): the selected unit's stacked attack orders, each with a delete button (the game only has
-  "cease fire", which drops all of them) and what it is waiting for: the weapon's state or the reload time left.
+- Reports from R.A.T.S. Command Tools are spoken (2.0): why-not reasons, contact reports without the spam, joker /
+  bingo / fuel emergency, search and rescue. Command Tools finds them and raises the messages, Radio says them in the
+  unit's voice.
+  - Without Command Tools those reports are not there, and the game's own contact lines play as in the unmodded game.
+  - Command Tools also brings the order queue window (F8), clickable units and tracks in messages, unit roles in the
+    formation manager and the RTB highlight. Before 2.0 all of this was part of Radio.
+- Other mods on the net (2.0): a mod can ask Radio to speak a line for a unit, and can bring its own lines as a line
+  pack (`linepack.ini`, clips per voice, no code): [docs/rats-bus.md](docs/rats-bus.md).
 
 ### Settings and voice packs
 
@@ -106,7 +91,8 @@ ordered.
   radio static (0 = clean voice, 100 % = the default amount) and a volume for each kind of call (contact and track
   calls, combat calls, warning calls, replies to orders, other calls). Changes apply at once and are saved.
 - Every feature has its own entry in the config file.
-- The 43 voices are the **NATO (English)** pack. Other languages come later as separate Workshop items (no DLL needed).
+- The 43 voices are the **NATO (English)** pack, since 2.0 the item **R.A.T.S. Radio English**. Other languages and
+  accent packs come as separate Workshop items too (no DLL needed).
 - Options > Audio > Rats Radio > **Voice packs** lists every country (NATO, Warsaw Pact, Other) with a drop-down:
   *Auto* (the installed pack for that country, else the game's voice), *Game voice* or a pack.
   - A country without a pack keeps the game's own voice: the Soviets speak the game's Russian. Choose *NATO (English)*
@@ -128,17 +114,20 @@ everything works offline.
    file once; it is the one that runs on the 3D-globe public beta) or **[Anchor Chain](https://steamcommunity.com/sharedfiles/filedetails/?id=3380210757)** following its
    [installation guide](https://seapower-modders.github.io/AnchorChain/install-anchor-chain.html) (one manual step: copy its
    preloader into the game folder).
-2. Subscribe to **[Sea Power: R.A.T.S. Radio](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579)** on the Steam Workshop. About 910 MB: the
-   43 rendered voices with their mood takes.
+2. Subscribe to **[Sea Power: R.A.T.S. Radio](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579)** on the Steam Workshop. Steam offers its
+   Required Items with it: **R.A.T.S. Radio English** (the 43 voices with their moods, about 910 MB) and **R.A.T.S. Command Tools**. The
+   game's Mod menu fetches missing ones too ("Sync dependencies").
 3. Start a mission. The log `<Sea Power>\BepInEx\LogOutput.log` lists the installed voice packs and the roster: every
    unit with its callsign, voice (`packId/personaId`) and nation.
 
 Manual install instead of the Workshop: unzip the release into `<Sea Power>\Sea Power_Data\StreamingAssets\
-SeaPowerRadio\` (`SeaPowerRadio.dll`, `_info.ini`, `voices\`).
+SeaPowerRadio\` (`SeaPowerRadio.dll`, `SeaPowerRadioFlat.dll`, `_info.ini`, `data\`), the English pack into its own folder
+(`StreamingAssets\SeaPowerRadioEnglish\`), and Command Tools as its own release says.
 
 Settings: in the game, Options > Audio > **Rats Radio** (see above). The same values are in
-`<Sea Power>\BepInEx\config\dev.sewerlabs.seapowerradio.cfg` (volumes, static, voices, which calls are spoken, the order
-queue key, how many voices may overlap, ...).
+`<Sea Power>\BepInEx\config\dev.sewerlabs.seapowerradio.cfg` (volumes, static, voices, how many voices may overlap, ...).
+The reports and tools have their own file since 2.0 (`dev.sewerlabs.seapowercommandtools.cfg`), which takes over your
+earlier Radio settings for them once.
 
 **Mod ships and their names.** A ship says its name only if that name was rendered as a clip (every ship and shore unit
 of the base game, `voices/names.txt`); any other name gets a generated callsign. Hull prefixes such as USS, HMS, HMCS or
@@ -199,8 +188,10 @@ the default build is for the globe game (`SeaPowerRadio.dll`), `-p:GameBuild=Fla
 `Sea Power_Data\Managed` (`-p:FlatManagedDir=...`, default `..\_gamerefs\SeaPower-0.8.7-public\Managed` next to the mod
 folders in the workspace) into `SeaPowerRadioFlat.dll`. The package holds both; each looks at the game it runs on and
 stays off when it is not the one it was made for (the log says which runs). Anchor Chain skips a plugin whose GUID it
-has already seen, so the flat build registers as `dev.sewerlabs.seapowerradio.flatmap`. `tools/package.ps1` builds and
-checks both (`tools/compat-check` in the workspace).
+has already seen, so the flat build registers as `dev.sewerlabs.seapowerradio.flatmap`. The start, the hook registry, the
+config file, the log and the host object are the workspace's shared skeleton (`SeaPowerKeel\shared`, compiled into the DLL
+as linked source; the csproj imports its `Rats.Mod.props`). `tools/package.ps1` builds and checks both
+(`tools/compat-check` in the workspace).
 
 Releases: [docs/workshop.md](docs/workshop.md) (`tools/package.ps1`); in-game test checklists:
 [docs/testing.md](docs/testing.md); the game systems the mod hooks into (stock voices, why a unit doesn't fire,
@@ -233,10 +224,12 @@ edge-tts (`generate.py`) remains as a fallback engine.
 | `phrases.py` | phrase catalog (stock keys, why-not reasons, callouts, T3 identification causes) as *takes*: every clip is cut out of a whole sentence (phrases after a carrier callsign, callsign words / flight-position pairs / number pieces each in the slot they're used in), so stitched pieces keep the voice's own melody and pauses. `{trk}`/`{brg}`/`{num}`/`{alt}`/`{count}` slots split a phrase around a number. `STOCK_MAP` maps every stock voice key to its replacement |
 | `chatterbox_render.py` | renders the library into `mod/voices/<persona>/` on the GPU; phrase urgency -> `exaggeration`/`cfg_weight`; hallucinated or unalignable takes are re-rolled; resumable |
 | `align.py` | CTC forced aligner (wav2vec2) giving word timestamps, since Chatterbox reports none |
-| `radio.py` | the radio sound, split into the *voice* half (baked per clip) and the *transmission* half (hiss, click, crackle, squelch - once per transmission, at runtime) |
+| `radio.py` | the radio sound, split into the *voice* half (baked per clip) and the *transmission* half (hiss, click, crackle, squelch, loudness gain and soft limiter - once per transmission, at runtime); its `transmission()` follows the plugin's RadioFx step for step |
 | `reel.py` | stitches clips into transmissions like the plugin will, pauses at numbers closed up the same way -> `tools/voicegen/samples/` (`--as-cut`: joins as cut, for comparison; `--library`: another checkout's voices) |
 | `names.py` | in-game names: ship/shore short names and squadron callsign words from the game's language files, each bound to a few voices -> `mod/voices/names.txt` |
-| `check_sync.py` | checks callsign lists (Python vs. C#) and that every stock key is mapped - run before a render |
+| `rules.py` | the one source of the rules plugin and tools share: callsign words, clip number ranges, pauses at numbers, phrase groups (call volumes, moods), priority thresholds, the radio sound table |
+| `rules_cs.py` | writes `rules.py`, the named variants and a few phrase facts into `src/SeaPowerRadio/Radio/ClipRules.g.cs` |
+| `check_sync.py` | checks that `ClipRules.g.cs`, `catalog.txt` and `stockmap.txt` are current, that every phrase group and named variant exists, and that every stock key is mapped - run before a build and a render |
 | `check_library.py` | lists takes still missing from the rendered library |
 | `full_render.ps1` | detached, game-aware full render (pauses while a game runs), verify, re-roll, deploy |
 | `generate.py`, `edge_cast.py` | edge-tts fallback engine and its cast |
@@ -262,10 +255,13 @@ python -m venv .venv && .venv/Scripts/python -m pip install -r tools/voicegen/re
 
 ```
 src/SeaPowerRadio/        C# plugin (netstandard2.1, BepInEx 5 / HarmonyX via Anchor Chain)
-  Plugin.cs               Anchor Chain entry point
-  PatchRegistry.cs        every game hook, grouped by feature; a missing target disables only that feature
-  Core/EventBus.cs        normalized game events (stock voice requests, mission start/end, launches)
-  Patches/                Harmony patches (stock voice capture, launching weapon, mission lifecycle)
+  Plugin.cs, ModInfo.cs   Anchor Chain entry point; what the shared skeleton reads (GUID, name, version, log source)
+  RadioApi.cs, RatsBus.cs what other mods call: rats.radio.say and line packs (docs/rats-bus.md)
+  Hooks.cs                every game hook, grouped by feature (shared HookRegistry); a missing target disables only that
+                          feature, except the mission and launch hooks the roster needs (then the mod stays off)
+  RadioHost.cs, Settings.cs  the host object (shared ModHost) and the config entries (shared ModSettings)
+  Core/EventBus.cs        the aircraft-launched event (mission start/end come from the shared MissionHooks)
+  Patches/                Harmony patches (stock voice capture, launching weapon, speed orders, aircraft launch, alerts, options)
   Roster/                 player elements + hangar slots → callsign + voice
   Voices/                 callsign generator, voice assignment, voice library loader
   Radio/                  Catalog (catalog.txt / stockmap.txt), TransmissionBuilder (callsign + phrase + number
@@ -273,19 +269,13 @@ src/SeaPowerRadio/        C# plugin (netstandard2.1, BepInEx 5 / HarmonyX via An
                           (joins the clips, hiss, click, crackle, squelch),
                           RadioPlayer (priority queue, up to 4 channels for overlapping voices), CallCategory (call kind → volume),
                           StockVoiceRouter (stock line → own voice)
-  Contacts/               ContactReporter: new / lost / intermittent / hostile calls with hysteresis and cooldowns
-  WhyNot/                 WhyNotMonitor (engage states, reload ETA, sonar-only, dropped orders → spoken + alert),
-                          QueueOverlay (selected unit's stacked attack orders with delete buttons, F8)
   Ui/                     OptionsPage: the "Rats Radio" group in the Options menu's Audio tab (code-built Noesis controls)
-  Air/                    FuelMonitor (joker / bingo calls), RtbMarker (RTB yellow + sorting), SarReporter
-  Formation/              UnitRole (ship type / aircraft mission / helicopter type), RoleLine (adds the role line
-                          to the formation manager's row templates when the view is built)
 mod/                      files shipped next to the DLL (voices/: personas.txt, catalog.txt, stockmap.txt,
                           names.txt, rendered clips; _info.ini; rats-radio-aliases.txt = default hull prefixes)
-tools/voicegen/           offline voice pipeline (cast.py = the persona list)
+tools/voicegen/           offline voice pipeline (cast.py = the persona list; rules.py = the clip and sound rules the
+                          plugin shares, written to Radio/ClipRules.g.cs by rules_cs.py; check_sync.py checks both sides)
 tools/package.ps1         release build → dist/SeaPowerRadio/ (+ release zip)
 tools/shot-director/      dev-only plugin that drives the game for the Workshop screenshots (never shipped)
-tools/workshop-upload/    dev-only: updates the Workshop item through the Steam client, no game UI (never shipped)
 docs/                     test checklists, stock voice inventory, Workshop release
 ```
 

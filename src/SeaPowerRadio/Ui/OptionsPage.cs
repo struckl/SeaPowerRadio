@@ -179,7 +179,6 @@ internal static class OptionsPage
             string value = index == 0 ? VoicePacks.Auto : index == 1 ? VoicePacks.GameVoice : packs[index - 2].Id;
             if (string.Equals(entry.Value, value, StringComparison.Ordinal)) return;
             entry.Value = value;
-            Settings.SaveSoon();
         };
         Noesis.Grid.SetColumn(combo, 1);
 
@@ -225,7 +224,6 @@ internal static class OptionsPage
         box.Click += (sender, args) =>
         {
             entry.Value = box.IsChecked == true;
-            Settings.SaveSoon();
         };
         return box;
     }
@@ -272,7 +270,6 @@ internal static class OptionsPage
             if (Math.Abs(entry.Value - v) > 0.001f)
             {
                 entry.Value = v;
-                Settings.SaveSoon();
             }
         };
 

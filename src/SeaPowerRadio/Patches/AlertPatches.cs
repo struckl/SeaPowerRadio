@@ -6,14 +6,13 @@ namespace SeaPowerRadio.Patches;
 /// <summary>
 /// The bottom-right message list: every RaiseAlert overload ends in the AlertyMcAlertFace setter, which appends to
 /// TopAlerts and evicts the oldest beyond three. The prefix does the same, but keeps messages whose radio call
-/// is still waiting (Radio/AlertLink). Before that, every unit and track the message mentions is made a link
-/// (Radio/MessageLinker) - the message log shows the same message, so it gets the links too.
+/// is still waiting (Radio/AlertLink). R.A.T.S. Command Tools makes the mentions in a message links with its own,
+/// higher-priority prefix on the same setter, so it runs before this one.
 /// </summary>
 internal static class AlertPatches
 {
-    public const string FeatureName = "AlertLink";
-
-    public static Feature Declare() => new Feature(FeatureName)
+    public static void Declare() => HookRegistry.Add("AlertLink", HookStage.Load,
+            "messages are not kept until their call is spoken", optional: true)
         .Hook("SeapowerUI.ViewModels.MainGameViewModel", "set_AlertyMcAlertFace", new[] { typeof(Alert) },
             typeof(AlertPatches), prefix: nameof(SetPrefix));
 
@@ -21,7 +20,6 @@ internal static class AlertPatches
     {
         if (value == null)
             return true;
-        MessageLinker.Link(value);
         if (!AlertLink.Enabled)
             return true;
         try

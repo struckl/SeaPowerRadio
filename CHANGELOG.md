@@ -1,5 +1,42 @@
 # Changelog
 
+## 2.0.0 - unreleased - Radio is the radio; voices and tools are items of their own
+
+> **Not released.** 2.0 is held back (his decision 2026-11-19): `main` stays on 1.x, which is still developed. This branch lives as a pull request until 2.0 is picked up again; merge `main` into it then, do not merge it into `main`.
+
+
+- **Voices are items of their own.** The 43 English voices, with their mood takes, are now **R.A.T.S. Radio English**
+  (the same pack, `nato-en` 2.0.0); Radio itself carries no voices (it has a small `data/` folder with the country groups and the map of the game's
+  voice lines). Every language and accent pack after it works the same way.
+- **The reports and tools moved to R.A.T.S. Command Tools**: why-not, contact reports, fuel calls, search and rescue,
+  the order queue window, clickable units and tracks, unit roles and the RTB highlight. Command Tools works alone (as
+  messages and windows) and Radio speaks its reports in the units' voices. Your settings for them are taken over once.
+  Without Command Tools, the game's own contact lines play again instead of being muted.
+- **Required Items**: R.A.T.S. Radio English and R.A.T.S. Command Tools. The game's Mod menu ("Sync dependencies") fetches
+  them; players who had Radio before also get a note in the main menu once (what moved, a Subscribe button for what is
+  missing, "Don't show again"). New players never see it.
+- **Other mods can talk on the net**: `rats.radio.say` (a unit, phrase keys, numbers) and **line packs** (`linepack.ini`,
+  a mod's own lines rendered in the voices, no code). Packs are also found in a `radio/` sub folder.
+  [docs/rats-bus.md](docs/rats-bus.md).
+- Compiled for both game versions; the DLLs pass the both-games check (`tools/compat-check`). Not run in the game yet.
+- Fixed: a call that filled the voice clip cache could throw away clips of a call still being put together, which
+  then played broken or not at all.
+- Changed (internal): one rules table (`tools/voicegen/rules.py`, read by the plugin as `ClipRules.g.cs`) for callsign
+  words, clip number ranges, the variants the plugin picks by name, call-volume and mood groups and the radio sound;
+  `check_sync.py` checks it all. The shipped clips and their names are unchanged.
+- Changed (internal): Radio now uses the workspace's shared mod skeleton (`SeaPowerKeel\shared`) for the start, the hook
+  registry, mission start and end, the config file, the log, the host object, the project file and the package steps; its
+  own copies are gone. Config sections, keys and defaults, the GUIDs and every text are unchanged. What the shared code
+  brings along: Radio stays off when it is unticked in the game's Mod Manager (Anchor Chain loads unticked folders too);
+  a host error is logged only the first five times; the radio net is cleared when the game closes, not in the middle of
+  the shutdown; patch priorities are set explicitly; the aircraft-launch hook is a feature of its own and, like the mission
+  hooks, switches the mod off when the game no longer has the method.
+- Changed (internal): listening samples (`reel.py`) mix like the game again: the same joins, crossfade, loudness gain
+  and soft limiter; low altitudes use the rendered clips.
+- Changed (internal): the order the game calls in (appended pieces, launch line, messages in the same frame) is
+  written down in one place (`CallOrder`); long functions split; unused code, fields and the per-repo Workshop
+  uploader removed.
+
 ## 1.5.2 - 2026-11-18 - fixes from player reports
 
 Run in the test VM on game 0.9.3 public and beta on 2026-11-18: Red Sea Breakout with radio calls, no seed warning, no Radio error.

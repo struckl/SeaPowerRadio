@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using BepInEx;
 using SeaPowerRadio.Voices;
 
 namespace SeaPowerRadio.Radio;
@@ -11,7 +10,6 @@ namespace SeaPowerRadio.Radio;
 internal sealed class NameAlias
 {
     public string Match;      // slug of the game name ("uss_pargo")
-    public bool StartsWith;   // the line ended in '*': every name that starts with it
     public string Say;        // a name with clips (names.txt) or a ship/sub/shore callsign word ("Victory"), null = keep the unit's own
     public string Voice;      // "gb_m_04" or "nato-en/gb_m_04", null = chosen as usual
     public string Source;     // file:line, for the log
@@ -34,7 +32,7 @@ internal static class NameAliases
     private static readonly List<string> prefixes = new List<string>();         // lower case, longest first
     private static readonly HashSet<string> warned = new HashSet<string>();
 
-    public static string UserFile => Path.Combine(Paths.ConfigPath, "SeaPowerRadio", "aliases.txt");
+    public static string UserFile => UserFiles.PathOf("aliases.txt");
 
     public static void Reload()
     {
@@ -104,53 +102,59 @@ internal static class NameAliases
             string line = lines[i].Trim();
             if (line.Length == 0 || line.StartsWith("#") || line.StartsWith(";")) continue;
             string where = $"{Path.GetFileName(Path.GetDirectoryName(file))}/{Path.GetFileName(file)}:{i + 1}";
-
             if (line.StartsWith("*prefix", StringComparison.OrdinalIgnoreCase))
-            {
-                foreach (string p in line.Substring("*prefix".Length).Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries))
-                    if (!prefixes.Contains(p.ToLowerInvariant()))
-                        prefixes.Add(p.ToLowerInvariant());
-                continue;
-            }
-
-            int eq = line.IndexOf('=');
-            if (eq <= 0)
-            {
-                ModLog.Warn($"[aliases] {where}: no '=' in \"{line}\", skipped");
-                continue;
-            }
-            string left = line.Substring(0, eq).Trim();
-            string right = line.Substring(eq + 1);
-            int bar = right.IndexOf('|');
-            string say = (bar >= 0 ? right.Substring(0, bar) : right).Trim();
-            string voice = bar >= 0 ? right.Substring(bar + 1).Trim() : "";
-
-            bool startsWith = left.EndsWith("*");
-            if (startsWith) left = left.TrimEnd('*').Trim();
-            if (Names.Slug(left) == "x" || (say.Length == 0 && voice.Length == 0))   // "x": nothing but punctuation
-            {
-                ModLog.Warn($"[aliases] {where}: \"{line}\" needs a game name and a name or voice, skipped");
-                continue;
-            }
-
-            var alias = new NameAlias
-            {
-                Match = Names.Slug(left),
-                StartsWith = startsWith,
-                Say = say.Length > 0 ? say : null,
-                Voice = voice.Length > 0 ? voice : null,
-                Source = where,
-            };
-            CheckTargets(alias);
-            if (startsWith)
-            {
-                starts.RemoveAll(s => s.Match == alias.Match);
-                starts.Add(alias);
-            }
+                AddPrefixes(line.Substring("*prefix".Length));
             else
-            {
-                exact[alias.Match] = alias;
-            }
+                ReadAlias(line, where);
+        }
+    }
+
+    private static void AddPrefixes(string list)
+    {
+        foreach (string p in list.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries))
+            if (!prefixes.Contains(p.ToLowerInvariant()))
+                prefixes.Add(p.ToLowerInvariant());
+    }
+
+    /// <summary>"game name[*] = name to say | voice".</summary>
+    private static void ReadAlias(string line, string where)
+    {
+        int eq = line.IndexOf('=');
+        if (eq <= 0)
+        {
+            ModLog.Warn($"[aliases] {where}: no '=' in \"{line}\", skipped");
+            return;
+        }
+        string left = line.Substring(0, eq).Trim();
+        string right = line.Substring(eq + 1);
+        int bar = right.IndexOf('|');
+        string say = (bar >= 0 ? right.Substring(0, bar) : right).Trim();
+        string voice = bar >= 0 ? right.Substring(bar + 1).Trim() : "";
+
+        bool startsWith = left.EndsWith("*");
+        if (startsWith) left = left.TrimEnd('*').Trim();
+        if (Names.Slug(left) == ClipRules.SlugEmpty || (say.Length == 0 && voice.Length == 0))   // nothing but punctuation
+        {
+            ModLog.Warn($"[aliases] {where}: \"{line}\" needs a game name and a name or voice, skipped");
+            return;
+        }
+
+        var alias = new NameAlias
+        {
+            Match = Names.Slug(left),
+            Say = say.Length > 0 ? say : null,
+            Voice = voice.Length > 0 ? voice : null,
+            Source = where,
+        };
+        CheckTargets(alias);
+        if (startsWith)
+        {
+            starts.RemoveAll(s => s.Match == alias.Match);
+            starts.Add(alias);
+        }
+        else
+        {
+            exact[alias.Match] = alias;
         }
     }
 
@@ -191,13 +195,9 @@ internal static class NameAliases
             ModLog.Warn($"[aliases] {a.Source}: {unitName} speaks with the '{pack.Id}' pack, which has no voice \"{a.Voice}\"; voice chosen as usual");
     }
 
-    private static void EnsureUserFile()
-    {
-        try
-        {
-            if (File.Exists(UserFile)) return;
-            Directory.CreateDirectory(Path.GetDirectoryName(UserFile));
-            File.WriteAllText(UserFile,
+    private static void EnsureUserFile() => UserFiles.Ensure(UserFile, Template, "aliases");
+
+    private const string Template =
 @"# Rats Radio: your own ship names. Read at every mission start. Workshop updates never touch this file.
 #
 #   game name = name to say | voice
@@ -215,11 +215,5 @@ internal static class NameAliases
 # HMS Bristol = Bristol | gb_m_06
 # CVN-68* = Nimitz
 # *prefix HNoMS, HSwMS
-");
-        }
-        catch (Exception ex)
-        {
-            ModLog.Warn($"[aliases] could not create {UserFile}: {ex.Message}");
-        }
-    }
+";
 }

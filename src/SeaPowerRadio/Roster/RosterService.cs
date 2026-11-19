@@ -1,7 +1,6 @@
 using System;
 using SeaPower;
 using SeaPowerRadio.Core;
-using SeaPowerRadio.Voices;
 
 namespace SeaPowerRadio.Roster;
 
@@ -12,8 +11,8 @@ internal static class RosterService
 
     public static void Init()
     {
-        EventBus.MissionStarted += OnMissionStarted;
-        EventBus.MissionEnded += () => Current = null;
+        MissionHooks.Started += OnMissionStarted;
+        MissionHooks.Ended += () => Current = null;
         EventBus.AircraftLaunched += OnAircraftLaunched;
     }
 

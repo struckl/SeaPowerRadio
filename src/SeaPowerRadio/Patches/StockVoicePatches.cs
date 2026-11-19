@@ -13,9 +13,8 @@ namespace SeaPowerRadio.Patches;
 /// </summary>
 internal static class StockVoicePatches
 {
-    public const string FeatureName = "StockVoice";
-
-    public static Feature Declare() => new Feature(FeatureName)
+    public static void Declare() => HookRegistry.Add("StockVoice", HookStage.Load,
+            "the game's own voice lines play", optional: true)
         .Hook("SeaPower.VoiceMessage", "SubmitMessage",
             new[] { typeof(string), typeof(ObjectBase), typeof(string), typeof(int), typeof(string), typeof(bool), typeof(bool) },
             typeof(StockVoicePatches), prefix: nameof(SubmitPrefix))
@@ -23,15 +22,15 @@ internal static class StockVoicePatches
             new[] { typeof(string), typeof(ObjectBase), typeof(string), typeof(int), typeof(string) },
             typeof(StockVoicePatches), prefix: nameof(AppendPrefix));
 
+    // Harmony matches the hooked methods' parameters by name, so both prefixes list them all.
     private static bool SubmitPrefix(string clip, ObjectBase speaker, string nation, int number, string format,
         bool sequence, bool altitude) =>
-        Capture(clip, speaker, nation, number, format, sequence, altitude, appended: false);
+        Capture(clip, speaker, nation, number, appended: false);
 
     private static bool AppendPrefix(string clip, ObjectBase speaker, string nation, int number, string format) =>
-        Capture(clip, speaker, nation, number, format, sequence: true, altitude: false, appended: true);
+        Capture(clip, speaker, nation, number, appended: true);
 
-    private static bool Capture(string clip, ObjectBase speaker, string nation, int number, string format,
-        bool sequence, bool altitude, bool appended)
+    private static bool Capture(string clip, ObjectBase speaker, string nation, int number, bool appended)
     {
         try
         {
@@ -39,13 +38,8 @@ internal static class StockVoicePatches
             {
                 Key = clip,
                 Speaker = speaker,
-                Nation = nation,
                 Number = number,
-                Format = format,
-                Sequence = sequence,
-                Altitude = altitude,
                 Appended = appended,
-                Time = Time.unscaledTime,
                 Frame = Time.frameCount,
             };
 
@@ -56,13 +50,12 @@ internal static class StockVoicePatches
                 ModLog.Info($"[stock-voice] {(appended ? "+" : "")}{clip}{num} <- {who}");
             }
 
-            EventBus.Publish(request);
             return !Radio.StockVoiceRouter.Handle(request);
         }
         catch (Exception ex)
         {
             ModLog.Error($"Stock voice capture failed for '{clip}': {ex.Message}");
-            return true; // let the game play its line
+            return true;
         }
     }
 }

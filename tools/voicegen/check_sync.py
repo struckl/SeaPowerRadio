@@ -1,9 +1,12 @@
-"""Consistency checks between the voice catalog, the plugin and the game. Run before a full render.
+"""Consistency checks between the voice catalog, the plugin and the game. Run before a full render and before a build.
 
-1. Callsign words in phrases.py == the word lists in src/SeaPowerRadio/Voices/Callsigns.cs.
-2. Every stock voice key the game can play (voice.ini [US] + literal call sites, docs/stock-voice-events.md) has
-   an entry in phrases.STOCK_MAP.
-3. Every catalog key referenced by STOCK_MAP exists.
+1. src/SeaPowerRadio/Radio/ClipRules.g.cs is what rules_cs.py writes from rules.py and phrases.py today (callsign
+   words, number ranges, named variants, phrase groups, sound table).
+2. mod/voices/catalog.txt and stockmap.txt are what phrases.py writes today.
+3. Every phrase key in a phrase group of rules.py (call volumes, moods) exists in phrases.PHRASES.
+4. Every named variant (phrases.NAMED_VARIANTS) is one of its phrase's variants.
+5. Every stock voice key the game can play (voice.ini [US] + literal call sites, docs/stock-voice-events.md) has
+   an entry in phrases.STOCK_MAP, and every catalog key it points at exists.
 
 Exit code 1 on any mismatch.
 """
@@ -14,29 +17,46 @@ import re
 import sys
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from phrases import CALLSIGN_WORDS, PHRASES, STOCK_MAP  # noqa: E402
+import rules  # noqa: E402
+import rules_cs  # noqa: E402
+from paths import REPO  # noqa: E402
+from phrases import (CATALOG_FILE, NAMED_VARIANTS, PHRASES, STOCK_MAP, STOCKMAP_FILE,  # noqa: E402
+                     catalog_text, stockmap_text)
 
-REPO = HERE.parents[1]
 problems: list[str] = []
+phrase_keys = {p.key for p in PHRASES}
 
-cs = (REPO / "src" / "SeaPowerRadio" / "Voices" / "Callsigns.cs").read_text(encoding="utf-8")
-block = cs.split("Words =", 1)[1].split("};", 1)[0]
-cs_words = re.findall(r'"([A-Z][a-z]+)"', block)
-if sorted(cs_words) != sorted(CALLSIGN_WORDS):
-    problems.append(f"callsign words differ: only C# {set(cs_words) - set(CALLSIGN_WORDS)}, "
-                    f"only Python {set(CALLSIGN_WORDS) - set(cs_words)}")
+
+def same_text(path: Path, expected: str, fix: str) -> None:
+    actual = path.read_text(encoding="utf-8").replace("\r\n", "\n") if path.exists() else ""
+    if actual != expected:
+        problems.append(f"{path.relative_to(REPO)} is out of date: run {fix}")
+
+
+same_text(rules_cs.TARGET, rules_cs.render(), "python tools/voicegen/rules_cs.py")
+same_text(CATALOG_FILE, catalog_text(), "python tools/voicegen/phrases.py")
+same_text(STOCKMAP_FILE, stockmap_text(), "python tools/voicegen/phrases.py")
+
+for group, keys in rules.PHRASE_GROUPS.items():
+    unknown = sorted(set(keys) - phrase_keys)
+    if unknown:
+        problems.append(f"rules.py group {group} names phrases that do not exist: {unknown}")
+
+variants = {p.key: p.variants for p in PHRASES}
+for phrase, named in NAMED_VARIANTS.items():
+    for name, text in named.items():
+        if text not in variants.get(phrase, ()):
+            problems.append(f"named variant {phrase}.{name} = {text!r} is no variant of {phrase}")
 
 inventory = (REPO / "docs" / "stock-voice-events.md").read_text(encoding="utf-8")
 stock_keys = set(re.findall(r"^\| [^|]+ \| `([^`]+)` \|", inventory, flags=re.M))
-stock_keys |= set(re.findall(r"^- `([^`]+)` –", inventory, flags=re.M))
+stock_keys |= set(re.findall(r"^- `([^`]+)` [-\N{EN DASH}]", inventory, flags=re.M))
 missing = sorted(stock_keys - set(STOCK_MAP))
 if missing:
     problems.append(f"stock keys without STOCK_MAP entry: {missing}")
 
-phrase_keys = {p.key for p in PHRASES}
 dangling = {k: v for k, v in STOCK_MAP.items() if v is not None and v not in phrase_keys}
 if dangling:
     problems.append(f"STOCK_MAP targets missing from PHRASES: {dangling}")
@@ -44,4 +64,6 @@ if dangling:
 if problems:
     print("\n".join("x " + p for p in problems))
     sys.exit(1)
-print(f"ok: {len(cs_words)} callsign words, {len(stock_keys)} stock keys mapped, {len(phrase_keys)} phrases")
+words = sum(len(w) for w in rules.CALLSIGN_WORDS.values())
+print(f"ok: ClipRules.g.cs, catalog and stock map current; {words} callsign words, {len(stock_keys)} stock keys "
+      f"mapped, {len(phrase_keys)} phrases, {sum(len(k) for k in rules.PHRASE_GROUPS.values())} group entries")

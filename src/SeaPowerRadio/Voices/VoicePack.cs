@@ -15,10 +15,8 @@ internal sealed class VoicePack
 {
     public string Id;
     public string Name;
-    public string Language;                 // picks the number / callsign rules, see LanguageRules
     public string[] Nations;                // countries that use this pack under "Auto"
     public Version Version;
-    public Version MinBaseVersion;
     public string Directory;                // the folder that holds voicepack.ini
 
     public readonly List<VoicePersona> Personas = new List<VoicePersona>();
@@ -57,6 +55,12 @@ internal sealed class VoicePack
     public readonly HashSet<string> Moods = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
+    /// Folders of line packs (<c>linepack.ini</c>) for this pack: other mods' own lines, <c>&lt;root&gt;/&lt;persona&gt;/&lt;key&gt;.mp3</c>.
+    /// A clip the pack itself does not have is looked for there.
+    /// </summary>
+    public readonly List<string> LineRoots = new List<string>();
+
+    /// <summary>
     /// File of a clip. A key "mood/clip" is looked up in the mood folders (first one that has it); a plain key in the
     /// persona's folder.
     /// </summary>
@@ -64,7 +68,18 @@ internal sealed class VoicePack
     {
         int slash = key.IndexOf('/');
         if (slash < 0)
-            return System.IO.Path.Combine(Directory, persona, key + ".mp3");
+        {
+            string own = System.IO.Path.Combine(Directory, persona, key + ".mp3");
+            if (LineRoots.Count == 0 || File.Exists(own))
+                return own;
+            foreach (string root in LineRoots)
+            {
+                string path = System.IO.Path.Combine(root, persona, key + ".mp3");
+                if (File.Exists(path))
+                    return path;
+            }
+            return own;
+        }
         string mood = key.Substring(0, slash), clip = key.Substring(slash + 1) + ".mp3";
         string first = null;
         foreach (string root in MoodRoots)
@@ -117,16 +132,25 @@ internal sealed class VoicePack
             ModLog.Warn($"Voice pack '{id}' ({directory}) needs Rats Radio {min} or newer (this is {baseVersion}), skipped.");
             return null;
         }
+        WarnIfNotEnglish(Get(values, "Language"));
         return new VoicePack
         {
             Id = id.Trim(),
             Name = Get(values, "Name") is string n && n.Length > 0 ? n : id,
-            Language = (Get(values, "Language") ?? "en").ToLowerInvariant(),
             Nations = (Get(values, "Nations") ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToArray(),
             Version = ParseVersion(Get(values, "Version"), new Version(1, 0, 0)),
-            MinBaseVersion = min,
             Directory = directory,
         };
+    }
+
+    private static readonly HashSet<string> WarnedLanguages = new HashSet<string>();
+
+    /// <summary>Numbers and callsigns follow English rules only so far: a pack in another language says them that way.</summary>
+    private static void WarnIfNotEnglish(string language)
+    {
+        string code = (language ?? "en").ToLowerInvariant();
+        if (code != "en" && WarnedLanguages.Add(code))
+            ModLog.Warn($"No number/callsign rules for language '{code}' in this version: using the English rules.");
     }
 
     private static string Get(Dictionary<string, string> values, string key) =>
@@ -157,7 +181,7 @@ internal sealed class VoicePack
                 ModLog.Warn($"{Id}/personas.txt: bad line '{line}'");
                 continue;
             }
-            Personas.Add(new VoicePersona { Pack = this, Id = f[0].Trim(), Language = f[1].Trim(), Gender = f[2].Trim(), Accent = f[3].Trim() });
+            Personas.Add(new VoicePersona { Pack = this, Id = f[0].Trim(), Gender = f[2].Trim(), Accent = f[3].Trim() });
         }
         LoadAccents();
         Catalog = new Catalog(Directory, baseCatalog);

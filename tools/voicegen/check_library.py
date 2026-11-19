@@ -12,10 +12,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from cast import CAST, REPO  # noqa: E402
+from cast import CAST  # noqa: E402
+from paths import VOICES  # noqa: E402
 from phrases import takes_for  # noqa: E402
-
-VOICES = REPO / "mod" / "voices"
 
 
 def main() -> int:

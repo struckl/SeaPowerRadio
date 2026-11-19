@@ -10,7 +10,7 @@ namespace SeaPowerRadio.Voices;
 /// <summary>
 /// Finds the installed voice packs and says which one speaks for a country. Discovery scans every folder the game
 /// loads mods from - <c>StreamingAssets/&lt;folder&gt;</c> and the Steam Workshop items of the game - plus the base
-/// mod's own folder, for a <c>voicepack.ini</c> at the top level or in <c>voices/</c>. It reads the folders
+/// mod's own folder, for a <c>voicepack.ini</c> at the top level, in <c>voices/</c> or in <c>radio/</c> (also <c>moodpack.ini</c> and <c>linepack.ini</c>). It reads the folders
 /// itself instead of asking the game's FileManager (whose API differs between the two game versions).
 /// </summary>
 internal static class VoicePacks
@@ -30,7 +30,6 @@ internal static class VoicePacks
     public static VoicePack ById(string id) =>
         All.FirstOrDefault(p => string.Equals(p.Id, id, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>The pack a voice id ("packId/personaId") belongs to.</summary>
     public static VoicePack OfVoice(string voice)
     {
         if (voice == null) return null;
@@ -45,59 +44,27 @@ internal static class VoicePacks
         All.Clear();
         var folders = new List<string> { VoiceLibrary.ModDirectory };
         folders.AddRange(ModFolders());
-
-        var found = new Dictionary<string, VoicePack>(StringComparer.OrdinalIgnoreCase);
-        var seenDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var packDirs = new List<string>();
         var moodDirs = new List<string>();
+        var lineDirs = new List<string>();
         foreach (string folder in folders)
-        {
-            foreach (string dir in new[] { folder, Path.Combine(folder, "voices") })
+            foreach (string dir in new[] { folder, Path.Combine(folder, "voices"), Path.Combine(folder, "radio") })
             {
                 string full;
                 try { full = Path.GetFullPath(dir); } catch (Exception) { continue; }
-                if (File.Exists(Path.Combine(full, "moodpack.ini")) && !moodDirs.Contains(full, StringComparer.OrdinalIgnoreCase))
-                    moodDirs.Add(full);
-                if (!File.Exists(Path.Combine(full, "voicepack.ini")) || !seenDirs.Add(full))
-                    continue;
-                try
-                {
-                    VoicePack pack = VoicePack.ReadIni(full, baseVersion);
-                    if (pack == null) continue;
-                    if (found.TryGetValue(pack.Id, out VoicePack other))
-                    {
-                        bool newer = pack.Version > other.Version;
-                        ModLog.Info($"Voice pack '{pack.Id}' found twice ({other.Directory} {other.Version}, {pack.Directory} {pack.Version}): keeping {(newer ? pack.Directory : other.Directory)}.");
-                        if (!newer) continue;
-                    }
-                    found[pack.Id] = pack;
-                }
-                catch (Exception ex)
-                {
-                    ModLog.Warn($"Voice pack in {full} could not be read: {ex.Message}");
-                }
+                AddIfHas(moodDirs, full, "moodpack.ini");
+                AddIfHas(lineDirs, full, "linepack.ini");
+                AddIfHas(packDirs, full, "voicepack.ini");
             }
-        }
 
-        // The base's own pack loads first: its stock map is the default for packs without a stockmap.txt.
-        Catalog baseCatalog = null;
-        string baseDir = Path.GetFullPath(VoiceLibrary.VoicesDirectory);
-        foreach (VoicePack pack in found.Values.OrderBy(p => p.Id == NatoId ? 0 : 1).ThenBy(p => p.Name, StringComparer.OrdinalIgnoreCase))
-        {
-            try
-            {
-                if (!pack.LoadContent(baseCatalog))
-                    continue;
-                if (baseCatalog == null && string.Equals(Path.GetFullPath(pack.Directory), baseDir, StringComparison.OrdinalIgnoreCase))
-                    baseCatalog = pack.Catalog;
-                All.Add(pack);
-            }
-            catch (Exception ex)
-            {
-                ModLog.Warn($"Voice pack '{pack.Id}' could not be loaded: {ex.Message}");
-            }
-        }
+        LoadPacks(NewestById(packDirs, baseVersion));
         foreach (VoicePack pack in All)
             AddMoodRoot(pack, pack.Directory, null);
+        foreach (string dir in lineDirs)
+        {
+            try { AttachLinePack(dir, baseVersion); }
+            catch (Exception ex) { ModLog.Warn($"Line pack in {dir} could not be read: {ex.Message}"); }
+        }
         foreach (string dir in moodDirs)
         {
             try { AttachMoodPack(dir, baseVersion); }
@@ -106,14 +73,101 @@ internal static class VoicePacks
         ModLog.Info($"Voice packs installed: {(All.Count == 0 ? "none" : string.Join(", ", All.Select(p => $"{p.Id} {p.Version}")))}");
     }
 
+    private static void AddIfHas(List<string> dirs, string dir, string ini)
+    {
+        if (File.Exists(Path.Combine(dir, ini)) && !dirs.Contains(dir, StringComparer.OrdinalIgnoreCase))
+            dirs.Add(dir);
+    }
+
+    /// <summary>The voicepack.ini of every folder; a pack found twice keeps its newest version.</summary>
+    private static Dictionary<string, VoicePack> NewestById(List<string> packDirs, Version baseVersion)
+    {
+        var found = new Dictionary<string, VoicePack>(StringComparer.OrdinalIgnoreCase);
+        foreach (string dir in packDirs)
+        {
+            try
+            {
+                VoicePack pack = VoicePack.ReadIni(dir, baseVersion);
+                if (pack == null) continue;
+                if (found.TryGetValue(pack.Id, out VoicePack other))
+                {
+                    bool newer = pack.Version > other.Version;
+                    ModLog.Info($"Voice pack '{pack.Id}' found twice ({other.Directory} {other.Version}, {pack.Directory} {pack.Version}): keeping {(newer ? pack.Directory : other.Directory)}.");
+                    if (!newer) continue;
+                }
+                found[pack.Id] = pack;
+            }
+            catch (Exception ex)
+            {
+                ModLog.Warn($"Voice pack in {dir} could not be read: {ex.Message}");
+            }
+        }
+        return found;
+    }
+
     /// <summary>
-    /// A mood pack: a folder with <c>moodpack.ini</c> ([Moods] Pack=&lt;voice pack id&gt;, Moods=stressed,happy,sad,
-    /// MinBaseVersion) and <c>&lt;persona&gt;/&lt;mood&gt;/&lt;key&gt;.mp3</c> for that voice pack's personas. No code, no catalog.
+    /// Loads every pack's content. The base's own pack loads first: its stock map is the default for packs without a
+    /// stockmap.txt (English is an item of its own since 2.0 and lends its map to the others).
     /// </summary>
-    private static void AttachMoodPack(string dir, Version baseVersion)
+    private static void LoadPacks(Dictionary<string, VoicePack> found)
+    {
+        Catalog baseCatalog = null;
+        string baseDir = Path.GetFullPath(VoiceLibrary.VoicesDirectory);
+        foreach (VoicePack pack in found.Values.OrderBy(p => p.Id == NatoId ? 0 : 1).ThenBy(p => p.Name, StringComparer.OrdinalIgnoreCase))
+        {
+            try
+            {
+                if (!pack.LoadContent(baseCatalog))
+                    continue;
+                if (baseCatalog == null && (pack.Id == NatoId
+                                            || string.Equals(Path.GetFullPath(pack.Directory), baseDir, StringComparison.OrdinalIgnoreCase)))
+                    baseCatalog = pack.Catalog;
+                All.Add(pack);
+            }
+            catch (Exception ex)
+            {
+                ModLog.Warn($"Voice pack '{pack.Id}' could not be loaded: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// A line pack: another mod's own radio lines for a voice pack's personas. Folder with <c>linepack.ini</c>
+    /// ([Lines] Id, Pack=&lt;voice pack id&gt;, Version, MinBaseVersion, optional Moods=stressed,...), its <c>catalog.txt</c>
+    /// (rows as in the pack's) and <c>&lt;persona&gt;/&lt;key&gt;.mp3</c> (moods in <c>&lt;persona&gt;/&lt;mood&gt;/</c>). The mod then
+    /// speaks them through <c>rats.radio.say</c> like any phrase. No code; see docs/rats-bus.md.
+    /// </summary>
+    private static void AttachLinePack(string dir, Version baseVersion)
+    {
+        var values = ReadSection(Path.Combine(dir, "linepack.ini"));
+        values.TryGetValue("Id", out string id);
+        values.TryGetValue("Pack", out string packId);
+        values.TryGetValue("MinBaseVersion", out string min);
+        values.TryGetValue("Moods", out string moods);
+        if (VoicePack.ParseVersion(min, new Version(0, 0)) > baseVersion)
+        {
+            ModLog.Warn($"Line pack '{id}' ({dir}) needs Rats Radio {min} or newer (this is {baseVersion}), skipped.");
+            return;
+        }
+        VoicePack pack = ById(packId ?? NatoId);
+        if (pack == null)
+        {
+            ModLog.Info($"Line pack '{id}' ({dir}): voice pack '{packId ?? NatoId}' is not installed, not used.");
+            return;
+        }
+        string catalog = Path.Combine(dir, "catalog.txt");
+        int rows = File.Exists(catalog) ? pack.Catalog.AddRows(catalog) : 0;
+        if (!pack.LineRoots.Contains(dir, StringComparer.OrdinalIgnoreCase))
+            pack.LineRoots.Add(dir);
+        if (!string.IsNullOrWhiteSpace(moods))
+            AddMoodRoot(pack, dir, moods);
+        ModLog.Info($"Line pack '{id}' for '{pack.Id}': {rows} phrase variants from {dir}");
+    }
+
+    private static Dictionary<string, string> ReadSection(string file)
     {
         var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (string raw in File.ReadAllLines(Path.Combine(dir, "moodpack.ini")))
+        foreach (string raw in File.ReadAllLines(file))
         {
             string line = raw;
             int comment = line.IndexOf(';');
@@ -123,6 +177,16 @@ internal static class VoicePacks
             if (eq > 0 && !line.StartsWith("#"))
                 values[line.Substring(0, eq).Trim()] = line.Substring(eq + 1).Trim();
         }
+        return values;
+    }
+
+    /// <summary>
+    /// A mood pack: a folder with <c>moodpack.ini</c> ([Moods] Pack=&lt;voice pack id&gt;, Moods=stressed,happy,sad,
+    /// MinBaseVersion) and <c>&lt;persona&gt;/&lt;mood&gt;/&lt;key&gt;.mp3</c> for that voice pack's personas. No code, no catalog.
+    /// </summary>
+    private static void AttachMoodPack(string dir, Version baseVersion)
+    {
+        var values = ReadSection(Path.Combine(dir, "moodpack.ini"));
         values.TryGetValue("Pack", out string packId);
         values.TryGetValue("Moods", out string moods);
         values.TryGetValue("MinBaseVersion", out string min);
@@ -162,6 +226,9 @@ internal static class VoicePacks
         ModLog.Info($"Voice pack '{pack.Id}': moods {string.Join(",", moods)} from {dir}");
     }
 
+    // StreamingAssets folders of the game itself, not mods.
+    private static readonly HashSet<string> NotModFolders = new HashSet<string> { "original", "user", "EntityScenes" };
+
     public static IEnumerable<string> ModFolders()
     {
         var roots = new List<string>();
@@ -182,7 +249,7 @@ internal static class VoicePacks
             foreach (string sub in subs)
             {
                 string name = Path.GetFileName(sub);
-                if (name == "original" || name == "user" || name == "EntityScenes") continue;
+                if (NotModFolders.Contains(name)) continue;
                 yield return sub;
             }
         }

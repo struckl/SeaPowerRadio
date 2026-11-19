@@ -22,18 +22,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from cast import REPO  # noqa: E402
+import rules  # noqa: E402
+import paths  # noqa: E402
 from phrases import PHRASES, SLOT, number_pauses  # noqa: E402
 from radio import concat_files, silence, transmission  # noqa: E402
 
-VOICES = REPO / "mod" / "voices"
+VOICES = paths.VOICES
 OUT = Path(__file__).resolve().parent / "samples"
-
-# Most silence where two clips join -- the plugin's TransmissionBuilder.MaxPause.
-NUMBER_PAUSE = 0.05     # word <-> number, no pause in the text: "bearing two seven three"
-GROUP_PAUSE = 0.08      # between the digit groups: "seven zero, three four"
-SPOKEN_PAUSE = 0.25     # a pause the speaker makes anyway (after the callsign, at a comma)
-NUMBER_PIECES = ("brg_", "pm_", "pe_", "dm_", "alt_", "cnt_")
 AS_CUT = False          # --as-cut: join with the pauses as cut, for comparison
 
 Parts = list[tuple[Path, float]]
@@ -58,14 +53,15 @@ def pauses_at_number(key: str) -> bool:
 
 
 def max_pause(previous: str, key: str) -> float:
+    """Most silence where two clips join: the plugin's TransmissionBuilder.MaxPause, from the same rules."""
     if AS_CUT:
         return float("inf")
-    a, b = previous.startswith(NUMBER_PIECES), key.startswith(NUMBER_PIECES)
+    a, b = previous.startswith(rules.NUMBER_PIECES), key.startswith(rules.NUMBER_PIECES)
     if a and b:
-        return GROUP_PAUSE
+        return rules.GROUP_PAUSE
     if a or b:
-        return SPOKEN_PAUSE if pauses_at_number(key if a else previous) else NUMBER_PAUSE
-    return SPOKEN_PAUSE
+        return rules.SPOKEN_PAUSE if pauses_at_number(key if a else previous) else rules.NUMBER_PAUSE
+    return rules.SPOKEN_PAUSE
 
 
 def parts_of(voice: str, keys: list[str]) -> Parts:
@@ -73,21 +69,8 @@ def parts_of(voice: str, keys: list[str]) -> Parts:
 
 
 def number(voice: str, kind: str, value: str) -> list[str]:
-    """Number pieces, assembled the way the plugin's TransmissionBuilder.Number does (see phrases.py)."""
-    if kind == "brg":                                   # 273 -> brg_273 (older libraries: dm_2 + pe_73)
-        b = value.zfill(3)
-        return [f"brg_{b}"] if (VOICES / voice / f"brg_{b}.mp3").exists() else [f"dm_{b[0]}", f"pe_{b[1:]}"]
-    if kind == "alt":                                   # feet
-        feet = int(value)
-        return [f"alt_{round(feet / 1000)}"] if feet >= 1000 else [f"alt_lo_{max(1, round(feet / 100))}"]
-    if kind == "count":
-        return [f"cnt_{value}"]
-    v = str(abs(int(value)))                            # trk, num
-    if len(v) >= 4:                                     # 7034 -> pm_70 + pe_34
-        return [f"pm_{v[-4:-2]}", f"pe_{v[-2:]}"]
-    if len(v) == 3:                                     # 150 -> dm_1 + pe_50
-        return [f"dm_{v[0]}", f"pe_{v[1:]}"]
-    return [f"pe_{v.zfill(2)}"]
+    """Number pieces, assembled the way the plugin does (rules.number_pieces)."""
+    return rules.number_pieces(kind, int(value), lambda key: (VOICES / voice / f"{key}.mp3").exists())
 
 
 def say(voice: str, cs: tuple[str, str | None], key: str, rng: random.Random, value: str | None = None,

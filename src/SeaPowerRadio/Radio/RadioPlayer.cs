@@ -26,7 +26,8 @@ internal sealed class RadioPlayer
     private const int MaxQueue = 24;
     private const int MaxChannels = 4;
     private const float SamePhraseWindow = 2.5f;
-    private static readonly float[] Pans = { 0f, -0.35f, 0.35f, 0f };
+    private static readonly float[] Pans = { 0f, -0.35f, 0.35f, 0f };   // per channel: overlapping voices a little apart
+    private const float ReplyNoise = 0.6f;   // replies to the player sound cleaner than the rest of the net
 
     /// <summary>One voice on the net: its own audio source and the call it is playing.</summary>
     private sealed class Channel
@@ -92,12 +93,46 @@ internal sealed class RadioPlayer
     {
         EnsureChannel(0);
         float now = Time.unscaledTime;
-        foreach (Transmission stale in queue.Where(q => !q.Urgent && now - q.SubmittedAt > (q.Role == CallRole.Reply ? 6f : q.Priority >= 5 ? 8f : 15f)).ToList())
+        DropStale(now);
+        int active = UpdateChannels();
+
+        int max = Settings.OverlapVoices.Value ? Mathf.Clamp(Settings.MaxOverlap.Value, 2, MaxChannels) : 1;
+        bool urgentWaiting = queue.Any(q => q.Urgent);
+        if (active >= max && urgentWaiting)
+        {
+            Channel victim = channels.Where(c => c.Current != null && !c.Current.Urgent).OrderBy(c => c.StartedAt).FirstOrDefault();
+            if (victim == null)
+                return;
+            Stop(victim);
+            active--;
+        }
+        if (active >= max || queue.Count == 0 || (now < nextAllowed && !urgentWaiting))
+            return;
+
+        Transmission next = queue.OrderBy(q => q.Rank).ThenBy(q => q.SubmittedAt).FirstOrDefault(t => active == 0 || !SpeakerBusy(t));
+        Channel channel = next != null ? FreeChannel() : null;
+        if (channel != null)
+            Start(channel, next, now, max);
+    }
+
+    // Seconds a call may wait before it is no longer worth saying: a late "copy" is worse than none.
+    private const float ReplyStale = 6f, RoutineStale = 8f, OtherStale = 15f;
+
+    private void DropStale(float now)
+    {
+        foreach (Transmission stale in queue.Where(q => !q.Urgent && now - q.SubmittedAt > StaleAfter(q)).ToList())
         {
             queue.Remove(stale);
             AlertLink.Release(stale);
         }
+    }
 
+    private static float StaleAfter(Transmission t) =>
+        t.Role == CallRole.Reply ? ReplyStale : t.Priority >= ClipRules.RoutineMinPriority ? RoutineStale : OtherStale;
+
+    /// <summary>Finishes channels whose call has ended and applies the live volume to the others; returns how many are talking.</summary>
+    private int UpdateChannels()
+    {
         int active = 0;
         foreach (Channel c in channels)
         {
@@ -109,36 +144,15 @@ internal sealed class RadioPlayer
                 ApplyVolume(c);
             }
         }
+        return active;
+    }
 
-        int max = Settings.OverlapVoices.Value ? Mathf.Clamp(Settings.MaxOverlap.Value, 2, MaxChannels) : 1;
-        bool urgentWaiting = queue.Any(q => q.Urgent);
-        if (active >= max && urgentWaiting)
-        {
-            // An urgent call cuts into a routine one.
-            Channel victim = channels.Where(c => c.Current != null && !c.Current.Urgent).OrderBy(c => c.StartedAt).FirstOrDefault();
-            if (victim == null)
-                return;
-            Stop(victim);
-            active--;
-        }
-        if (active >= max || queue.Count == 0 || (now < nextAllowed && !urgentWaiting))
-            return;
+    // Random gap after a call starts (overlapping voices) and after the net falls silent, like a real net.
+    private const float OverlapGapMin = 0.6f, OverlapGapMax = 1.4f;
+    private const float SilenceGapMin = 0.35f, SilenceGapMax = 0.9f;
 
-        Transmission next = null;
-        foreach (Transmission t in queue.OrderBy(q => q.Rank).ThenBy(q => q.SubmittedAt))
-        {
-            if (active == 0 || !SpeakerBusy(t))
-            {
-                next = t;
-                break;
-            }
-        }
-        if (next == null)
-            return;
-
-        Channel channel = FreeChannel();
-        if (channel == null)
-            return;
+    private void Start(Channel channel, Transmission next, float now, int max)
+    {
         queue.Remove(next);
         Abbreviate(next);
         lastSpeaker = next.Speaker;
@@ -147,11 +161,10 @@ internal sealed class RadioPlayer
         channel.StartedAt = now;
         channel.Category = CallCategories.Of(next.Phrase, next.Role);
         if (max > 1)
-            nextAllowed = now + Random.Range(0.6f, 1.4f);
+            nextAllowed = now + Random.Range(OverlapGapMin, OverlapGapMax);
         host.StartCoroutine(Prepare(channel, next, ++channel.Version));
     }
 
-    /// <summary>True if the unit (or roster element) of this call is already talking on another channel.</summary>
     private bool SpeakerBusy(Transmission t)
     {
         foreach (Channel c in channels)
@@ -221,7 +234,7 @@ internal sealed class RadioPlayer
         // On top: the master radio volume and the volume of the call's category (options page).
         ch.Boost = Mathf.Max(1f, TotalGain(ch));
         float level = (t.Role == CallRole.Report ? Settings.ReportVolume.Value : 1f) * ch.Boost;
-        float noise = Settings.RadioNoise.Value * (t.Role == CallRole.Reply ? 0.6f : 1f);
+        float noise = Settings.RadioNoise.Value * (t.Role == CallRole.Reply ? ReplyNoise : 1f);
         ch.Clip = RadioFx.Build(parts, pauses, t.Profile, unchecked(++seed * 7919), noise, level);
         ch.Source.clip = ch.Clip;
         ch.Source.panStereo = Settings.OverlapVoices.Value ? Pans[ch.Index] : 0f;
@@ -248,26 +261,35 @@ internal sealed class RadioPlayer
         {
             t.Clips.RemoveRange(0, t.CallsignClips);
             t.CallsignClips = 0;
-            t.Text = "(same unit)" + t.Text.Substring(t.Text.IndexOf(',') + 1);
+            t.Text = "(same unit)" + t.Text.Substring(t.CallsignTextLength);
             return;
         }
-        if (unit != null && last != null
-            && Names.TryParseAircraft(unit.Name.Value, out string word, out int number, out int position)
-            && Names.TryParseAircraft(last.Name.Value, out string lastWord, out int lastNumber, out _)
-            && position > 0 && number == lastNumber && string.Equals(word, lastWord, System.StringComparison.OrdinalIgnoreCase)
-            && ClipLibrary.Exists(t.Voice, $"cn_{position}"))
+        if (FlightmateClip(t.Voice, unit, last, out int position) is string positionClip)
         {
             t.Clips.RemoveRange(0, t.CallsignClips);
-            t.Clips.Insert(0, $"cn_{position}");
+            t.Clips.Insert(0, positionClip);
             t.CallsignClips = 1;
-            t.Text = $"({position})" + t.Text.Substring(t.Text.IndexOf(',') + 1);
+            t.Text = $"({position})" + t.Text.Substring(t.CallsignTextLength);
         }
+    }
+
+    /// <summary>The number clip ("two") of a wingman of the flight that spoke last; null when it is none.</summary>
+    private static string FlightmateClip(string voice, ObjectBase unit, ObjectBase last, out int position)
+    {
+        position = 0;
+        if (unit == null || last == null
+            || !Names.TryParseAircraft(unit.Name.Value, out string word, out int number, out position)
+            || !Names.TryParseAircraft(last.Name.Value, out string lastWord, out int lastNumber, out _)
+            || position <= 0 || number != lastNumber || !string.Equals(word, lastWord, System.StringComparison.OrdinalIgnoreCase))
+            return null;
+        string clip = TransmissionBuilder.CallsignNumberClip(position);
+        return clip != null && ClipLibrary.Exists(voice, clip) ? clip : null;
     }
 
     private void Finish(Channel c)
     {
         if (!channels.Any(o => o != c && o.Current != null))
-            nextAllowed = Mathf.Max(nextAllowed, Time.unscaledTime + Random.Range(0.35f, 0.9f));
+            nextAllowed = Mathf.Max(nextAllowed, Time.unscaledTime + Random.Range(SilenceGapMin, SilenceGapMax));
         AlertLink.Release(c.Current);
         ReleaseClip(c);
         c.Current = null;
@@ -294,7 +316,6 @@ internal sealed class RadioPlayer
         c.Clip = null;
     }
 
-    /// <summary>Makes sure channel <paramref name="index"/> exists (one audio source each).</summary>
     private void EnsureChannel(int index)
     {
         while (channels.Count <= index)

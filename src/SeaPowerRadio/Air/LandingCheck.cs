@@ -19,7 +19,7 @@ internal static class LandingCheck
     private static readonly FieldInfo UnitsToRebase = AccessTools.Field(typeof(SceneCreator), "_unitsToRebase");
 
     /// <summary>The field the mission named as the aircraft's home base, whether or not the game kept it.</summary>
-    public static ObjectBase MissionHome(ObjectBase unit)
+    private static ObjectBase MissionHome(ObjectBase unit)
     {
         if (!Singleton<SceneCreator>.InstanceExists())
             return null;
@@ -63,46 +63,64 @@ internal static class LandingCheck
 
     private static string Why(ObjectBase site, FlightDeck deck, ObjectBase unit)
     {
-        string ini = unit._obp._objectIniName;
-        List<ObjectBaseParameters.UnitRoles> roles = unit._obp._unitRoles;
-        Aircraft aircraft = unit as Aircraft;
-        bool large = aircraft != null && aircraft.Ap._isLarge;
-        bool veryLarge = aircraft != null && aircraft.Ap._isVeryLarge;
-        VehicleType type = aircraft == null ? VehicleType.Helicopter
-            : aircraft.Ap._isVTOL ? VehicleType.VTOL
-            : VehicleType.Plane;
-        string size = veryLarge ? "very large" : large ? "large" : "small";
-
-        var parts = new List<string>();
-        parts.Add(site.CanAcceptAircraft(unit, message: false, checkDistance: false) ? "game: TAKES it" : "game: refuses");
-
-        if (deck._vehiclesOnBoard.Any(v => v._fileName == ini))
+        var a = new Airframe(unit);
+        var parts = new List<string>
         {
-            parts.Add("type: in its aircraft list");
-        }
-        else
-        {
-            string aboard = string.Join(", ", deck._vehiclesOnBoard.Where(v => v.Numbers > 0).Select(v => v._fileName));
-            parts.Add($"type: NOT in its aircraft list ({deck._vehiclesOnBoard.Count} types; aboard: {(aboard.Length > 0 ? aboard : "none")})");
-        }
-
-        int spots = deck._recoveryPoints.Count(p => p.IsAllowed(type));
-        int fitting = deck._recoveryPoints.Count(p => p.IsAllowed(type) && p.CheckSupport(ini, roles, large, veryLarge));
-        parts.Add(spots == 0 ? $"runway: no landing spot for {type}"
-            : fitting == 0 ? $"runway: too small for a {size} aircraft"
-            : $"runway: fits ({fitting} of {deck._recoveryPoints.Count} landing spots)");
-
-        parts.Add(deck._elevators.Any(e => e.CheckSupport(ini, roles, large, veryLarge))
-            ? "hangar: fits"
-            : $"hangar: too small for a {size} aircraft");
+            site.CanAcceptAircraft(unit, message: false, checkDistance: false) ? "game: TAKES it" : "game: refuses",
+            TypeListed(deck, a.Ini),
+            Runway(deck, a),
+            deck._elevators.Any(e => e.CheckSupport(a.Ini, a.Roles, a.Large, a.VeryLarge))
+                ? "hangar: fits"
+                : $"hangar: too small for a {a.Size} aircraft",
+        };
 
         int taken = deck.TotalVehiclesOnBoardIncludingCooldown() + deck.TotalVehiclesInAir() + deck.TotalVehiclesNotInFlight();
         parts.Add($"room: {taken} of {deck.MaxAircraftOnBoard} taken{(taken >= deck.MaxAircraftOnBoard ? " - FULL" : "")}");
 
         if (deck.Inoperable.Value)
             parts.Add("deck: OUT OF ACTION");
-        if (type == VehicleType.Helicopter && !deck.CanRecoverHelicopterInCurrentSeaState(unit))
+        if (a.Type == VehicleType.Helicopter && !deck.CanRecoverHelicopterInCurrentSeaState(unit))
             parts.Add("sea state: too high");
         return string.Join(" | ", parts);
+    }
+
+    /// <summary>What a landing spot or hangar elevator checks about the aircraft.</summary>
+    private readonly struct Airframe
+    {
+        public readonly string Ini;
+        public readonly List<ObjectBaseParameters.UnitRoles> Roles;
+        public readonly bool Large, VeryLarge;
+        public readonly VehicleType Type;
+
+        public Airframe(ObjectBase unit)
+        {
+            Ini = unit._obp._objectIniName;
+            Roles = unit._obp._unitRoles;
+            Aircraft aircraft = unit as Aircraft;
+            Large = aircraft != null && aircraft.Ap._isLarge;
+            VeryLarge = aircraft != null && aircraft.Ap._isVeryLarge;
+            Type = aircraft == null ? VehicleType.Helicopter
+                : aircraft.Ap._isVTOL ? VehicleType.VTOL
+                : VehicleType.Plane;
+        }
+
+        public string Size => VeryLarge ? "very large" : Large ? "large" : "small";
+    }
+
+    private static string TypeListed(FlightDeck deck, string ini)
+    {
+        if (deck._vehiclesOnBoard.Any(v => v._fileName == ini))
+            return "type: in its aircraft list";
+        string aboard = string.Join(", ", deck._vehiclesOnBoard.Where(v => v.Numbers > 0).Select(v => v._fileName));
+        return $"type: NOT in its aircraft list ({deck._vehiclesOnBoard.Count} types; aboard: {(aboard.Length > 0 ? aboard : "none")})";
+    }
+
+    private static string Runway(FlightDeck deck, Airframe a)
+    {
+        int spots = deck._recoveryPoints.Count(p => p.IsAllowed(a.Type));
+        int fitting = deck._recoveryPoints.Count(p => p.IsAllowed(a.Type) && p.CheckSupport(a.Ini, a.Roles, a.Large, a.VeryLarge));
+        return spots == 0 ? $"runway: no landing spot for {a.Type}"
+            : fitting == 0 ? $"runway: too small for a {a.Size} aircraft"
+            : $"runway: fits ({fitting} of {deck._recoveryPoints.Count} landing spots)";
     }
 }

@@ -26,7 +26,7 @@ internal static class RoleLine
 
     private static bool reported;
 
-    public static bool Enabled => Settings.UnitRoles != null && Settings.UnitRoles.Value;
+    private static bool Enabled => Settings.UnitRoles != null && Settings.UnitRoles.Value;
 
     public static void ViewCreated(FormationManagerView view)
     {
@@ -67,7 +67,7 @@ internal static class RoleLine
         {
             Noesis.UIElement child = grid.Children[i];
             if (child is Noesis.FrameworkElement element && element.Tag as string == LineTag)
-                return true;                                  // this template already has it
+                return true;
             if (child is Noesis.TextBlock text && Noesis.Grid.GetRow(text) == 1)
                 secondLine = text;
         }

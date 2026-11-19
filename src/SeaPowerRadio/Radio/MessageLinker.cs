@@ -27,7 +27,7 @@ internal static class MessageLinker
         ObjectBase.ObjectType.Helicopter, ObjectBase.ObjectType.LandUnit,
     };
 
-    public static bool Enabled => Settings.LinkMentions != null && Settings.LinkMentions.Value;
+    private static bool Enabled => Settings.LinkMentions != null && Settings.LinkMentions.Value;
 
     public static void Link(Alert alert)
     {
@@ -61,25 +61,31 @@ internal static class MessageLinker
             var names = new Dictionary<string, (ObjectBase obj, bool own)>(StringComparer.OrdinalIgnoreCase);
             foreach (KeyValuePair<ObjectBase, Vehicle> kv in vehicles)
             {
-                ObjectBase obj = kv.Key;
-                Vehicle v = kv.Value;
-                if (obj == null || v == null)
+                if (kv.Key == null || kv.Value == null)
                     continue;
-                if (!index.ByTrack.ContainsKey(v.Id))
-                    index.ByTrack[v.Id] = obj;
-
-                bool own = obj._taskforce == player;
-                if (!NamedTypes.Contains(obj._type) || !(own || v.Identified.Value))
-                    continue;
-                string name = obj.Name.Value?.Trim();
-                if (string.IsNullOrEmpty(name) || name.Length < 3 || name.All(char.IsDigit))
-                    continue;
-                // Two objects with one name: an own unit wins over a contact, otherwise the first one stays.
-                if (!names.TryGetValue(name, out var known) || (own && !known.own))
-                    names[name] = (obj, own);
+                if (!index.ByTrack.ContainsKey(kv.Value.Id))
+                    index.ByTrack[kv.Value.Id] = kv.Key;
+                AddName(names, kv.Key, kv.Value, player);
             }
+            // Longest first, so "Kitty Hawk II" is found before "Kitty Hawk".
             index.ByName.AddRange(names.OrderByDescending(n => n.Key.Length).Select(n => (n.Key, n.Value.obj)));
             return index;
+        }
+
+        /// <summary>
+        /// Own units and identified contacts of the kinds that have names, by a name that reads as one (three letters
+        /// or more, not only digits). Two objects with one name: an own unit wins over a contact, else the first stays.
+        /// </summary>
+        private static void AddName(Dictionary<string, (ObjectBase obj, bool own)> names, ObjectBase obj, Vehicle v, Taskforce player)
+        {
+            bool own = obj._taskforce == player;
+            if (!NamedTypes.Contains(obj._type) || !(own || v.Identified.Value))
+                return;
+            string name = obj.Name.Value?.Trim();
+            if (string.IsNullOrEmpty(name) || name.Length < 3 || name.All(char.IsDigit))
+                return;
+            if (!names.TryGetValue(name, out var known) || (own && !known.own))
+                names[name] = (obj, own);
         }
     }
 

@@ -1,6 +1,7 @@
+#if !FLATMAP
 using System.Runtime.CompilerServices;
+#endif
 using SeaPower;
-using SeaPower.LiveMap;
 using SeapowerUI;
 using SeaPowerRadio.Air;
 
@@ -17,23 +18,26 @@ internal static class RtbPatches
 {
     public const string FeatureName = "RtbHighlight";
 
-    public static Feature Declare() => new Feature(FeatureName)
+    public static Feature Declare()
+    {
+        var feature = new Feature(FeatureName);
 #if FLATMAP
-        .Hook("SeapowerUI.MapContactVisuals", "Resolve", new[] { typeof(IUnit) }, typeof(RtbPatches),
-            postfix: nameof(ResolvePostfix))
+        feature.Hook("SeapowerUI.MapContactVisuals", "Resolve", new[] { typeof(IUnit) }, typeof(RtbPatches),
+            postfix: nameof(ResolvePostfix));
 #else
-        .Hook("SeapowerUI.MapContactVisuals", "Resolve", new[] { typeof(IUnit), typeof(MapViewModel) }, typeof(RtbPatches),
-            postfix: nameof(ResolvePostfix))
-        .Hook("SeapowerUI.MapUnitViewModel", "UpdateContactDisplay", new[] { typeof(IUnit) }, typeof(RtbPatches),
-            postfix: nameof(SymbolPostfix))
-        .Hook("SeapowerUI.MapUnitViewModel", "Update", System.Type.EmptyTypes, typeof(RtbPatches),
-            prefix: nameof(SymbolUpdatePrefix))
-        .Hook("SeapowerUI.UnitPostureBrushConverter", "Convert",
-            new[] { typeof(object[]), typeof(System.Type), typeof(object), typeof(System.Globalization.CultureInfo) },
-            typeof(RtbPatches), postfix: nameof(SymbolBrushPostfix))
+        feature.Hook("SeapowerUI.MapContactVisuals", "Resolve", new[] { typeof(IUnit), typeof(MapViewModel) }, typeof(RtbPatches),
+                postfix: nameof(ResolvePostfix))
+            .Hook("SeapowerUI.MapUnitViewModel", "UpdateContactDisplay", new[] { typeof(IUnit) }, typeof(RtbPatches),
+                postfix: nameof(SymbolPostfix))
+            .Hook("SeapowerUI.MapUnitViewModel", "Update", System.Type.EmptyTypes, typeof(RtbPatches),
+                prefix: nameof(SymbolUpdatePrefix))
+            .Hook("SeapowerUI.UnitPostureBrushConverter", "Convert",
+                new[] { typeof(object[]), typeof(System.Type), typeof(object), typeof(System.Globalization.CultureInfo) },
+                typeof(RtbPatches), postfix: nameof(SymbolBrushPostfix));
 #endif
-        .Hook("SeapowerUI.FormationManagerView", ".ctor", System.Type.EmptyTypes, typeof(RtbPatches),
+        return feature.Hook("SeapowerUI.FormationManagerView", ".ctor", System.Type.EmptyTypes, typeof(RtbPatches),
             postfix: nameof(ViewPostfix));
+    }
 
     private static bool Marked(IUnit unit)
     {
@@ -44,20 +48,20 @@ internal static class RtbPatches
     }
 
 #if FLATMAP
-    private static void ResolvePostfix(IUnit unit, ref (MapVisualPosture Posture, Noesis.SolidColorBrush Brush) __result)
+    private static void ResolvePostfix(IUnit unit, ref (MapVisualPosture Posture, Noesis.SolidColorBrush Brush) __result) =>
+        Recolour(unit, ref __result, RtbMarker.Brush);
 #else
-    private static void ResolvePostfix(IUnit unit, MapViewModel map, ref (MapVisualPosture Posture, Noesis.SolidColorBrush Brush) __result)
+    private static void ResolvePostfix(IUnit unit, MapViewModel map, ref (MapVisualPosture Posture, Noesis.SolidColorBrush Brush) __result) =>
+        Recolour(unit, ref __result, () => RtbMarker.Brush(map?.PaletteOrDay));
 #endif
+
+    private static void Recolour(IUnit unit, ref (MapVisualPosture Posture, Noesis.SolidColorBrush Brush) result,
+        System.Func<Noesis.SolidColorBrush> brush)
     {
         try
         {
-            if (!Marked(unit))
-                return;
-#if FLATMAP
-            __result = (__result.Posture, RtbMarker.Brush());
-#else
-            __result = (__result.Posture, RtbMarker.Brush(map?.PaletteOrDay));
-#endif
+            if (Marked(unit))
+                result = (result.Posture, brush());
         }
         catch (System.Exception ex)
         {

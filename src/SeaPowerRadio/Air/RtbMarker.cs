@@ -57,9 +57,8 @@ internal static class RtbMarker
 
 #if FLATMAP
     /// <summary>Yellow for the map's night or day colours (Sea Power 0.8.7: one theme for every map).</summary>
-    public static Noesis.SolidColorBrush Brush()
-    {
-        bool dark = !Singleton<ThemeTracker>.InstanceExists() || Singleton<ThemeTracker>.Instance.CurrentTheme != ThemeMode.Light;
+    public static Noesis.SolidColorBrush Brush() =>
+        Brush(!Singleton<ThemeTracker>.InstanceExists() || Singleton<ThemeTracker>.Instance.CurrentTheme != ThemeMode.Light);
 #else
     /// <summary>
     /// Yellow for the map's night or day colours. In the 3D-globe build every map has its own palette (Auto follows
@@ -71,11 +70,11 @@ internal static class RtbMarker
         palette ??= Globals._mainGameViewModel?.Map?.DisplayMap?.Palette;
         return Brush(palette == null || GameApi.IsDark(palette));
     }
+#endif
 
     /// <summary>Yellow for night (dark) or day; a map symbol knows which one it is drawn in (day/night per position).</summary>
     public static Noesis.SolidColorBrush Brush(bool dark)
     {
-#endif
         if (dark)
             return night ??= new Noesis.SolidColorBrush(Noesis.Color.FromArgb(0xFF, 0xFF, 0xD2, 0x3C));
         return day ??= new Noesis.SolidColorBrush(Noesis.Color.FromArgb(0xFF, 0xB8, 0x86, 0x00));
@@ -125,7 +124,7 @@ internal static class RtbMarker
         List<INotifyPropertyChanged> top = rows.Where(IsTopLevel).ToList();
         int first = top.FindIndex(IsRtbRow);
         if (first < 0 || top.Skip(first).All(IsRtbRow))
-            return;                                 // none, or already all at the bottom
+            return;
         foreach (INotifyPropertyChanged row in top.Where(IsRtbRow).ToList())
             rows.Move(rows.IndexOf(row), rows.Count - 1);
     }

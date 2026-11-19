@@ -21,6 +21,7 @@ internal static class AlertLink
     private const int TopAlertsMax = 6;    // never grow beyond this, even if everything is waiting
     // A message older than this many frames has missed its call (the call takes only this frame's, see CallOrder).
     private const int RecentFrames = 2;
+    private const float FullOpacity = 100f;   // the game's AlertTextOpacity scale
     private static readonly Noesis.Color Amber = Noesis.Color.FromArgb(0xFF, 0xF0, 0xB0, 0x28);
 
     private static readonly List<(Alert alert, int frame)> Recent = new List<(Alert, int)>();
@@ -36,7 +37,7 @@ internal static class AlertLink
     {
         var top = vm.TopAlerts;
         top.Add(value);
-        value.AlertTextOpacity = 100f;
+        value.AlertTextOpacity = FullOpacity;
         value.alertTextSetTime = Time.time;
         Recent.Add((value, Time.frameCount));
         Recent.RemoveAll(r => Time.frameCount - r.frame > RecentFrames);
@@ -101,7 +102,7 @@ internal static class AlertLink
         foreach (Alert a in Waiting.Concat(Speaking))
         {
             a.alertTextSetTime = now;
-            if (a.AlertTextOpacity < 100f) a.AlertTextOpacity = 100f;
+            if (a.AlertTextOpacity < FullOpacity) a.AlertTextOpacity = FullOpacity;
         }
     }
 

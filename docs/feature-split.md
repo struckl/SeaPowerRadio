@@ -47,7 +47,7 @@ untangling, C deep in the voice core).
 | 5 | Overlapping voices | up to 3 stations at once, panned | `RadioPlayer.cs`; `2. Radio/Overlapping voices`, `Voices at once` | yes | C |
 | 6 | Radio sound | hiss, click, crackle, squelch tail, static amount | `RadioFx.cs`; `Radio noise` | yes | C |
 | 7 | Call volumes | master volume plus five per-category sliders | `CallCategory.cs`; `8. Call volumes`; Options page | yes | C |
-| 8 | Voice packs | per-country pack choice, game voice fallback, pack discovery | `Voices/VoicePack(s).cs`, `Nations.cs`, `LanguageRules.cs`; `10. Voice packs`; Options page | yes | C |
+| 8 | Voice packs | per-country pack choice, game voice fallback, pack discovery | `Voices/VoicePack(s).cs`, `Nations.cs`; `10. Voice packs`; Options page | yes | C |
 | 9 | Moods (1.5.0) | stressed / happy / sad takes from the Moods pack | `Radio/Moods.cs`, mood roots in `VoicePack` | yes | C |
 | 10 | Female voices | on/off, live revoice when switched off | `Settings`, `RadioHost.OnFemaleVoicesChanged`, `Roster.Revoice` | yes | C |
 | 11 | Random voices per mission | salt per mission, kept for saves | `Roster/VoiceSalts.cs` | yes | C |

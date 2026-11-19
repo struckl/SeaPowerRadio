@@ -43,29 +43,18 @@ changed, so a plugin-only update is small for players.
 
 ### Updates without opening the game
 
-[tools/workshop-upload](../tools/workshop-upload) (dev-only, never shipped) makes the calls the Create Mod screen
-makes for an existing item, through the running Steam client and the game's own Steamworks.NET - but only the
-content and the change note; title, description, tags, preview, visibility, dependencies and the compatibility
-metadata stay as they are. Steam must be running, signed in with the owner account (no password involved); the game
-can stay closed. 1.0.1 and 1.0.2 went up this way, the 1.0.1 video replaced the 1.0.0 one on the page, and the
-description with the language roadmap was set with it (2026-10-27). 1.0.4 (the package with both DLLs, globe build
-and 0.8.7) went up the same way on 2026-10-28; its change note says it was run in the game on the globe build only
-and that the 0.8.7 build is checked offline. 1.0.4 stopped every mission from loading on 0.8.7 (a field of a globe-only type in the
-globe DLL, see CHANGELOG); 1.0.5 (2026-10-28, same way, run in the game on 0.8.7) replaced it.
+The workspace tool does it through the running Steam client (the per-repo `tools/workshop-upload` it replaced is
+gone): content, change note, page text, video and pictures, with the game closed. Steam must be running, signed in
+with the owner account. From the workspace root:
 
 ```powershell
-dotnet build tools\workshop-upload -c Release
-$up = 'tools\workshop-upload\bin\Release\net8.0\WorkshopUpload.exe'
-& $up check 3826433579                                   # title, owner, visibility, last update – changes nothing
-& $up upload 3826433579 dist\SeaPowerRadio <change note file>   # the staged folder from package.ps1
-& $up video 3826433579 https://youtu.be/<id>             # replaces the page's YouTube video in its place
-& $up description 3826433579 workshop\description.bbcode  # replaces the page's text (under 8,000 bytes)
+python tools/modtool.py workshop radio check            # title, owner, visibility, pictures - changes nothing
+python tools/modtool.py workshop radio upload           # dry run; --yes only on his OK
+python tools/modtool.py workshop radio video <link>
+python tools/modtool.py workshop radio description
 ```
 
-It refuses an item the signed-in account doesn't own and a folder without `_info.ini`, prints the upload progress
-and the item's new update time. `check` also lists the page's extra previews (videos, images); `video` swaps the
-first YouTube video for the new one (or adds it if there is none) without a change note. A changed `_info.ini`
-`[Compatibility]` or new dependencies still need the game's Create Mod screen.
+Details: the workspace's `docs/modtool.md`.
 
 After the first upload:
 

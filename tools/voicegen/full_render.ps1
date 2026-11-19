@@ -5,7 +5,8 @@
 #      no game for -ResumeAfter s   -> the render is started again and continues where it stopped
 #    Stopping is safe: clips are written to *.part.mp3 and renamed when complete.
 # 2. Checks the library (check_library.py). Takes that gave up get one more pass with new seeds.
-# 3. Deploys the mod incl. voices into the game (dotnet build -> StreamingAssets\SeaPowerRadio).
+# 3. Builds and deploys the plugin into the game (dotnet build -> StreamingAssets\SeaPowerRadio). Since 2.0 the clips
+#    are not part of the base mod: they ship as the English voices item (tools\package.ps1 -Pack).
 # 4. With -ShutdownWhenDone: shuts the PC down after a warning (abort with: shutdown /a).
 #
 # Start it so it survives the terminal / app that launched it (WMI creates it outside the caller's job):

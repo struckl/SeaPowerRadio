@@ -119,9 +119,9 @@ internal sealed class VoiceAssignment
         var known = candidates?.Where(byId.ContainsKey).ToList();
         if (known == null || known.Count == 0)
             return For(elementKey, accents, gender);
-        var men = known.Where(c => Allowed(byId[c], gender)).ToList();
-        if (men.Count > 0)
-            known = men;                 // none of the voices the name exists in is a man: the name matters more
+        var allowed = known.Where(c => Allowed(byId[c], gender)).ToList();
+        if (allowed.Count > 0)
+            known = allowed;             // none of the voices the name exists in is allowed: the name matters more
         if (accents != null)
         {
             // The accent of the unit's nation; when the name was rendered in none of them the name still matters more.

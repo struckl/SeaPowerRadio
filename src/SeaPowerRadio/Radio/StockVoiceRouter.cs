@@ -189,10 +189,7 @@ internal static class StockVoiceRouter
                 ModLog.Info($"[why-not] {unit.getName()}: detached from formation for VID");
                 return phrase;
             }
-            string text = "${Name}: " + WhyNot.WhyNotMonitor.AlertText("WhyNot_HoldingFormation");
-            ModLog.Info("[why-not] " + text.Replace("${Name}", unit.getName()));
-            try { Globals._mainGameViewModel?.RaiseAlert(unit, text); }
-            catch (Exception) { /* the alert is a nice-to-have */ }
+            WhyNot.WhyNotMonitor.HoldingFormation(unit);
             return "WhyNot_HoldingFormation";
         }
         return null;

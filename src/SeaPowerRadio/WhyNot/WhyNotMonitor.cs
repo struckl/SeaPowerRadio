@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using SeaPower;
+using SeaPowerRadio.Core;
 using SeaPowerRadio.Radio;
 using SeaPowerRadio.Roster;
 using UnityEngine;
@@ -42,6 +43,8 @@ internal sealed class WhyNotMonitor
     private const float Cooldown = 40f;
     private const float TargetCooldown = 300f;
     private const float UnitGap = 6f;
+    private const float ClearedWindow = 3f;        // real s after cease fire / a queue delete: vanished orders are the player's
+    private const double JustLaunched = 5.0;       // mission s: an order that ends this soon after a launch was fired
 
     private readonly RadioPlayer player;
     private readonly Dictionary<int, UnitTrack> units = new Dictionary<int, UnitTrack>();
@@ -65,6 +68,7 @@ internal sealed class WhyNotMonitor
     {
         units.Clear();
         groupSaid.Clear();
+        ClearedAt.Clear();
     }
 
     public void Tick()
@@ -94,39 +98,56 @@ internal sealed class WhyNotMonitor
         List<EngageTask> tasks = unit._currentEngageTasks;
         List<WeaponSystem> systems = unit._obp?._weaponSystems ?? new List<WeaponSystem>();
 
-        // Orders that vanished without a launch: the game gave up on them.
-        bool clearedByPlayer = ClearedAt.TryGetValue(id, out float clearedAt) && now - clearedAt < 3f;
+        ReportDropped(e, unit, track, tasks, systems, now);
+        if (tasks.Count == 0)
+        {
+            track.States.Clear();
+            return;
+        }
+        if (Evading(unit))
+        {
+            Report(e, unit, track, "WhyNot_Defending", tasks[0], "missile evasion state");
+            return;
+        }
+        Dictionary<WeaponSystem, EngageTask> working = Working(unit, tasks, systems);
+        ReportBlocked(e, unit, track, working, now);
+        ReportUntaken(e, unit, track, tasks, working, now);
+    }
+
+    /// <summary>Orders that vanished without a launch: the game gave up on them.</summary>
+    private void ReportDropped(RosterElement e, ObjectBase unit, UnitTrack track, List<EngageTask> tasks, List<WeaponSystem> systems, float now)
+    {
+        bool clearedByPlayer = ClearedAt.TryGetValue(unit.GetInstanceID(), out float clearedAt) && now - clearedAt < ClearedWindow;
         foreach (EngageTask gone in track.Known.Where(t => !tasks.Contains(t)).ToList())
         {
             track.Known.Remove(gone);
             track.PendingSince.Remove(gone);
             if (clearedByPlayer || gone._isAutoAttack || gone._targetObject == null || gone._targetObject.IsDestroyed)
                 continue;
-            bool launched = systems.Any(w => GameTime.missionElapsedTime - w._lastLaunchTime < 5.0);
+            bool launched = systems.Any(w => GameTime.missionElapsedTime - w._lastLaunchTime < JustLaunched);
             if (!launched)
                 Report(e, unit, track, DroppedReason(unit, gone), gone, "order dropped without a launch");
         }
         foreach (EngageTask t in tasks)
             track.Known.Add(t);
+    }
 
-        if (tasks.Count == 0)
-        {
-            track.States.Clear();
-            return;
-        }
+    /// <summary>A fighter that is defending against a missile never gets its nose on the target.</summary>
+    private static bool Evading(ObjectBase unit)
+    {
+        string state = unit is Aircraft ? unit.StateMachine?.CurrentStateName : null;
+        return state != null && (state.IndexOf("Evasion", StringComparison.OrdinalIgnoreCase) >= 0
+                                 || state.IndexOf("Evade", StringComparison.OrdinalIgnoreCase) >= 0);
+    }
 
-        // A fighter that is defending against a missile never gets its nose on the target.
-        if (unit is Aircraft && unit.StateMachine?.CurrentStateName?.IndexOf("Evasion", StringComparison.OrdinalIgnoreCase) >= 0
-            || unit is Aircraft && unit.StateMachine?.CurrentStateName?.IndexOf("Evade", StringComparison.OrdinalIgnoreCase) >= 0)
-        {
-            Report(e, unit, track, "WhyNot_Defending", tasks[0], "missile evasion state");
-            return;
-        }
-
-        // Weapon systems working on an order, stuck in a blocking state. A ship that has to turn for a fixed
-        // launcher (Harpoon, Tomahawk boxes) hands the order to an alignment task first: its weapon system already
-        // has the state the game shows in the status bar ("Engaging ... with RGM-84C (Target too far)") but hasn't
-        // taken the order yet - left out, the order looked untaken and got a wrong guess ("sonar contact only").
+    /// <summary>
+    /// The weapon systems working on an order. A ship that has to turn for a fixed launcher (Harpoon, Tomahawk boxes)
+    /// hands the order to an alignment task first: its weapon system already has the state the game shows in the
+    /// status bar ("Engaging ... with RGM-84C (Target too far)") but hasn't taken the order yet - left out, the order
+    /// looked untaken and got a wrong guess ("sonar contact only").
+    /// </summary>
+    private static Dictionary<WeaponSystem, EngageTask> Working(ObjectBase unit, List<EngageTask> tasks, List<WeaponSystem> systems)
+    {
         var working = new Dictionary<WeaponSystem, EngageTask>();
         foreach (WeaponSystem w in systems)
             if (w._executingEngageTask && w._takenEngageTask != null)
@@ -134,6 +155,12 @@ internal sealed class WhyNotMonitor
         foreach (AlignUnitToTarget a in unit._alignmentTasks ?? new List<AlignUnitToTarget>())
             if (a?._weaponSystem != null && a._engageTask != null && tasks.Contains(a._engageTask) && !working.ContainsKey(a._weaponSystem))
                 working[a._weaponSystem] = a._engageTask;
+        return working;
+    }
+
+    /// <summary>Working weapon systems stuck in a blocking engage state for StateHold seconds.</summary>
+    private void ReportBlocked(RosterElement e, ObjectBase unit, UnitTrack track, Dictionary<WeaponSystem, EngageTask> working, float now)
+    {
         foreach (WeaponSystem idle in track.States.Keys.Where(w => !working.ContainsKey(w)).ToList())
             track.States.Remove(idle);
         foreach (KeyValuePair<WeaponSystem, EngageTask> pair in working)
@@ -155,8 +182,11 @@ internal sealed class WhyNotMonitor
                 Report(e, unit, track, reason, pair.Value,
                     $"{w._vwp?._systemName ?? "weapon"} state {state}{(w._executingEngageTask ? "" : " while the unit aligns")}");
         }
+    }
 
-        // Orders nobody has taken yet.
+    private void ReportUntaken(RosterElement e, ObjectBase unit, UnitTrack track, List<EngageTask> tasks,
+        Dictionary<WeaponSystem, EngageTask> working, float now)
+    {
         foreach (EngageTask t in tasks)
         {
             if (working.ContainsValue(t))
@@ -177,34 +207,41 @@ internal sealed class WhyNotMonitor
         }
     }
 
-    /// <summary>Blocking engage states and what the unit says about them. Null = working normally.</summary>
+    // Blocking engage states and what the unit says about them; every other state is working normally.
+    private static readonly Dictionary<WeaponSystem.EngageState, string> Blocking = new Dictionary<WeaponSystem.EngageState, string>
+    {
+        { WeaponSystem.EngageState.NotInRearAspect, "WhyNot_NotInRearAspect" },
+        { WeaponSystem.EngageState.TargetTooFar, "WhyNot_TargetTooFar" },
+        { WeaponSystem.EngageState.TargetTooFarToOpenSystem, "WhyNot_TargetTooFar" },
+        { WeaponSystem.EngageState.MissileCanNotReachTarget, "WhyNot_CantReach" },
+        { WeaponSystem.EngageState.TargetTooClose, "WhyNot_TargetTooClose" },
+        { WeaponSystem.EngageState.TargetIsBeyondFCRHorizon, "WhyNot_BeyondRadarHorizon" },
+        { WeaponSystem.EngageState.NoLOSToTarget, "WhyNot_NoLineOfSight" },
+        { WeaponSystem.EngageState.LauncherTooLow, "WhyNot_TooLow" },
+        { WeaponSystem.EngageState.LauncherTooHigh, "WhyNot_TooHigh" },
+        { WeaponSystem.EngageState.TargetIsNotInFiringArcs, "WhyNot_NotInFiringArc" },
+        { WeaponSystem.EngageState.TargetIsNotInVerticalArc, "WhyNot_NotInFiringArc" },
+        { WeaponSystem.EngageState.TVSeekerCantSeeTarget, "WhyNot_SeekerCantSee" },
+        { WeaponSystem.EngageState.LaserCantPaintTarget, "WhyNot_SeekerCantSee" },
+        { WeaponSystem.EngageState.SpeedTooLow, "WhyNot_SpeedWrong" },
+        { WeaponSystem.EngageState.SpeedTooHigh, "WhyNot_SpeedWrong" },
+        { WeaponSystem.EngageState.EngagementNotAllowed, "WhyNot_NotAllowed" },
+    };
+
+    // States about the track on the target: "sonar contact only" when that is all the player holds, else these.
+    private static readonly Dictionary<WeaponSystem.EngageState, string> NoTrack = new Dictionary<WeaponSystem.EngageState, string>
+    {
+        { WeaponSystem.EngageState.TargetIsNotDetectableByFCR, "WhyNot_NoRadarLock" },
+        { WeaponSystem.EngageState.PrelaunchSensorAlignment, "WhyNot_NoRadarLock" },
+        { WeaponSystem.EngageState.TargetIsNotDetectableBySearchSensor, "WhyNot_NoSensorTrack" },
+    };
+
+    /// <summary>What the unit says about a blocking engage state. Null = working normally.</summary>
     private static string ReasonFor(WeaponSystem.EngageState state, ObjectBase target)
     {
-        switch (state)
-        {
-            case WeaponSystem.EngageState.NotInRearAspect: return "WhyNot_NotInRearAspect";
-            case WeaponSystem.EngageState.TargetTooFar:
-            case WeaponSystem.EngageState.TargetTooFarToOpenSystem: return "WhyNot_TargetTooFar";
-            case WeaponSystem.EngageState.MissileCanNotReachTarget: return "WhyNot_CantReach";
-            case WeaponSystem.EngageState.TargetTooClose: return "WhyNot_TargetTooClose";
-            case WeaponSystem.EngageState.TargetIsNotDetectableByFCR:
-            case WeaponSystem.EngageState.PrelaunchSensorAlignment:
-                return TargetSonarOnly(target) ? "WhyNot_SonarOnly" : "WhyNot_NoRadarLock";
-            case WeaponSystem.EngageState.TargetIsNotDetectableBySearchSensor:
-                return TargetSonarOnly(target) ? "WhyNot_SonarOnly" : "WhyNot_NoSensorTrack";
-            case WeaponSystem.EngageState.TargetIsBeyondFCRHorizon: return "WhyNot_BeyondRadarHorizon";
-            case WeaponSystem.EngageState.NoLOSToTarget: return "WhyNot_NoLineOfSight";
-            case WeaponSystem.EngageState.LauncherTooLow: return "WhyNot_TooLow";
-            case WeaponSystem.EngageState.LauncherTooHigh: return "WhyNot_TooHigh";
-            case WeaponSystem.EngageState.TargetIsNotInFiringArcs:
-            case WeaponSystem.EngageState.TargetIsNotInVerticalArc: return "WhyNot_NotInFiringArc";
-            case WeaponSystem.EngageState.TVSeekerCantSeeTarget:
-            case WeaponSystem.EngageState.LaserCantPaintTarget: return "WhyNot_SeekerCantSee";
-            case WeaponSystem.EngageState.SpeedTooLow:
-            case WeaponSystem.EngageState.SpeedTooHigh: return "WhyNot_SpeedWrong";
-            case WeaponSystem.EngageState.EngagementNotAllowed: return "WhyNot_NotAllowed";
-            default: return null;
-        }
+        if (NoTrack.TryGetValue(state, out string phrase))
+            return TargetSonarOnly(target) ? "WhyNot_SonarOnly" : phrase;
+        return Blocking.TryGetValue(state, out phrase) ? phrase : null;
     }
 
     /// <summary>Why an order waits with no weapon system on it. Null when there is nothing certain to say.</summary>
@@ -246,11 +283,11 @@ internal sealed class WhyNotMonitor
         return "WhyNot_CantSeeTarget";
     }
 
-    public static string ReloadPhrase(float seconds)
+    private static string ReloadPhrase(float seconds)
     {
         if (seconds < 45f) return "WhyNot_ReloadSoon";
         int minutes = Mathf.CeilToInt(seconds / 60f);
-        return minutes <= 10 ? "WhyNot_ReloadIn" + minutes : "WhyNot_ReloadLong";
+        return minutes <= 10 ? ReloadInPrefix + minutes : "WhyNot_ReloadLong";     // Radio has clips for 1-10 min
     }
 
     /// <summary>
@@ -299,24 +336,19 @@ internal sealed class WhyNotMonitor
         track.LastSaid[about] = now;
         track.LastAny = now;
 
-        string weapon = AmmoName(unit, task);
-        string target = task?._targetObject != null ? $"Track {task._targetObject.GetMapContactID()}" : "position";
+        string weapon = task != null ? OrderText.Weapon(unit, task) : "weapon";
+        string target = task != null ? OrderText.Target(task) : "position";
         string text = $"${{Name}}: {AlertText(phrase)} ({weapon} at {target})";  // unit and track become links
-        ModLog.Info($"[why-not] {text.Replace("${Name}", unit.getName())} [{detail}]");
-        try { Globals._mainGameViewModel?.RaiseAlert(unit, text); }
-        catch (Exception ex) { ModLog.Debug($"[why-not] alert failed: {ex.Message}"); }
+        GameMessage.RaiseLogged("why-not", unit, null, text, $" [{detail}]");
 
         var said = (GroupOf(unit), phrase, targetId);
         if (groupSaid.TryGetValue(said, out last) && now - last < TargetCooldown)
             return; // another unit of the formation already said it
         groupSaid[said] = now;
 
-        Transmission t = TransmissionBuilder.Build(e, phrase, null);
-        if (t != null)
-        {
-            t.Alerts.AddRange(AlertLink.TakeFor(unit));
-            player.Submit(t);
-        }
+        Transmission call = TransmissionBuilder.Build(e, phrase, null);
+        if (call != null)
+            SpokenReport.Submit(player, call, AlertLink.TakeFor(unit));
     }
 
     /// <summary>The formation a unit sails or flies in, or the unit itself.</summary>
@@ -326,42 +358,45 @@ internal sealed class WhyNotMonitor
         return formation != null && formation.Stations.Count > 1 ? formation : (object)unit;
     }
 
-    private static string AmmoName(ObjectBase unit, EngageTask task)
+    // The on-screen line next to each spoken one.
+    private static readonly Dictionary<string, string> Texts = new Dictionary<string, string>
     {
-        if (task == null) return "weapon";
-        Ammunition ammo = task._ammunition ?? unit.getAmmunitionByName(task._ammoId);
-        return ammo?._ap?._displayedName ?? task._ammoId;
+        { "WhyNot_ReloadSoon", "Reloading, ready in under a minute" },
+        { "WhyNot_ReloadLong", "Reloading, ready in more than 10 min" },
+        { "WhyNot_NotInRearAspect", "Unable – target not in rear aspect (IR missile)" },
+        { "WhyNot_TargetTooFar", "Unable – target outside launch envelope" },
+        { "WhyNot_CantReach", "Unable – missile cannot reach the target" },
+        { "WhyNot_TargetTooClose", "Unable – inside minimum range" },
+        { "WhyNot_NoRadarLock", "Negative – no radar lock / fire control track" },
+        { "WhyNot_NoSensorTrack", "Unable – no sensor track on the target" },
+        { "WhyNot_SonarOnly", "Negative – sonar contact only, no targeting track for this weapon" },
+        { "WhyNot_BeyondRadarHorizon", "Unable – target below the radar horizon" },
+        { "WhyNot_NoLineOfSight", "Unable – no line of sight" },
+        { "WhyNot_TooLow", "Unable – too low to launch" },
+        { "WhyNot_TooHigh", "Unable – too high to launch" },
+        { "WhyNot_NotInFiringArc", "Turning – target not in the firing arc" },
+        { "WhyNot_SeekerCantSee", "Negative – seeker can't see the target in these conditions" },
+        { "WhyNot_SpeedWrong", "Unable – wrong speed for launch" },
+        { "WhyNot_NotAllowed", "Negative – not cleared to engage" },
+        { "WhyNot_NoAmmo", "Negative – nothing left for that target" },
+        { "WhyNot_CantSeeTarget", "Order dropped – no sensor can see the target" },
+        { "WhyNot_Defending", "Unable – defending against a missile" },
+        { "WhyNot_HoldingFormation", "Unable – wingman holds formation on lead (VID needs a detached aircraft)" },
+    };
+
+    private const string ReloadInPrefix = "WhyNot_ReloadIn";
+
+    private static string AlertText(string phrase)
+    {
+        if (phrase.StartsWith(ReloadInPrefix))
+            return $"Reloading, ready in {phrase.Substring(ReloadInPrefix.Length)} min";
+        return Texts.TryGetValue(phrase, out string text) ? text : phrase;
     }
 
-    /// <summary>The on-screen line next to the spoken one.</summary>
-    public static string AlertText(string phrase)
-    {
-        if (phrase.StartsWith("WhyNot_ReloadIn"))
-            return $"Reloading, ready in {phrase.Substring("WhyNot_ReloadIn".Length)} min";
-        switch (phrase)
-        {
-            case "WhyNot_ReloadSoon": return "Reloading, ready in under a minute";
-            case "WhyNot_ReloadLong": return "Reloading, ready in more than 10 min";
-            case "WhyNot_NotInRearAspect": return "Unable – target not in rear aspect (IR missile)";
-            case "WhyNot_TargetTooFar": return "Unable – target outside launch envelope";
-            case "WhyNot_CantReach": return "Unable – missile cannot reach the target";
-            case "WhyNot_TargetTooClose": return "Unable – inside minimum range";
-            case "WhyNot_NoRadarLock": return "Negative – no radar lock / fire control track";
-            case "WhyNot_NoSensorTrack": return "Unable – no sensor track on the target";
-            case "WhyNot_SonarOnly": return "Negative – sonar contact only, no targeting track for this weapon";
-            case "WhyNot_BeyondRadarHorizon": return "Unable – target below the radar horizon";
-            case "WhyNot_NoLineOfSight": return "Unable – no line of sight";
-            case "WhyNot_TooLow": return "Unable – too low to launch";
-            case "WhyNot_TooHigh": return "Unable – too high to launch";
-            case "WhyNot_NotInFiringArc": return "Turning – target not in the firing arc";
-            case "WhyNot_SeekerCantSee": return "Negative – seeker can't see the target in these conditions";
-            case "WhyNot_SpeedWrong": return "Unable – wrong speed for launch";
-            case "WhyNot_NotAllowed": return "Negative – not cleared to engage";
-            case "WhyNot_NoAmmo": return "Negative – nothing left for that target";
-            case "WhyNot_CantSeeTarget": return "Order dropped – no sensor can see the target";
-            case "WhyNot_Defending": return "Unable – defending against a missile";
-            case "WhyNot_HoldingFormation": return "Unable – wingman holds formation on lead (VID needs a detached aircraft)";
-            default: return phrase;
-        }
-    }
+    /// <summary>
+    /// A wingman ordered to VID while flying in formation (Patches/VidPatches): its message. Not through Report: the
+    /// player gave the order just now, so it is answered every time, without cooldowns.
+    /// </summary>
+    public static void HoldingFormation(ObjectBase unit) =>
+        GameMessage.RaiseLogged("why-not", unit, null, "${Name}: " + AlertText("WhyNot_HoldingFormation"));
 }

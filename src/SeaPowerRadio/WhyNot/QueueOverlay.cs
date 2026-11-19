@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using SeaPower;
+using SeaPowerRadio.Core;
 using UnityEngine;
 
 namespace SeaPowerRadio.WhyNot;
@@ -19,6 +20,8 @@ namespace SeaPowerRadio.WhyNot;
 internal sealed class QueueOverlay : MonoBehaviour
 {
     private const int MaxRows = 8;
+    private const int GuiDepth = -10000;           // before NoesisView (depth = -camera depth), which uses up clicks over its panels
+    private const int WindowId = 0x5EA9;           // any id no other IMGUI window of the game uses
     private bool visible = true;
     private Rect window = new Rect(0, 0, 440, 60);
     private GUIStyle row;
@@ -55,7 +58,7 @@ internal sealed class QueueOverlay : MonoBehaviour
     {
         if (!Settings.QueueOverlay.Value)
             return;
-        GUI.depth = -10000; // before NoesisView (depth = -camera depth), which uses up clicks over its panels
+        GUI.depth = GuiDepth;
         Event ev = Event.current;
         if (ev.type == EventType.KeyDown && ev.keyCode == Settings.QueueOverlayKey.Value)
         {
@@ -64,18 +67,27 @@ internal sealed class QueueOverlay : MonoBehaviour
         }
         if (ev.type == EventType.Repaint)
             buttons.Clear();                        // re-filled below if the window is drawn
-        if (!visible || Roster.RosterService.Current == null || !Singleton<RenderPosition>.InstanceExists())
+        ObjectBase unit = SelectedUnit();
+        if (unit == null)
             return;
+        List<EngageTask> tasks = unit._currentEngageTasks.Where(t => !t._isAutoAttack).ToList();
+        if (tasks.Count > 0)
+            DrawWindow(unit, tasks);
+    }
 
+    /// <summary>The selected own unit with an order list, while the window is shown in a mission; else null.</summary>
+    private ObjectBase SelectedUnit()
+    {
+        if (!visible || Roster.RosterService.Current == null || !Singleton<RenderPosition>.InstanceExists())
+            return null;
         ObjectBase unit = null;
         try { unit = Singleton<RenderPosition>.Instance.getSelectedObject(); }
         catch (Exception) { /* no selection API in this state */ }
-        if (unit == null || !unit.IsPlayerUnit || unit._currentEngageTasks == null)
-            return;
-        List<EngageTask> tasks = unit._currentEngageTasks.Where(t => !t._isAutoAttack).ToList();
-        if (tasks.Count == 0)
-            return;
+        return unit != null && unit.IsPlayerUnit && unit._currentEngageTasks != null ? unit : null;
+    }
 
+    private void DrawWindow(ObjectBase unit, List<EngageTask> tasks)
+    {
         scale = Mathf.Max(1f, Screen.height / 1080f);
         Matrix4x4 old = GUI.matrix;
         GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
@@ -87,7 +99,7 @@ internal sealed class QueueOverlay : MonoBehaviour
         }
         row ??= new GUIStyle(GUI.skin.label) { fontSize = 13, wordWrap = false };
         window.height = 34f + Math.Min(tasks.Count, MaxRows) * 24f;
-        window = GUI.Window(0x5EA9, window, id => DrawQueue(unit, tasks), $"Orders – {unit.getName()}  ({Settings.QueueOverlayKey.Value} hides)");
+        window = GUI.Window(WindowId, window, id => DrawQueue(unit, tasks), $"Orders – {unit.getName()}  ({Settings.QueueOverlayKey.Value} hides)");
         GUI.matrix = old;
     }
 
@@ -97,30 +109,7 @@ internal sealed class QueueOverlay : MonoBehaviour
         List<WeaponSystem> systems = unit._obp?._weaponSystems ?? new List<WeaponSystem>();
         for (int i = 0; i < tasks.Count && i < MaxRows; i++)
         {
-            EngageTask t = tasks[i];
-            string ammo = (t._ammunition ?? unit.getAmmunitionByName(t._ammoId))?._ap?._displayedName ?? t._ammoId;
-            string target = t._targetObject != null ? $"Track {t._targetObject.GetMapContactID()}" : "position";
-            GUI.Label(new Rect(8, y, 330, 22), $"{i + 1}. {ammo} → {target} · {Status(unit, t, systems)}", row);
-            var delete = new Rect(392, y, 36, 20);
-            Event ev = Event.current;
-            if (ev.type == EventType.Repaint)
-            {
-                buttons.Add((new Rect((window.x + delete.x) * scale, (window.y + delete.y) * scale,
-                                      delete.width * scale, delete.height * scale), t));
-                buttonsFor = unit;
-                buttonsSystems = systems;
-            }
-            if (ev.type == EventType.MouseDown && ev.button == 0 && delete.Contains(ev.mousePosition))
-            {
-                // On the press, not the release: a click can change the game's selection before the release arrives.
-                if (deletedFrame != Time.frameCount)
-                {
-                    deletedFrame = Time.frameCount;
-                    Delete(unit, t, systems);
-                }
-                ev.Use();
-            }
-            GUI.Button(delete, "✕");
+            DrawRow(unit, tasks[i], i, y, systems);
             y += 24f;
         }
         GUI.DragWindow(new Rect(0, 0, 10000, 20));
@@ -129,6 +118,33 @@ internal sealed class QueueOverlay : MonoBehaviour
         if ((rest.type == EventType.MouseDown || rest.type == EventType.MouseUp)
             && new Rect(0, 0, window.width, window.height).Contains(rest.mousePosition))
             rest.Use();
+    }
+
+    private void DrawRow(ObjectBase unit, EngageTask t, int i, float y, List<WeaponSystem> systems)
+    {
+        string ammo = OrderText.Weapon(unit, t);
+        string target = OrderText.Target(t);
+        GUI.Label(new Rect(8, y, 330, 22), $"{i + 1}. {ammo} → {target} · {Status(unit, t, systems)}", row);
+        var delete = new Rect(392, y, 36, 20);
+        Event ev = Event.current;
+        if (ev.type == EventType.Repaint)
+        {
+            buttons.Add((new Rect((window.x + delete.x) * scale, (window.y + delete.y) * scale,
+                                  delete.width * scale, delete.height * scale), t));
+            buttonsFor = unit;
+            buttonsSystems = systems;
+        }
+        if (ev.type == EventType.MouseDown && ev.button == 0 && delete.Contains(ev.mousePosition))
+        {
+            // On the press, not the release: a click can change the game's selection before the release arrives.
+            if (deletedFrame != Time.frameCount)
+            {
+                deletedFrame = Time.frameCount;
+                Delete(unit, t, systems);
+            }
+            ev.Use();
+        }
+        GUI.Button(delete, "✕");
     }
 
     private static string Status(ObjectBase unit, EngageTask t, List<WeaponSystem> systems)
@@ -150,7 +166,7 @@ internal sealed class QueueOverlay : MonoBehaviour
     {
         try
         {
-            WhyNotMonitor.MarkCleared(unit);
+            WhyNotMonitor.MarkCleared(unit);   // the player's doing, not "dropped by the game"
             foreach (WeaponSystem w in systems.Where(w => w._takenEngageTask == t))
                 w.EndEngageTask();
             unit.RemoveEngageTask(t);

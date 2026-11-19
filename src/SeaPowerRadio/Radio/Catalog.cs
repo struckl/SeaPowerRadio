@@ -120,7 +120,6 @@ internal sealed class Catalog
         }
     }
 
-    /// <summary>The catalog of the pack a voice id (<c>packId/personaId</c>) belongs to.</summary>
     public static Catalog Of(string voice) => VoicePacks.OfVoice(voice)?.Catalog;
 
     /// <summary>
@@ -162,7 +161,6 @@ internal sealed class Catalog
         return pick;
     }
 
-    /// <summary>Does this voice have the clips of this variant?</summary>
     public static bool Rendered(PhraseVariant v, string voice)
     {
         if (voice == null) return false;

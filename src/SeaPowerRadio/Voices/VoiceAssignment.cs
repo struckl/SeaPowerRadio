@@ -10,7 +10,6 @@ internal sealed class VoicePersona
 {
     public VoicePack Pack;     // the pack this voice belongs to
     public string Id;          // folder name in the pack, e.g. "us_m_03" (unique inside the pack)
-    public string Language;    // language column of personas.txt
     /// <summary>Unique across packs: <c>packId/personaId</c>, what the transmissions and logs carry.</summary>
     public string FullId => Pack.Id + "/" + Id;
     public string Gender;      // "m" / "f"
@@ -52,15 +51,13 @@ internal sealed class VoiceAssignment
 
     public int PoolSize => order.Count;
 
-    /// <summary>"Female voices" off: women's voices are skipped while a male voice is still available.</summary>
     /// <summary>
-    /// <paramref name="gender"/> = a squadron rule (squadrons.txt, "m" / "f"): only that gender, whatever the setting says.
+    /// "Female voices" off: women's voices are skipped while a male voice is still available. <paramref name="gender"/> = a squadron rule (squadrons.txt, "m" / "f"): only that gender, whatever the setting says.
     /// Null = the "Female voices" setting decides.
     /// </summary>
     private static bool Allowed(VoicePersona p, string gender = null) =>
         gender != null ? p.Gender == gender : p.Gender != "f" || Settings.FemaleVoices == null || Settings.FemaleVoices.Value;
 
-    /// <summary>Whether this persona may speak with the current settings (and the squadron's gender rule, if it has one).</summary>
     public static bool IsAllowed(VoicePersona p, string gender = null) => p == null || Allowed(p, gender);
 
     /// <summary>

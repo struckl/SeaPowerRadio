@@ -11,7 +11,6 @@ namespace SeaPowerRadio.Radio;
 internal sealed class NameAlias
 {
     public string Match;      // slug of the game name ("uss_pargo")
-    public bool StartsWith;   // the line ended in '*': every name that starts with it
     public string Say;        // a name with clips (names.txt) or a ship/sub/shore callsign word ("Victory"), null = keep the unit's own
     public string Voice;      // "gb_m_04" or "nato-en/gb_m_04", null = chosen as usual
     public string Source;     // file:line, for the log
@@ -136,7 +135,6 @@ internal static class NameAliases
             var alias = new NameAlias
             {
                 Match = Names.Slug(left),
-                StartsWith = startsWith,
                 Say = say.Length > 0 ? say : null,
                 Voice = voice.Length > 0 ? voice : null,
                 Source = where,

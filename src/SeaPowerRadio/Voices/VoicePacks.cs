@@ -30,7 +30,6 @@ internal static class VoicePacks
     public static VoicePack ById(string id) =>
         All.FirstOrDefault(p => string.Equals(p.Id, id, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>The pack a voice id ("packId/personaId") belongs to.</summary>
     public static VoicePack OfVoice(string voice)
     {
         if (voice == null) return null;

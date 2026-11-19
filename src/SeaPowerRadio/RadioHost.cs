@@ -14,8 +14,6 @@ namespace SeaPowerRadio;
 /// </summary>
 internal sealed class RadioHost : MonoBehaviour
 {
-    public static RadioHost Instance { get; private set; }
-
     private RadioPlayer player;
     private ContactReporter contacts;
     private WhyNotMonitor whyNot;
@@ -24,7 +22,6 @@ internal sealed class RadioHost : MonoBehaviour
 
     private void Awake()
     {
-        Instance = this;
         player = new RadioPlayer(this);
         contacts = new ContactReporter(player);
         whyNot = new WhyNotMonitor(player);
@@ -89,7 +86,5 @@ internal sealed class RadioHost : MonoBehaviour
         EventBus.MissionStarted -= OnMissionStarted;
         EventBus.MissionEnded -= OnMissionEnded;
         Settings.FemaleVoices.SettingChanged -= OnFemaleVoicesChanged;
-        if (Instance == this)
-            Instance = null;
     }
 }

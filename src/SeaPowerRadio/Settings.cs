@@ -41,10 +41,6 @@ internal static class Settings
     public static ConfigEntry<float> VolumeOrders;
     public static ConfigEntry<float> VolumeOther;
 
-
-
-
-
     public static ConfigEntry<bool> LogRoster;
     public static ConfigEntry<bool> LogStockVoice;
     public static ConfigEntry<bool> LogRadio;
@@ -145,7 +141,17 @@ internal static class Settings
         ConfigMigration = file.Bind("1. General", "Config migration", 0,
             "Bookkeeping, leave as it is: the number of one-time settings migrations that have run (1 = Female voices " +
             "was reset to off once, 1.4.0). A setting you change afterwards is kept.");
+        BindRadio();
+        BindCallVolumes();
+        BindDiagnostics();
+        BindNations();
+        Migrate();
+        file.Save();   // writes the entries a config from an older version did not have yet
+    }
 
+    // Sections 3-7 moved to R.A.T.S. Command Tools in 2.0; the numbers of the others stay, so players' files keep working.
+    private static void BindRadio()
+    {
         ReplaceStockVoices = file.Bind("2. Radio", "Replace stock voices", true,
             "Mute the game's voice lines and have every unit say them in its own voice and callsign.");
         Volume = file.Bind("2. Radio", "Volume", 1.0f,
@@ -182,11 +188,10 @@ internal static class Settings
             "playing (never the same unit twice at once). Off: one call at a time, the rest wait in the queue.");
         MaxOverlap = file.Bind("2. Radio", "Voices at once", 3,
             new ConfigDescription("Most calls playing at the same time when Overlapping voices is on.", new AcceptableValueRange<int>(2, 4)));
+    }
 
-
-
-
-
+    private static void BindCallVolumes()
+    {
         VolumeContacts = file.Bind("8. Call volumes", "Contacts and tracks", 1.0f,
             new ConfigDescription("Volume of new / lost / identified contact and track calls (multiplier, 1 = default).",
                                   new AcceptableValueRange<float>(0f, 2f)));
@@ -201,16 +206,16 @@ internal static class Settings
         VolumeOther = file.Bind("8. Call volumes", "Air ops and other", 1.0f,
             new ConfigDescription("Volume of launch / recovery, fuel, search and rescue, mission and everything else.",
                                   new AcceptableValueRange<float>(0f, 2f)));
+    }
 
+    private static void BindDiagnostics()
+    {
         LogRoster = file.Bind("9. Diagnostics", "Log roster", true,
             "On mission start, log every player element with its callsign and voice.");
         LogStockVoice = file.Bind("9. Diagnostics", "Log stock voice events", true,
             "Log every voice line the game asks for (key, speaker, number).");
         LogRadio = file.Bind("9. Diagnostics", "Log radio calls", true,
             "Log every call the mod queues and speaks.");
-        BindNations();
-        Migrate();
-        file.Save();   // writes the entries a config from an older version did not have yet
     }
 
     /// <summary>

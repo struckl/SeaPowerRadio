@@ -9,11 +9,9 @@ namespace SeaPowerRadio.Ui;
 /// <summary>
 /// The 2.0 note for players who had Radio before (Settings.ShowUpgradeNotice, set once by the config migration): a small
 /// window in the main menu that says what moved and offers to subscribe what is missing. New players never see it.
-/// <list type="bullet">
-/// <item>R.A.T.S. Command Tools: order queue, clickable messages, unit roles, RTB highlight, why-not, contact, fuel and
-/// SAR reports. Missing = <c>rats.commandtools.version</c> is not set.</item>
-/// <item>R.A.T.S. Radio English: the 43 voices. Missing = no voice pack <c>nato-en</c> was found.</item>
-/// </list>
+/// - R.A.T.S. Command Tools: order queue, clickable messages, unit roles, RTB highlight, why-not, contact, fuel and
+/// SAR reports. Missing = <c>rats.commandtools.version</c> is not set.
+/// - R.A.T.S. Radio English: the 43 voices. Missing = no voice pack <c>nato-en</c> was found.
 /// "Subscribe" asks Steam through the game's own Steamworks (both items are Required Items of Radio, so the game's Mod
 /// menu "Sync dependencies" does the same); if that fails, the item's Workshop page opens. Subscribed items arrive with
 /// the next start of the game. "Later" hides it for this session, "Don't show again" for good.

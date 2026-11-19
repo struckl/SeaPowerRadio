@@ -417,7 +417,7 @@ internal sealed class Director : MonoBehaviour
         Log($"ammo '{unit.getName()}': {(weapons == null ? "?" : string.Join(", ", weapons.Keys.Cast<object>()))}");
     }
 
-    // NAME | TRACK | AMMO [| SALVO] – the same task the attack cursor adds (AttackingState.AddAttackTask).
+    // NAME | TRACK | AMMO [| SALVO] - the same task the attack cursor adds (AttackingState.AddAttackTask).
     private void Attack(string spec)
     {
         string[] p = spec.Split('|').Select(s => s.Trim()).ToArray();

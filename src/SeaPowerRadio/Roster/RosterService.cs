@@ -99,23 +99,40 @@ internal static class RosterService
     /// </summary>
     private static string MissionSeed()
     {
+        // Each step may be empty on some missions or saves (a null reference here was logged in 43 player reports): every
+        // step is checked on its own, and the log says which one gave nothing.
+        string raw = Globals.currentMissionFilePath;
+        string step = "save";
         try
         {
             if (SaveLoadManager.IsASaveFile && Singleton<SceneCreator>.InstanceExists())
             {
-                string baseFile = Singleton<SceneCreator>.Instance.MissionIni?.readValue("File", "BaseFile", "", false);
+                step = "save chain";
+                var ini = Singleton<SceneCreator>.Instance?.MissionIni;
+                string baseFile = ini?.readValue("File", "BaseFile", "", false);
                 if (!string.IsNullOrEmpty(baseFile))
-                    return baseFile.Replace('\\', '/').ToLowerInvariant();
+                    return Normal(baseFile);
             }
-            string path = Globals.currentMissionFilePath ?? "unknown";
-            if (Singleton<FileManager>.InstanceExists())
-                path = Singleton<FileManager>.Instance.GetRelativePath(path);
-            return path.Replace('\\', '/').ToLowerInvariant();
+            if (string.IsNullOrEmpty(raw))
+            {
+                ModLog.Info("[roster] mission seed: no mission file path, voices use a fixed seed");
+                return "unknown";
+            }
+            step = "relative path";
+            string relative = Singleton<FileManager>.InstanceExists() ? Singleton<FileManager>.Instance?.GetRelativePath(raw) : null;
+            if (string.IsNullOrEmpty(relative))
+            {
+                ModLog.Info("[roster] mission seed: the mission lies outside a mod folder, the full path is used");
+                return Normal(raw);
+            }
+            return Normal(relative);
         }
         catch (Exception ex)
         {
-            ModLog.Warn($"Mission seed fallback: {ex.Message}");
-            return Globals.currentMissionFilePath ?? "unknown";
+            ModLog.Warn($"Mission seed fallback at the {step} step: {ex.GetType().Name}: {ex.Message}");
+            return Normal(raw ?? "unknown");
         }
     }
+
+    private static string Normal(string path) => path.Replace('\\', '/').ToLowerInvariant();
 }

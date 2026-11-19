@@ -219,7 +219,7 @@ internal sealed class Roster
         foreach (RosterElement e in elements.Where(e => e.Pack != null && e.Voice == null))
             ApplyMemory(e);
 
-        // Named units next – their names exist only in a few voices – then everyone else from the pool.
+        // Named units next - their names exist only in a few voices - then everyone else from the pool.
         foreach (RosterElement e in elements.Where(e => e.BoundName != null && e.Pack != null && e.Voice == null))
             e.Voice = VoicesOf(e.Pack).Prefer(e.Key, e.BoundName.Voices, AccentsOf(e), e.Gender);
         foreach (RosterElement e in elements.Where(e => e.Voice == null && e.Pack != null))
@@ -259,7 +259,7 @@ internal sealed class Roster
 
     /// <summary>
     /// The in-game name a unit says: a ship's short name, or an aircraft's squadron callsign word. A ship's alias line
-    /// (aliases.txt) comes first, then its own name, then its name without a hull prefix ("USS Pargo" → "Pargo").
+    /// (aliases.txt) comes first, then its own name, then its name without a hull prefix ("USS Pargo" -> "Pargo").
     /// </summary>
     public static GameName NameOf(ObjectBase unit, VoicePack pack)
     {
@@ -377,7 +377,7 @@ internal sealed class Roster
 
         RosterElement slot = elements.FirstOrDefault(e =>
             e.IsAirWingSlot && e.Carrier == deckOwner && e.AircraftIni == aircraftIni && e.Squadron == squadron
-            && e.Unit == null); // Unity null: a recovered aircraft's object is destroyed → slot free again
+            && e.Unit == null); // Unity null: a recovered aircraft's object is destroyed -> slot free again
         if (slot == null)
             return AddLate(aircraft);
 
@@ -401,7 +401,7 @@ internal sealed class Roster
         return slot;
     }
 
-    /// <summary>A player unit that was not there at mission start (trigger-enabled, air support…).</summary>
+    /// <summary>A player unit that was not there at mission start (trigger-enabled, air support...).</summary>
     public RosterElement AddLate(ObjectBase unit)
     {
         RosterElement existing = Find(unit);
@@ -459,13 +459,11 @@ internal sealed class Roster
         return sb.ToString();
     }
 
-    // ------------------------------------------------------------------------------------------------------------
-
     private static IEnumerable<ObjectBase> PlayerUnits()
     {
         Taskforce player = Globals._playerTaskforce;
         if (player == null) yield break;
-        // Active units plus those a trigger will enable later — they should have their voice from the start.
+        // Active units plus those a trigger will enable later - they should have their voice from the start.
         foreach (ObjectBase unit in player._taskforceUnits.Concat(player._taskforceDisabledUnits))
         {
             if (unit == null || !unit.isUnit()) continue;

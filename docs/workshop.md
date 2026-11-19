@@ -1,6 +1,6 @@
 # Releasing on the Steam Workshop
 
-The game uploads Workshop items itself: **Main menu → Mods → Create Mod**, signed in with the Steam account that
+The game uploads Workshop items itself: **Main menu > Mods > Create Mod**, signed in with the Steam account that
 owns the item. No SteamCMD needed.
 
 ## Before a release
@@ -10,7 +10,7 @@ owns the item. No SteamCMD needed.
 2. Check `mod/_info.ini`: Mod Manager name and description, and `[Compatibility]` (`ApproximateVersion` = the game
    version tested against; it accepts later patch versions of that minor version).
 3. New phrases since the last release? Render them (`tools/voicegen`, see the README), then
-   `.venv-chatterbox/Scripts/python tools/voicegen/check_library.py` – nothing may be missing.
+   `.venv-chatterbox/Scripts/python tools/voicegen/check_library.py` - nothing may be missing.
 4. Run the checklists in [testing.md](testing.md) on the current game version.
 5. Close Sea Power, then stage and install the release folder:
 
@@ -24,17 +24,17 @@ owns the item. No SteamCMD needed.
 
 ## Upload
 
-Start Sea Power → Mods → Create Mod:
+Start Sea Power > Mods > Create Mod:
 
 | Field | Value |
 | --- | --- |
-| Existing item | pick *Sea Power: Rats Radio* – Workshop item [3826433579](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579), first uploaded 2026-10-24 as 1.0.0 |
-| Folder | `StreamingAssets\SeaPowerRadio` (the folder `package.ps1 -Install` filled). **Double-click** `SeaPowerRadio` so the picker is *inside* it, then confirm: the picker takes the folder it is in, a single click only highlights. Confirming in `StreamingAssets` itself gets "… is a forbidden path!" (the game refuses `StreamingAssets` and `StreamingAssets\original`) |
+| Existing item | pick *Sea Power: Rats Radio* - Workshop item [3826433579](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579), first uploaded 2026-10-24 as 1.0.0 |
+| Folder | `StreamingAssets\SeaPowerRadio` (the folder `package.ps1 -Install` filled). **Double-click** `SeaPowerRadio` so the picker is *inside* it, then confirm: the picker takes the folder it is in, a single click only highlights. Confirming in `StreamingAssets` itself gets "... is a forbidden path!" (the game refuses `StreamingAssets` and `StreamingAssets\original`) |
 | Name | Sea Power: Rats Radio (the naming of "Sea Power: Rats Topographic Map" and "Sea Power: Rats Pop-Out Windows") |
 | Description | [workshop/description.bbcode](../workshop/description.bbcode) |
 | Preview image | `StreamingAssets\SeaPowerRadio\preview.jpg` (put there by `package.ps1`: the picker only browses StreamingAssets and only takes .jpg; Steam wants it under 1 MB) |
 | Tags | Audio, Scripting |
-| Dependencies | `3380210757` (Anchor Chain) – shows as a required item on the Workshop page |
+| Dependencies | `3380210757` (Anchor Chain) - shows as a required item on the Workshop page |
 | Visibility | first upload **Hidden** (or Friends only); Public once the subscribed copy is tested |
 | Change log | the CHANGELOG entry |
 
@@ -44,7 +44,7 @@ changed, so a plugin-only update is small for players.
 ### Updates without opening the game
 
 [tools/workshop-upload](../tools/workshop-upload) (dev-only, never shipped) makes the calls the Create Mod screen
-makes for an existing item, through the running Steam client and the game's own Steamworks.NET – but only the
+makes for an existing item, through the running Steam client and the game's own Steamworks.NET - but only the
 content and the change note; title, description, tags, preview, visibility, dependencies and the compatibility
 metadata stay as they are. Steam must be running, signed in with the owner account (no password involved); the game
 can stay closed. 1.0.1 and 1.0.2 went up this way, the 1.0.1 video replaced the 1.0.0 one on the page, and the
@@ -75,13 +75,13 @@ After the first upload:
 
   | Image | Shows |
   | --- | --- |
-  | 01-radio-net | the message log full of radio calls over the Aegean (*Dangerous Straits 1985*): new air contacts with bearings, a hostile classification by ESM, a flight on position – every unit and track a link |
+  | 01-radio-net | the message log full of radio calls over the Aegean (*Dangerous Straits 1985*): new air contacts with bearings, a hostile classification by ESM, a flight on position - every unit and track a link |
   | 02-unit-roles-rtb | the formation manager with each ship's role line, the F-5 pair heading home in yellow on the map |
   | 03-message-log | close-up of the message log |
-  | 04-unit-roles | close-up of the role lines (Battleship, Destroyer, Missile Cruiser …) |
+  | 04-unit-roles | close-up of the role lines (Battleship, Destroyer, Missile Cruiser ...) |
 
 - the sound sample: `workshop/radio-net.mp4` (70 s, 1080p, the radio net while Yak-38s close in on the Iowa
-  group; not in git) uploaded to YouTube, then added as a video – the Workshop only embeds YouTube.
+  group; not in git) uploaded to YouTube, then added as a video - the Workshop only embeds YouTube.
 
 Then the Workshop link into the README and the description, and the release zip as a GitHub release (`v<version>`).
 
@@ -113,7 +113,7 @@ message log opened on the main screen. The sample was recorded with Desktop Dupl
 (`ffmpeg -f lavfi -i ddagrab=…`) and a WASAPI loopback of the speakers for the sound (Python `soundcard`), muxed and
 scaled to 1080p. Afterwards: `quit`, remove `StreamingAssets\ShotDirector\`, put back any config the run changed.
 
-The order queue window (F8) did not show up in this run, although Iowa had attack orders waiting – probably
+The order queue window (F8) did not show up in this run, although Iowa had attack orders waiting - probably
 because the director's `select` doesn't select a unit the way a click on the map does (F8 also toggles the window
 off; it starts shown). A screenshot of it is still missing.
 
@@ -126,7 +126,7 @@ to Public.
 
 ## Still to do for the first release
 
-- A screenshot of the order queue (F8) and of a spoken refusal ("Unable – target outside launch envelope").
+- A screenshot of the order queue (F8) and of a spoken refusal ("Unable - target outside launch envelope").
 - Settings inside the game (most players won't edit the BepInEx config).
 - Test matrix: other game languages (unit roles, callsign words), large missions (many units), the game's own
   voice volume settings.

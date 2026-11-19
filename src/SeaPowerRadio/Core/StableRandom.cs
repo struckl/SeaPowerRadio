@@ -5,7 +5,7 @@ namespace SeaPowerRadio.Core;
 
 /// <summary>
 /// Deterministic randomness for per-mission choices (callsigns, voices). Seeded from a stable FNV-1a hash rather
-/// than <c>string.GetHashCode</c>, which is not guaranteed stable across runtimes — a reload of the same mission
+/// than <c>string.GetHashCode</c>, which is not guaranteed stable across runtimes - a reload of the same mission
 /// must give every element the same callsign and voice.
 /// </summary>
 internal sealed class StableRandom
@@ -30,7 +30,7 @@ internal sealed class StableRandom
 
     public int Next(int maxExclusive) => rng.Next(maxExclusive);
 
-    /// <summary>Fisher–Yates shuffle into a new list.</summary>
+    /// <summary>Fisher-Yates shuffle into a new list.</summary>
     public List<T> Shuffled<T>(IEnumerable<T> items)
     {
         var list = new List<T>(items);

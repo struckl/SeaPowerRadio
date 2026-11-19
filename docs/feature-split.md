@@ -92,7 +92,7 @@ Order Queue, Clickable Messages, Unit Roles, RTB Highlight, Why Not, Contact Fil
 - Con: seven more Workshop items, each with pictures, posts, releases, `compat`, both loaders, both game builds, and its
   own Options group. The workspace already has seven mods. Four of these are under 300 lines. The maintenance cost per
   item (release, Workshop check, posts) is the same for 165 lines as for 4,000.
-- Con: features that depend on each other (queue ↔ why-not, roles ↔ RTB colour, links ↔ held messages) need cross-mod
+- Con: features that depend on each other (queue <-> why-not, roles <-> RTB colour, links <-> held messages) need cross-mod
   signals in every pair.
 
 ### Option B: one tools mod for everything that is not voice (recommended)
@@ -215,7 +215,7 @@ moods, aliases, squadrons, campaign memory, salts; `LandingCheck` (a part of fue
 3. **Phase 3 (optional, later):** Radio requires Command Tools and drops its copies, only if the duplicate builds become a
    burden; announce first.
 
-If the owner wants something within a day instead: the order queue alone as *R.A.T.S. Order Queue* (≈ 200 lines with the
+If the owner wants something within a day instead: the order queue alone as *R.A.T.S. Order Queue* (~ 200 lines with the
 glue), with the claim mechanism from 4.2, and fold it into Command Tools later.
 
 ## 7. Honest cons

@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 – unreleased – Radio is the radio; voices and tools are items of their own
+## 2.0.0 - unreleased - Radio is the radio; voices and tools are items of their own
 
 - **Voices are items of their own.** The 43 English voices, with their mood takes, are now **R.A.T.S. Radio English**
   (the same pack, `nato-en` 2.0.0); Radio itself carries no voices (it has a small `data/` folder with the country groups and the map of the game's
@@ -17,13 +17,21 @@
   [docs/rats-bus.md](docs/rats-bus.md).
 - Compiled for both game versions; the DLLs pass the both-games check (`tools/compat-check`). Not run in the game yet.
 
-## 1.5.1 – 2026-11-12 – in-game name R.A.T.S. Radio
+## 1.5.2 - 2026-11-18 - fixes from player reports
+
+Run in the test VM on game 0.9.3 public and beta on 2026-11-18: Red Sea Breakout with radio calls, no seed warning, no Radio error.
+
+- **No more "Mission seed fallback" warning** at mission start (43 player reports): each step of finding the mission's file is checked on its own; a mission outside a mod folder or a save without its first mission uses the full path, quietly
+
+- The mod folder carries this CHANGELOG.md, so R.A.T.S. Keel's What's new can show what changed when there are no Workshop notes (a local copy, the GitHub zip).
+
+## 1.5.1 - 2026-11-12 - in-game name R.A.T.S. Radio
 
 Run in the game on 0.9.1 (build 261112) on 2026-11-12: the new name shows in Keel's list, the mod works in Red Sea Breakout.
 
 - **Shows as just "R.A.T.S. Radio" in the game.** The game's mod list and the mod loader's list (Keel or Anchor Chain) now both say R.A.T.S. Radio, without "Sea Power" and the same name for both game versions (the flat-map build said "(flat map)").
 
-## 1.5.0 – 2026-11-11 – moods
+## 1.5.0 - 2026-11-11 - moods
 
 - **Units sound the way the situation feels.** Every voice now also has stressed, happy and sad takes (60,169 more clips;
   the item grows to about twice its size). Warnings and weapons calls are stressed, and a unit that just called a missile
@@ -38,26 +46,26 @@ Run in the game on 0.9.1 (build 261112) on 2026-11-12: the new name shows in Kee
   in the day or night yellow of where it is on the globe. The 0.8.7 build is unchanged. Run in the game on 0.9.0: an A-6 sent home turned yellow all over, its wingmen stayed blue.
 - Compiled for both game versions; `python tools/modtool.py compat` passes. The moods have not been run in the game yet.
 
-## 1.4.4 – 2026-11-11 – declared for game 0.9.0
+## 1.4.4 - 2026-11-11 - declared for game 0.9.0
 
 - **Declared for game 0.9.0.** The mod's `_info.ini` now says it fits 0.8.7 up to every 0.9.x, so the game no longer lists it as "not declared to be compatible", and Steam hands this and later updates to 0.9.0 players (the game skips Workshop updates whose declaration does not fit its version). Checked offline against 0.9.0 (build 261111): every game type, member, Harmony target and by-name lookup the mod uses is there; not run in the game on 0.9.0 yet.
 
-## 1.4.3 – 2026-11-10 – squadrons.txt matches the names players see
+## 1.4.3 - 2026-11-10 - squadrons.txt matches the names players see
 
 - **Squadron rules now apply** (bug report: `Viper = female` left the T-20 squadron launching as "Viper 1" with mixed
   voices). 1.4.1 compared the rule only with the mission file's internal key ("Squadron1"), never with a name the player
   sees, so a rule by name could not match. A rule now matches the squadron's shown name, its short name, its callsign
   words ("Viper") and the internal key. The hangar lines in the log list all of them. Compiled only, not run in the game.
 
-## 1.4.2 – 2026-11-09 – callsign words in aliases.txt
+## 1.4.2 - 2026-11-09 - callsign words in aliases.txt
 
 - **An alias can keep a generated callsign** (bug report: `Akira O-ren = Victory` logged "no voice pack has the name
   Victory"). `aliases.txt` only accepted base-game ship names; it now also takes the ship, submarine and shore callsign
-  words (Victory, Courage, Castle, …). The ship gets that callsign in every mission. No other unit is handed the word, and
+  words (Victory, Courage, Castle, ...). The ship gets that callsign in every mission. No other unit is handed the word, and
   it wins over a campaign's remembered callsign. Generation now skips a taken word before falling back to a numbered one.
   The template in a newly created `aliases.txt` lists the words. Compiled only, not run in the game.
 
-## 1.4.1 – 2026-11-09 – voice gender per squadron
+## 1.4.1 - 2026-11-09 - voice gender per squadron
 
 Compiled for both game versions against the reference copies (`_gamerefs`); `python tools/modtool.py compat` passes. Not run in the game.
 
@@ -67,7 +75,7 @@ Compiled for both game versions against the reference copies (`_gamerefs`); `pyt
   wildcard, the last matching line wins. Applies from the next mission; the file is created with examples. A squadron
   callsign word that exists only in voices of the other gender keeps that voice. See [docs/squadron-voices.md](docs/squadron-voices.md).
 
-## 1.4.0 – 2026-11-09 – accents follow the nation, random voices each mission, female voices off
+## 1.4.0 - 2026-11-09 - accents follow the nation, random voices each mission, female voices off
 
 - Fuel calls on globe beta 261107: the game replaced its fuel curves with a performance model; the calls read the new model and the old curves by name. Run in the game on 261107: all five aircraft in the test mission watched, no scan errors.
 
@@ -99,7 +107,7 @@ Run in the game on the globe beta (build 261107) on 2026-11-09: the mod starts u
   be rendered** (`tools/voicegen/rerender_names_1.4.txt`); until then a ship says its generated callsign.
 - Voice pack `nato-en` 1.1.0 (names.txt, accents.txt).
 
-## 1.3.0 – 2026-11-03 – name aliases for mod ships
+## 1.3.0 - 2026-11-03 - name aliases for mod ships
 
 **Not run in the game.** Built for both versions, `python tools/modtool.py compat` passes. Vanilla ships are not affected:
 the aliases and prefixes are only tried for a name that has no clip of its own (or that a player listed). If loading the
@@ -117,7 +125,7 @@ alias files fails, the mission goes on without aliases.
 - **Ship mods can ship aliases.** A `rats-radio-aliases.txt` in any mod folder (StreamingAssets or Workshop) is read too;
   the player's own file wins.
 
-## 1.2.0 – 2026-11-03 – voice packs: every country picks its own voice pack
+## 1.2.0 - 2026-11-03 - voice packs: every country picks its own voice pack
 
 **Run in the game on 0.8.7 (flat map); the 3D-globe build is not run yet.** Built for both versions (default and
 `-p:GameBuild=Flat`), `python tools/modtool.py compat` passes. In the game on 0.8.7: pack discovery, a NATO mission, a Soviet
@@ -153,7 +161,7 @@ unchanged.
   a warning).
 - `tools/package.ps1 -Pack <id>` stages a pack folder (`dist/pack-<id>`) for its own Workshop item.
 
-## 1.1.0 – 2026-10-31 – settings in the Options menu, female voices, static, call volumes, overlapping voices
+## 1.1.0 - 2026-10-31 - settings in the Options menu, female voices, static, call volumes, overlapping voices
 
 Player requests. **Run in the game on 0.8.7 (2026-10-31):** the Rats Radio group shows in Options > Audio from the main menu
 and from the pause menu; slider changes are saved to the config within about a second and kept across menus; the call
@@ -184,7 +192,7 @@ says so and the settings stay in the config file.
   (or roster entry) twice at once. Urgent calls cut into the oldest routine call when all channels are busy. Off = the old
   behaviour, one call at a time.
 
-## 1.0.5 – 2026-10-28 – fix: no mission could be started on 0.8.7 with 1.0.4
+## 1.0.5 - 2026-10-28 - fix: no mission could be started on 0.8.7 with 1.0.4
 
 **1.0.4 must not be used on 0.8.7.** Its globe DLL stays off there, but Unity's ECS start-up loads every type of every
 loaded assembly, and one internal class of the globe DLL (`GameApi`) held a field of a type that exists only in the globe
@@ -201,7 +209,7 @@ were tested in the game on 0.8.7 afterwards (2026-10-28).
 The globe build was last run in the game before this change (2026-10-28); the change only touches how one field is typed
 (the day/night lookup now goes through a cast), and the globe build is not re-run with it yet.
 
-## 1.0.4 – 2026-10-28 – meant for 0.8.7 and the 3D globe build (game build 26223125, the 11 November release); checked offline with compat-check only, and it broke 0.8.7
+## 1.0.4 - 2026-10-28 - meant for 0.8.7 and the 3D globe build (game build 26223125, the 11 November release); checked offline with compat-check only, and it broke 0.8.7
 
 **Known problem: on 0.8.7 no mission loads with this version - use 1.0.5.**
 
@@ -221,30 +229,30 @@ aircraft went bingo). 0.8.7 with the flat build is not yet run.
   The hook follows the new signature and takes the yellow for day or night from the palette of the map being drawn;
   the formation manager rows take it from the player's tactical map.
 
-## 1.0.3 – 2026-10-27
+## 1.0.3 - 2026-10-27
 
 - Refusals no longer repeat while the ship closes the range: a unit gives the same reason about the same target
   once (again after 5 minutes at the earliest) instead of every 40 seconds, and a formation ordered to attack
-  together gets one call – the first ship to give a reason says it, the others only put up their message.
-- Speed orders say the right way and where to: 1/3 → 2/3 said "slowing down". Now "coming up to two thirds",
-  "slowing to one third", "coming up to standard" …, "ahead full" and "ahead flank" as before. A speed set in knots
+  together gets one call - the first ship to give a reason says it, the others only put up their message.
+- Speed orders say the right way and where to: 1/3 -> 2/3 said "slowing down". Now "coming up to two thirds",
+  "slowing to one third", "coming up to standard" ..., "ahead full" and "ahead flank" as before. A speed set in knots
   with the slider, which had no voice line at all, is said too: "coming to one five knots" / "making one five knots".
-- Altitude orders too: a descent said "climbing, angels five" half the time. Now "climbing, …" below the new
-  altitude, "descending, …" above it, "leveling off, …" at the altitude it already holds – always with the ordered
+- Altitude orders too: a descent said "climbing, angels five" half the time. Now "climbing, ..." below the new
+  altitude, "descending, ..." above it, "leveling off, ..." at the altitude it already holds - always with the ordered
   altitude ("angels twenty", "five hundred feet"). Depth orders already name the depth.
-- New lines in all 43 voices: the six telegraph steps above, "descending, …" and the two knots lines.
-- No more clipped first sounds: "stand by, reloading …", "steady on …" and "splash one" lost their "s" in about
-  half the voices ("'tand by") – the clip was cut in the short silence between the s and the t / p. Those lines are
+- New lines in all 43 voices: the six telegraph steps above, "descending, ..." and the two knots lines.
+- No more clipped first sounds: "stand by, reloading ...", "steady on ..." and "splash one" lost their "s" in about
+  half the voices ("'tand by") - the clip was cut in the short silence between the s and the t / p. Those lines are
   cut again in every voice.
 - Launch calls fit the weapon: a Tomahawk at a land target said "torpedo away" (the game's line for a ship's
   missile at a land target was taken for an anti-submarine missile), at a position "harpoon away". Now "harpoon
   away" only for Harpoons, "anti-ship away" for other missiles at a ship, "birds away" / "missile away" for land
   attack, and "torpedo away" / "fish in the water" for torpedoes and ASROC (they said "weapon away").
 
-## 1.0.2 – 2026-10-25
+## 1.0.2 - 2026-10-25
 
 - Refusals: a ship ordered to fire a fixed-launcher missile (Harpoon) out of range said "negative, sonar contact
-  only" – the order waits while the ship turns, and the mod didn't see the game's own reason there. It now says
+  only" - the order waits while the ship turns, and the mod didn't see the game's own reason there. It now says
   "unable, target outside envelope", like the game's status bar. "Sonar contact only" is only said when sonar is the
   only sensor holding the contact (the group's own passive sonar hearing a ship that radar and ESM also hold made it
   look like a sonar contact).
@@ -252,14 +260,14 @@ aircraft went bingo). 0.8.7 with the flat build is not yet run.
   one per raft; a raid found aircraft by aircraft gives one "new air contact" and one "multiple contacts" instead of
   "new air contact, bearing 327" for every aircraft. The messages bottom right still list every raft and track.
 
-## 1.0.1 – 2026-10-25
+## 1.0.1 - 2026-10-25
 
 - No more long pauses before numbers: "bearing two seven three", "track seven zero three four" run together the
-  way they are said. The silence at every join between clips is cut back – to 0.05 s between a word and its number,
+  way they are said. The silence at every join between clips is cut back - to 0.05 s between a word and its number,
   0.08 s between digit groups; pauses the sentence has (after the callsign, "track 7034, faded") stay, up to 0.25 s.
   Same voices, no re-render; `catalog.txt` gained two columns (does the text pause before / after the number).
 
-## 1.0.0 – 2026-10-24 (first Workshop release)
+## 1.0.0 - 2026-10-24 (first Workshop release)
 
 Tested on Sea Power 0.8.7.
 

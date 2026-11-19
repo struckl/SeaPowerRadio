@@ -4,14 +4,12 @@ using SeaPowerRadio.Core;
 namespace SeaPowerRadio.Patches;
 
 /// <summary>
-/// Mission lifecycle (docs/recon.md §5):
-/// <list type="bullet">
-/// <item><c>MainGameViewModel.OnStart</c> — called once from <c>SceneCreator.LoadMission</c> after every unit,
-/// formation, hangar and save state is loaded. That is "mission ready".</item>
-/// <item><c>GameMain.OnDestroy</c> — GameMain lives in the mission scene, so it dies on every unload path
-/// (exit, restart, campaign).</item>
-/// <item><c>FlightDeck.launchVehicle</c> — returns the freshly created aircraft; its args say which hangar slot.</item>
-/// </list>
+/// Mission lifecycle (docs/how-it-works.md, "Mission lifecycle and roster"):
+/// - <c>MainGameViewModel.OnStart</c> - called once from <c>SceneCreator.LoadMission</c> after every unit,
+/// formation, hangar and save state is loaded. That is "mission ready".
+/// - <c>GameMain.OnDestroy</c> - GameMain lives in the mission scene, so it dies on every unload path
+/// (exit, restart, campaign).
+/// - <c>FlightDeck.launchVehicle</c> - returns the freshly created aircraft; its args say which hangar slot.
 /// </summary>
 internal static class MissionPatches
 {

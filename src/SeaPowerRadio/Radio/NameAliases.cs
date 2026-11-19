@@ -75,7 +75,7 @@ internal static class NameAliases
         return Lookup(gameName) ?? (StripPrefix(gameName) is string bare && bare != gameName ? Lookup(bare) : null);
     }
 
-    /// <summary>"USS Pargo" → "Pargo" when USS is a listed prefix; the name unchanged otherwise.</summary>
+    /// <summary>"USS Pargo" -> "Pargo" when USS is a listed prefix; the name unchanged otherwise.</summary>
     public static string StripPrefix(string gameName)
     {
         if (string.IsNullOrEmpty(gameName)) return gameName;

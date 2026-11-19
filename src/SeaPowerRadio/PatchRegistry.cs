@@ -45,7 +45,7 @@ internal sealed class Feature
 
 /// <summary>
 /// Every game method we hook is declared through here, grouped by feature. Game updates rename or remove methods;
-/// when a target is missing the whole feature is switched off and logged — the rest of the mod keeps working and
+/// when a target is missing the whole feature is switched off and logged - the rest of the mod keeps working and
 /// the game never sees an exception from us.
 /// </summary>
 internal static class PatchRegistry

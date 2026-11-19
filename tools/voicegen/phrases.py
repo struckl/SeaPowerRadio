@@ -35,34 +35,13 @@ STOCK_MAP at the bottom maps every stock voice.ini key the game plays to the cat
 from __future__ import annotations
 
 import re
-from pathlib import Path
 from dataclasses import dataclass
 
-DIGIT_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "niner"]
-COUNT_WORDS = {2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine"}
-TENS = {2: "twenty", 3: "thirty", 4: "forty", 5: "fifty", 6: "sixty"}
-TEENS = ["ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen",
-         "nineteen"]
-ONES = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
+import rules
+from paths import VOICES
+from spoken import DIGIT_WORDS, ONES, digits, number_words
 
 
-def digits(number: str) -> str:
-    return " ".join(DIGIT_WORDS[int(c)] for c in number)
-
-
-def cardinal(n: int) -> str:
-    """1..69 as words ("angels twenty-five")."""
-    if n < 10:
-        return ONES[n]
-    if n < 20:
-        return TEENS[n - 10]
-    tens, ones = divmod(n, 10)
-    return TENS[tens] + ("-" + ONES[ones] if ones else "")
-
-
-# ----------------------------------------------------------------------------------------------------------------
-# Takes
-# ----------------------------------------------------------------------------------------------------------------
 @dataclass(frozen=True)
 class Segment:
     text: str               # spoken text of this slice, incl. its punctuation
@@ -100,9 +79,6 @@ DUMMY = {
 }
 
 
-# ----------------------------------------------------------------------------------------------------------------
-# Phrases
-# ----------------------------------------------------------------------------------------------------------------
 @dataclass(frozen=True)
 class Phrase:
     key: str
@@ -131,9 +107,6 @@ PHRASES: list[Phrase] = [
     P("ReturningToFormation", "returning to station.", "rejoining the formation.", priority=6),
     P("ReturningToFormationAir", "rejoining on lead.", "coming back to the flight.", priority=6),
     P("SetAltitude", "climbing, {alt}.", "leveling off, {alt}.", "descending, {alt}.", priority=6),
-    # Variant order of SetAltitude, SetSpeedFull and AshmAway matters: the plugin says one of them only where it fits
-    # (Radio/StockVoiceRouter.cs: "climbing" only below the new altitude, "descending" only above it, "increasing
-    # speed" for 1/3 -> 2/3 in a voice without the SpeedUp* lines, "anti-ship away" for a missile that isn't a Harpoon).
     P("SetSpeedSlow", "slowing down.", "reducing speed.", priority=6),
     P("SetSpeedFull", "ahead full.", "increasing speed.", priority=6),
     P("SetSpeedFlank", "ahead flank!", "flank speed.", priority=6),
@@ -248,7 +221,7 @@ PHRASES: list[Phrase] = [
 
     # === Fuel / RTB / air ops =====================================================================================
     P("BingoFuel", "bingo, bingo. Returning to base.", "bingo fuel, RTB.", priority=2, sample=True),
-    # The mod's own fuel calls (Air/FuelMonitor.cs), against the nearest deck or field that can take the aircraft:
+    # The fuel calls of R.A.T.S. Command Tools (its fuel monitor), against the nearest deck or field that can take the aircraft:
     # joker = at cruise speed only just enough left to get there, bingo = only just enough even at the most
     # economical speed, emergency = not enough at all.
     P("FuelJoker", "joker fuel.", "joker, joker.", "we're at joker.", priority=4,
@@ -259,7 +232,7 @@ PHRASES: list[Phrase] = [
       "emergency fuel. We need a tanker or we're going in the water.", priority=1,
       note="mod: not enough fuel to reach any deck"),
 
-    # Search and rescue (Air/SarReporter.cs): survivors in the water -> rescuer on the way -> pickup -> full ->
+    # Search and rescue (R.A.T.S. Command Tools): survivors in the water -> rescuer on the way -> pickup -> full ->
     # delivered on deck.
     P("SarSurvivors", "survivors in the water, bearing {brg}.", "raft in the water, bearing {brg}.", priority=4,
       note="mod: own life rafts appeared (ship sunk, aircrew down)"),
@@ -364,26 +337,9 @@ PHRASES: list[Phrase] = [
     P("WhyNot_RebaseTooFar", "negative, too far to make it.", priority=6, note="CanNotRebase + RebaseTooFar"),
     P("WhyNot_RebaseUnsupported", "negative, can't take that type aboard.", priority=6,
       note="CanNotRebase + RebaseUnsupported"),
-    P("WhyNot_ReloadIn1", "stand by, reloading, ready in one minute.", "reloading, give me one minute.", priority=4,
-      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
-    P("WhyNot_ReloadIn2", "stand by, reloading, ready in two minutes.", "reloading, give me two minutes.", priority=4,
-      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
-    P("WhyNot_ReloadIn3", "stand by, reloading, ready in three minutes.", "reloading, give me three minutes.", priority=4,
-      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
-    P("WhyNot_ReloadIn4", "stand by, reloading, ready in four minutes.", "reloading, give me four minutes.", priority=4,
-      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
-    P("WhyNot_ReloadIn5", "stand by, reloading, ready in five minutes.", "reloading, give me five minutes.", priority=4,
-      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
-    P("WhyNot_ReloadIn6", "stand by, reloading, ready in six minutes.", "reloading, give me six minutes.", priority=4,
-      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
-    P("WhyNot_ReloadIn7", "stand by, reloading, ready in seven minutes.", "reloading, give me seven minutes.", priority=4,
-      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
-    P("WhyNot_ReloadIn8", "stand by, reloading, ready in eight minutes.", "reloading, give me eight minutes.", priority=4,
-      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
-    P("WhyNot_ReloadIn9", "stand by, reloading, ready in nine minutes.", "reloading, give me nine minutes.", priority=4,
-      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
-    P("WhyNot_ReloadIn10", "stand by, reloading, ready in ten minutes.", "reloading, give me ten minutes.", priority=4,
-      note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)"),
+    *[P(f"WhyNot_ReloadIn{n}", f"stand by, reloading, ready in {number_words(n)} minute{'s' if n > 1 else ''}.",
+        f"reloading, give me {number_words(n)} minute{'s' if n > 1 else ''}.", priority=4,
+        note="fire order while the weapon system reloads (_isReloading, _remainingReloadTime)") for n in range(1, 11)],
     P("WhyNot_ReloadSoon", "stand by, reloading, ready in under a minute.", "reloading, almost there.", priority=4),
     P("WhyNot_ReloadLong", "stand by, reloading, that'll take a while.", priority=4),
     P("WhyNot_SonarOnly", "negative, that's a sonar contact only, no targeting track.",
@@ -398,22 +354,19 @@ PHRASES: list[Phrase] = [
     P("Queued_5", "copy, queued, five in line.", priority=6),
 ]
 
-# ----------------------------------------------------------------------------------------------------------------
-# Callsign words -- MUST match src/SeaPowerRadio/Voices/Callsigns.cs (checked by check_sync.py).
-# ----------------------------------------------------------------------------------------------------------------
-AIR_WORDS = [
-    "Viper", "Cobra", "Falcon", "Razor", "Lancer", "Sabre", "Jester", "Rapier", "Talon", "Venom", "Ghost", "Raptor",
-    "Hammer", "Anvil", "Mace", "Dagger", "Tusk", "Spear", "Brick", "Boxer",
-    "Trident", "Pelican", "Albatross", "Corsair", "Neptune", "Marlin",
-    "Seahawk", "Dipper", "Lynx", "Kingfish", "Dusty", "Rotor",
-    "Magic", "Drover", "Tankard", "Wizard", "Mercury", "Darkstar",
-]
-SINGLE_WORDS = [
-    "Bulwark", "Sentinel", "Victory", "Warden", "Guardian", "Valiant", "Resolute", "Steadfast", "Vigilant",
-    "Defiant", "Intrepid", "Courage",
-    "Shadow", "Silent", "Deepwater", "Barracuda",
-    "Castle", "Bastion", "Harbor", "Lighthouse",
-]
+# Variants the plugin says only where they fit (Radio/StockVoiceRouter.cs: "climbing" only below the new altitude,
+# "descending" only above it, "increasing speed" for 1/3 -> 2/3 in a voice without the SpeedUp* lines, "anti-ship
+# away" for a missile that is not a Harpoon). Named by their text, so reordering a phrase's variants moves the
+# plugin's number with it (rules_cs.py writes each one's position into ClipRules.g.cs).
+NAMED_VARIANTS: dict[str, dict[str, str]] = {
+    "SetSpeedFull": {"AheadFull": "ahead full.", "IncreasingSpeed": "increasing speed."},
+    "AshmAway": {"Harpoon": "harpoon away!", "AntiShip": "anti-ship away!"},
+    "SetAltitude": {"Climbing": "climbing, {alt}.", "LevelingOff": "leveling off, {alt}.",
+                    "Descending": "descending, {alt}."},
+}
+
+AIR_WORDS = [w for kind in rules.AIR_KINDS for w in rules.CALLSIGN_WORDS[kind]]
+SINGLE_WORDS = [w for kind in rules.SINGLE_KINDS for w in rules.CALLSIGN_WORDS[kind]]
 CALLSIGN_WORDS = AIR_WORDS + SINGLE_WORDS
 
 SAMPLE_WORDS = {"Viper", "Sentinel"}
@@ -457,8 +410,8 @@ def build_takes() -> list[Take]:
     for word in AIR_WORDS:
         takes.append(take(Segment(word, f"cs_{word.lower()}"), Segment("two-one,"), Segment(CALLSIGN_TAIL),
                           jitter=1, sample=word in SAMPLE_WORDS))
-    for flight in range(1, 10):
-        for pos in range(1, 5):
+    for flight in span(rules.FLIGHTS):
+        for pos in span(rules.POSITIONS):
             fp = f"{flight}{pos}"
             takes.append(take(Segment("Viper"), Segment(f"{DIGIT_WORDS[flight]}-{DIGIT_WORDS[pos]},", f"fp_{fp}"),
                               Segment(CALLSIGN_TAIL), jitter=1, sample=fp in SAMPLE_FLIGHTPOS))
@@ -485,21 +438,24 @@ def build_takes() -> list[Take]:
         takes.append(take(Segment("track, seven zero,"), Segment(f"{digits(p)}.", f"pe_{p}"),
                           jitter=1, sample=f"pe_{p}" in SAMPLE_NUMBERS))
     # Altitude: angels 1..60 (thousands of feet), and the low ones in hundreds.
-    for k in range(1, 61):
-        takes.append(take(Segment("climbing,"), Segment(f"angels {cardinal(k)}.", f"alt_{k}"), jitter=1))
-    for h in (1, 2, 3, 5, 8):
+    for k in span(rules.ANGELS):
+        takes.append(take(Segment("climbing,"), Segment(f"angels {number_words(k)}.", f"alt_{k}"), jitter=1))
+    for h in rules.LOW_ALTITUDE_HUNDREDS:
         takes.append(take(Segment("descending,"), Segment(f"{ONES[h]} hundred feet.", f"alt_lo_{h}"), jitter=1))
-    for c, word in COUNT_WORDS.items():
-        takes.append(take(Segment("contacts lost,"), Segment(f"{word}.", f"cnt_{c}"), jitter=1))
+    for c in span(rules.COUNTS):
+        takes.append(take(Segment("contacts lost,"), Segment(f"{number_words(c)}.", f"cnt_{c}"), jitter=1))
     return takes
+
+
+def span(bounds: tuple[int, int]) -> range:
+    """An inclusive range of rules.py as a Python range."""
+    return range(bounds[0], bounds[1] + 1)
 
 
 def callsign_number_takes() -> list[Take]:
     """The number after an in-game callsign word ("Lancer | three"), in every voice."""
-    words = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven",
-             "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"]
-    return [take(Segment("Viper"), Segment(f"{words[n]},", f"cn_{n}"), Segment(CALLSIGN_TAIL), jitter=1)
-            for n in range(1, 21)]
+    return [take(Segment("Viper"), Segment(f"{number_words(n)},", f"cn_{n}"), Segment(CALLSIGN_TAIL), jitter=1)
+            for n in span(rules.CALLSIGN_NUMBERS)]
 
 
 TAKES = build_takes() + callsign_number_takes()
@@ -536,13 +492,13 @@ def _bindings() -> dict[str, list[str]]:
 def takes_for(persona_id: str) -> list[Take]:
     """Everything one voice says: the shared catalog plus the in-game names bound to it."""
     return TAKES + name_takes(persona_id)
+
+
 _keys = [k for t in TAKES for k in t.keys]
 assert len(set(_keys)) == len(_keys), "duplicate clip key"
 
-# ----------------------------------------------------------------------------------------------------------------
 # Stock voice.ini key -> catalog key (None = the mod rebuilds this report itself / building block of a stock
 # sequence that the mod replaces as a whole). Every key the game can play must be listed (check_sync.py).
-# ----------------------------------------------------------------------------------------------------------------
 STOCK_MAP: dict[str, str | None] = {
     "Confirmed": "Confirmed", "RogerThat": "Confirmed", "YesCommander": "Confirmed", "Yes": "Confirmed",
     "Affirmative": "Affirmative", "Negative": "Negative", "NegativeAir": "Negative",
@@ -622,6 +578,11 @@ _phrase_keys = {p.key for p in PHRASES}
 _bad = {k: v for k, v in STOCK_MAP.items() if v is not None and v not in _phrase_keys}
 assert not _bad, f"STOCK_MAP points at unknown phrases: {_bad}"
 
+# The game's contact report lines (new, classified, faded): swallowed while R.A.T.S. Command Tools reports contacts
+# in our voices, played by the game otherwise (the plugin's ClipRules.ContactStockKeys).
+CONTACT_STOCK_KEYS = sorted(k for k, v in STOCK_MAP.items()
+                            if v is None and (k.startswith(("Contact", "Classified")) or k == "ActiveContact"))
+
 # What the number a stock voice call passes means, so the plugin can speak it in the right form.
 STOCK_NUMBER: dict[str, str] = {
     "EngageTrack": "trk", "LaunchAtTarget": "trk", "HoldFireTrack": "trk", "SplashedTrack": "trk",
@@ -636,7 +597,8 @@ STOCK_NUMBER: dict[str, str] = {
 #   reply  - a unit answering the player's order: loudest and cleanest, goes first
 #   alert  - urgent (missile inbound, hit, bingo): loud, cuts in
 #   report - everything the net says on its own (contacts, launches, status): quieter, in the background
-# Default from priority (<=2 alert, 7 reply, else report), with these exceptions:
+# Default from priority (rules.py: alert at or below ALERT_MAX_PRIORITY, reply at REPLY_PRIORITY, else report), with
+# these exceptions:
 REPLY_PHRASES = {
     "TurnToCourse", "TurnAircraft", "Moving", "SetAltitude", "SetSpeedSlow", "SetSpeedFull", "SetSpeedFlank",
     "SpeedUpOneThird", "SpeedDownOneThird", "SpeedUpTwoThirds", "SpeedDownTwoThirds", "SpeedUpStandard",
@@ -665,19 +627,27 @@ def number_pauses(text: str) -> tuple[bool, bool]:
 
 
 def role_of(p: Phrase) -> str:
-    if p.key in REPLY_PHRASES or p.key.startswith(("WhyNot_", "Queued_")) or p.priority >= 7:
+    if p.key in REPLY_PHRASES or p.key.startswith(("WhyNot_", "Queued_")) or p.priority >= rules.REPLY_PRIORITY:
         return "reply"
-    if p.priority <= 2:
+    if p.priority <= rules.ALERT_MAX_PRIORITY:
         return "alert"
     return "report"
 
 
-CATALOG_FILE = Path(__file__).resolve().parents[2] / "mod" / "voices" / "catalog.txt"
-STOCKMAP_FILE = Path(__file__).resolve().parents[2] / "mod" / "voices" / "stockmap.txt"
+def queued_max() -> int:
+    """The highest place in line a voice can say ("Queued_<n>", from 2 on without gaps)."""
+    n = 2
+    while any(p.key == f"Queued_{n + 1}" for p in PHRASES):
+        n += 1
+    return n
 
 
-def write_runtime_files() -> None:
-    """catalog.txt and stockmap.txt next to the voice library, read by the plugin (Radio/Catalog.cs)."""
+CATALOG_FILE = VOICES / "catalog.txt"
+STOCKMAP_FILE = VOICES / "stockmap.txt"
+
+
+def catalog_text() -> str:
+    """catalog.txt: every phrase variant and its number slot, read by the plugin (Radio/Catalog.cs)."""
     lines = ["# phrase|variant|slot (- = none)|has _a|has _b|priority|role|pause before number|pause after number"
              " -- generated by tools/voicegen/phrases.py"]
     for p in PHRASES:
@@ -691,11 +661,21 @@ def write_runtime_files() -> None:
                 pause_a, pause_b = number_pauses(text)
                 lines.append(f"{p.key}|{n}|{m.group(1)}|{int(has_a)}|{int(has_b)}|{p.priority}|{role_of(p)}"
                              f"|{int(has_a and pause_a)}|{int(has_b and pause_b)}")
-    CATALOG_FILE.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return "\n".join(lines) + "\n"
+
+
+def stockmap_text() -> str:
+    """stockmap.txt: stock voice key -> phrase and the kind of number the game passes with it."""
     lines = ["# stock key|phrase (- = swallowed)|number kind (- = none) -- generated by tools/voicegen/phrases.py"]
     for key in sorted(STOCK_MAP):
         lines.append(f"{key}|{STOCK_MAP[key] or '-'}|{STOCK_NUMBER.get(key, '-')}")
-    STOCKMAP_FILE.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return "\n".join(lines) + "\n"
+
+
+def write_runtime_files() -> None:
+    """catalog.txt and stockmap.txt next to the voice library."""
+    CATALOG_FILE.write_text(catalog_text(), encoding="utf-8")
+    STOCKMAP_FILE.write_text(stockmap_text(), encoding="utf-8")
     print(f"wrote {CATALOG_FILE.name} and {STOCKMAP_FILE.name}")
 
 

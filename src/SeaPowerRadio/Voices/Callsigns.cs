@@ -23,19 +23,8 @@ internal enum CallsignKind
 /// </summary>
 internal sealed class Callsigns
 {
-    // Word lists double as the phrase catalog's callsign fragments (tools/voicegen). Keep them speakable on a noisy
-    // net: two syllables or a strong single one, no two words that sound alike.
-    public static readonly Dictionary<CallsignKind, string[]> Words = new Dictionary<CallsignKind, string[]>
-    {
-        [CallsignKind.Fighter] = new[] { "Viper", "Cobra", "Falcon", "Razor", "Lancer", "Sabre", "Jester", "Rapier", "Talon", "Venom", "Ghost", "Raptor" },
-        [CallsignKind.Attack] = new[] { "Hammer", "Anvil", "Mace", "Dagger", "Tusk", "Spear", "Brick", "Boxer" },
-        [CallsignKind.Patrol] = new[] { "Trident", "Pelican", "Albatross", "Corsair", "Neptune", "Marlin" },
-        [CallsignKind.Helicopter] = new[] { "Seahawk", "Dipper", "Lynx", "Kingfish", "Dusty", "Rotor" },
-        [CallsignKind.Support] = new[] { "Magic", "Drover", "Tankard", "Wizard", "Mercury", "Darkstar" },
-        [CallsignKind.Ship] = new[] { "Bulwark", "Sentinel", "Victory", "Warden", "Guardian", "Valiant", "Resolute", "Steadfast", "Vigilant", "Defiant", "Intrepid", "Courage" },
-        [CallsignKind.Submarine] = new[] { "Shadow", "Silent", "Deepwater", "Barracuda" },
-        [CallsignKind.Shore] = new[] { "Castle", "Bastion", "Harbor", "Lighthouse" },
-    };
+    // The words of tools/voicegen/rules.py, rendered in every voice.
+    private static Dictionary<CallsignKind, string[]> Words => Radio.ClipRules.CallsignWords;
 
     private readonly Dictionary<CallsignKind, Queue<string>> freeWords = new Dictionary<CallsignKind, Queue<string>>();
     private readonly Dictionary<CallsignKind, int> wordReuse = new Dictionary<CallsignKind, int>();
@@ -68,10 +57,10 @@ internal sealed class Callsigns
         return callsign;
     }
 
-    /// <summary>Lowest flight number 1-9 not yet taken for this word, or -1 when all nine are in use.</summary>
+    /// <summary>Lowest rendered flight number not yet taken for this word, or -1 when all are in use.</summary>
     public int NextFlightNumber(string flightWord)
     {
-        for (int n = 1; n < 10; n++)
+        for (int n = Radio.ClipRules.FlightMin; n <= Radio.ClipRules.FlightMax; n++)
             if (!used.Contains($"{flightWord} {n}-1"))
                 return n;
         return -1;
@@ -83,9 +72,10 @@ internal sealed class Callsigns
     /// </summary>
     public List<string> Flight(CallsignKind kind, int count)
     {
+        const int size = Radio.ClipRules.PositionMax;
         var result = new List<string>(count);
         string word = NextWord(kind);
-        for (int start = 0; start < count; start += 4)
+        for (int start = 0; start < count; start += size)
         {
             int flight = NextFlightNumber(word);
             for (int tries = 0; flight < 0 && tries < Words[kind].Length; tries++)
@@ -93,8 +83,8 @@ internal sealed class Callsigns
                 word = NextWord(kind);
                 flight = NextFlightNumber(word);
             }
-            if (flight < 0) flight = 9; // every word of this kind full: share rather than fail
-            for (int pos = 1; pos <= 4 && start + pos - 1 < count; pos++)
+            if (flight < 0) flight = Radio.ClipRules.FlightMax; // every word of this kind full: share rather than fail
+            for (int pos = 1; pos <= size && start + pos - 1 < count; pos++)
                 result.Add(Aircraft(word, flight, pos));
         }
         return result;
@@ -132,7 +122,6 @@ internal sealed class Callsigns
                 return free;
         }
         string word = NextWord(kind);
-        // Word list exhausted for this kind: append a number ("Sentinel 2").
         wordReuse.TryGetValue(kind, out int n);
         for (n = n == 0 ? 2 : n; n < 10; n++)
         {

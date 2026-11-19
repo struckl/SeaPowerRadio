@@ -127,7 +127,8 @@ internal sealed class Catalog
             case "reply": return CallRole.Reply;
             case "alert": return CallRole.Alert;
             case "report": return CallRole.Report;
-            default: return priority <= 2 ? CallRole.Alert : priority >= 7 ? CallRole.Reply : CallRole.Report;
+            // A line pack written by hand may leave the role out: by priority, as phrases.py's role_of starts.
+            default: return priority <= ClipRules.AlertMaxPriority ? CallRole.Alert : priority >= ClipRules.ReplyPriority ? CallRole.Reply : CallRole.Report;
         }
     }
 

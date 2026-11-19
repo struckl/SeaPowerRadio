@@ -32,10 +32,11 @@ import edge_tts
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from edge_cast import BY_ID, CAST, REPO, Persona  # noqa: E402
+from paths import VOICES  # noqa: E402
 from phrases import TAKES, Take  # noqa: E402
 from radio import voice_chain  # noqa: E402
 
-OUT_ROOT = REPO / "mod" / "voices"
+OUT_ROOT = VOICES
 CONCURRENCY = 4
 TICKS = 1e7          # edge-tts offsets are in 100 ns units
 DECODE_SHIFT = 0.03  # decoded MP3 runs ~30 ms behind the reported offsets (measured)

@@ -127,7 +127,7 @@ internal static class NameAliases
 
             bool startsWith = left.EndsWith("*");
             if (startsWith) left = left.TrimEnd('*').Trim();
-            if (Names.Slug(left) == "x" || (say.Length == 0 && voice.Length == 0))   // "x": nothing but punctuation
+            if (Names.Slug(left) == ClipRules.SlugEmpty || (say.Length == 0 && voice.Length == 0))   // nothing but punctuation
             {
                 ModLog.Warn($"[aliases] {where}: \"{line}\" needs a game name and a name or voice, skipped");
                 continue;

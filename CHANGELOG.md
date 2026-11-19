@@ -12,6 +12,11 @@
 - Changed (internal): the order the game calls in (appended pieces, launch line, messages in the same frame) is
   written down in one place (`CallOrder`); long functions split; unused code and fields and the per-repo Workshop
   uploader removed.
+- Changed (internal): the report features (fuel calls, SAR, contact calls, why-not, queue window, clickable messages,
+  RTB highlight, unit roles, landing check) are untangled as in R.A.T.S. Command Tools: one way to raise and log a
+  message (`GameMessage`) and to queue its call (`SpokenReport`), one distance and bearing helper (`Distance`), the
+  fuel, why-not and landing-check scans split into named steps, texts and engage states as tables, timings named, the
+  RTB brush per game build without a spliced method header. Every spoken line, message text and setting is unchanged.
 
 ## 1.5.2 - 2026-11-18 - fixes from player reports
 

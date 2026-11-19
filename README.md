@@ -267,6 +267,8 @@ src/SeaPowerRadio/        C# plugin (netstandard2.1, BepInEx 5 / HarmonyX via An
   Plugin.cs               Anchor Chain entry point
   PatchRegistry.cs        every game hook, grouped by feature; a missing target disables only that feature
   Core/EventBus.cs        normalized game events (mission start/end, launches)
+  Core/                   GameMessage (the one way a report raises its message bottom right), Distance (map units, km, nm,
+                          bearing), OrderText (weapon and track names of an order)
   Patches/                Harmony patches (stock voice capture, launching weapon, mission lifecycle)
   Roster/                 player elements + hangar slots → callsign + voice
   Voices/                 callsign generator, voice assignment, voice library loader
@@ -274,7 +276,8 @@ src/SeaPowerRadio/        C# plugin (netstandard2.1, BepInEx 5 / HarmonyX via An
                           pieces, how much pause each join keeps), ClipLibrary (on-demand loading, LRU), RadioFx
                           (joins the clips, hiss, click, crackle, squelch),
                           RadioPlayer (priority queue, up to 4 channels for overlapping voices), CallCategory (call kind → volume),
-                          StockVoiceRouter (stock line → own voice)
+                          StockVoiceRouter (stock line → own voice), SpokenReport (queues a report's call with its messages),
+                          AlertLink and MessageLinker (messages kept until spoken, clickable units and tracks)
   Contacts/               ContactReporter: new / lost / intermittent / hostile calls with hysteresis and cooldowns
   WhyNot/                 WhyNotMonitor (engage states, reload ETA, sonar-only, dropped orders → spoken + alert),
                           QueueOverlay (selected unit's stacked attack orders with delete buttons, F8)

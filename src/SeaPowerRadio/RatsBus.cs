@@ -28,7 +28,6 @@ internal static class RatsBus
         AppDomain.CurrentDomain.SetData(RadioSayKey, new Func<object, string[], int[], bool>(RadioApi.Say));
     }
 
-    /// <summary>R.A.T.S. Command Tools is running.</summary>
     public static bool ToolsRunning => AppDomain.CurrentDomain.GetData(ToolsVersionKey) is string;
 
     /// <summary>R.A.T.S. Command Tools runs this feature (read live: every mod has been loaded by the time it matters).</summary>

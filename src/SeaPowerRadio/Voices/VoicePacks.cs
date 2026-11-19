@@ -30,7 +30,6 @@ internal static class VoicePacks
     public static VoicePack ById(string id) =>
         All.FirstOrDefault(p => string.Equals(p.Id, id, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>The pack a voice id ("packId/personaId") belongs to.</summary>
     public static VoicePack OfVoice(string voice)
     {
         if (voice == null) return null;
@@ -116,10 +115,6 @@ internal static class VoicePacks
     }
 
     /// <summary>
-    /// A mood pack: a folder with <c>moodpack.ini</c> ([Moods] Pack=&lt;voice pack id&gt;, Moods=stressed,happy,sad,
-    /// MinBaseVersion) and <c>&lt;persona&gt;/&lt;mood&gt;/&lt;key&gt;.mp3</c> for that voice pack's personas. No code, no catalog.
-    /// </summary>
-    /// <summary>
     /// A line pack: another mod's own radio lines for a voice pack's personas. Folder with <c>linepack.ini</c>
     /// ([Lines] Id, Pack=&lt;voice pack id&gt;, Version, MinBaseVersion, optional Moods=stressed,...), its <c>catalog.txt</c>
     /// (rows as in the pack's) and <c>&lt;persona&gt;/&lt;key&gt;.mp3</c> (moods in <c>&lt;persona&gt;/&lt;mood&gt;/</c>). The mod then
@@ -168,6 +163,10 @@ internal static class VoicePacks
         return values;
     }
 
+    /// <summary>
+    /// A mood pack: a folder with <c>moodpack.ini</c> ([Moods] Pack=&lt;voice pack id&gt;, Moods=stressed,happy,sad,
+    /// MinBaseVersion) and <c>&lt;persona&gt;/&lt;mood&gt;/&lt;key&gt;.mp3</c> for that voice pack's personas. No code, no catalog.
+    /// </summary>
     private static void AttachMoodPack(string dir, Version baseVersion)
     {
         var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

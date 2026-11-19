@@ -7,14 +7,9 @@ namespace SeaPowerRadio.Core;
 internal sealed class StockVoiceRequest
 {
     public string Key;            // voice.ini key, e.g. "UnableToComply", "ContactFaded"
-    public ObjectBase Speaker;    // null for taskforce-level reports (then only Nation is set)
-    public string Nation;
+    public ObjectBase Speaker;    // null for taskforce-level reports
     public int Number;            // -1 = none
-    public string Format;
-    public bool Sequence;         // PlayVoiceSequence
-    public bool Altitude;         // PlayAircraftAltitude
     public bool Appended;         // AddVoiceToSequence (continues the previous transmission)
-    public float Time;            // Time.unscaledTime
     public int Frame;
 }
 
@@ -33,12 +28,10 @@ internal sealed class AircraftLaunch
 /// </summary>
 internal static class EventBus
 {
-    public static event Action<StockVoiceRequest> StockVoice;
     public static event Action MissionStarted;
     public static event Action MissionEnded;
     public static event Action<AircraftLaunch> AircraftLaunched;
 
-    public static void Publish(StockVoiceRequest request) => Safe(StockVoice, request, nameof(StockVoice));
     public static void PublishMissionStarted() => Safe(MissionStarted, nameof(MissionStarted));
     public static void PublishMissionEnded() => Safe(MissionEnded, nameof(MissionEnded));
     public static void PublishAircraftLaunched(AircraftLaunch launch) => Safe(AircraftLaunched, launch, nameof(AircraftLaunched));

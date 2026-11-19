@@ -28,9 +28,6 @@ internal sealed class StableRandom
         }
     }
 
-    public int Next(int maxExclusive) => rng.Next(maxExclusive);
-
-    /// <summary>Fisher-Yates shuffle into a new list.</summary>
     public List<T> Shuffled<T>(IEnumerable<T> items)
     {
         var list = new List<T>(items);

@@ -45,14 +45,13 @@ internal sealed class Roster
 {
     private readonly List<RosterElement> elements = new List<RosterElement>();
     private readonly Dictionary<int, RosterElement> byUnit = new Dictionary<int, RosterElement>();
-    // Callsign words per language (a pack's Language picks the rules), voices per pack: each pack in use shuffles
-    // its own pool, so a mixed task force gets every unit a voice of the pack of its own country.
-    private readonly Dictionary<string, Callsigns> callsigns = new Dictionary<string, Callsigns>();
+    // One callsign word list for every pack (the words are rendered in every voice); voices per pack: each pack in
+    // use shuffles its own pool, so a mixed task force gets every unit a voice of the pack of its own country.
+    private Callsigns callsigns;
     private readonly Dictionary<string, VoiceAssignment> voices = new Dictionary<string, VoiceAssignment>();
     private readonly Dictionary<string, VoicePack> packByNation = new Dictionary<string, VoicePack>(System.StringComparer.OrdinalIgnoreCase);
 
     public string MissionSeed { get; }
-    public IReadOnlyList<RosterElement> Elements => elements;
 
     private readonly CampaignMemory memory;   // null outside a linear campaign
 
@@ -118,15 +117,14 @@ internal sealed class Roster
     private Callsigns CallsignsFor(VoicePack pack)
     {
         if (pack == null) return null;
-        string language = LanguageRules.For(pack.Language);
-        if (!callsigns.TryGetValue(language, out Callsigns c))
+        if (callsigns == null)
         {
-            callsigns[language] = c = new Callsigns(MissionSeed);
+            callsigns = new Callsigns(MissionSeed);
             if (memory != null)
                 foreach (string remembered in memory.Callsigns())
-                    c.Reserve(remembered);          // a unit of the campaign keeps its callsign: nobody new gets it
+                    callsigns.Reserve(remembered);  // a unit of the campaign keeps its callsign: nobody new gets it
         }
-        return c;
+        return callsigns;
     }
 
     private VoiceAssignment VoicesOf(VoicePack pack)
@@ -141,8 +139,6 @@ internal sealed class Roster
         }
         return v;
     }
-
-    private string NationOf(ObjectBase unit) => unit.getNation();
 
     /// <summary>The voice an alias line pins this ship to, if the unit's pack has it. Wins over the campaign memory and the name's voices.</summary>
     private bool ApplyPin(RosterElement e)
@@ -162,12 +158,16 @@ internal sealed class Roster
     {
         if (e.Pack == null || e.Voice != null) return;
         if (!ApplyPin(e) && !ApplyMemory(e))
-        {
-            VoiceAssignment pool = VoicesOf(e.Pack);
-            e.Voice = e.BoundName != null ? pool.Prefer(e.Key, e.BoundName.Voices, AccentsOf(e), e.Gender) : pool.For(e.Key, AccentsOf(e), e.Gender);
-        }
+            AssignFromPool(e);
         Remember(e);
         memory?.SaveIfDirty();
+    }
+
+    /// <summary>A named unit gets one of the few voices its name was rendered in; everyone else any voice of the pool.</summary>
+    private void AssignFromPool(RosterElement e)
+    {
+        VoiceAssignment pool = VoicesOf(e.Pack);
+        e.Voice = e.BoundName != null ? pool.Prefer(e.Key, e.BoundName.Voices, AccentsOf(e), e.Gender) : pool.For(e.Key, AccentsOf(e), e.Gender);
     }
 
     public RosterElement Find(ObjectBase unit)
@@ -202,13 +202,13 @@ internal sealed class Roster
         // Callsign words the player gave ships (aliases.txt: "Akira O-ren = Victory") are theirs: generation skips them.
         foreach (ObjectBase unit in units.Where(u => !IsAir(u)))
         {
-            VoicePack pack = PackForNation(NationOf(unit));
+            VoicePack pack = PackForNation(unit.getNation());
             if (AliasCallsign(AliasOf(unit), pack) is string word)
                 CallsignsFor(pack)?.Reserve(word);
         }
 
         foreach (ObjectBase unit in units.Where(u => !IsAir(u)))
-            AddUnit(unit, KindOf(unit), CallsignsFor(PackForNation(NationOf(unit)))?.Single(KindOf(unit)));
+            AddSingle(unit);
 
         foreach (ObjectBase deckOwner in units.Where(u => u._obp?._flightDeck != null))
             AddAirWing(deckOwner);
@@ -221,9 +221,9 @@ internal sealed class Roster
 
         // Named units next - their names exist only in a few voices - then everyone else from the pool.
         foreach (RosterElement e in elements.Where(e => e.BoundName != null && e.Pack != null && e.Voice == null))
-            e.Voice = VoicesOf(e.Pack).Prefer(e.Key, e.BoundName.Voices, AccentsOf(e), e.Gender);
+            AssignFromPool(e);
         foreach (RosterElement e in elements.Where(e => e.Voice == null && e.Pack != null))
-            AssignVoice(e);
+            AssignFromPool(e);
 
         if (memory != null)
         {
@@ -296,16 +296,23 @@ internal sealed class Roster
     {
         CallsignKind kind = KindOf(members[0]);
         // A flight shares its callsign word: the language of the first member a pack speaks for.
-        VoicePack lead = members.Select(m => PackForNation(NationOf(m))).FirstOrDefault(p => p != null);
+        VoicePack lead = members.Select(m => PackForNation(m.getNation())).FirstOrDefault(p => p != null);
         List<string> names = CallsignsFor(lead)?.Flight(kind, members.Count);
         for (int i = 0; i < members.Count; i++)
-            AddUnit(members[i], kind, names != null && PackForNation(NationOf(members[i])) != null ? names[i] : null);
+            AddUnit(members[i], kind, names != null && PackForNation(members[i].getNation()) != null ? names[i] : null);
+    }
+
+    /// <summary>A ship, submarine or shore unit: one callsign word of its own.</summary>
+    private void AddSingle(ObjectBase unit)
+    {
+        CallsignKind kind = KindOf(unit);
+        AddUnit(unit, kind, CallsignsFor(PackForNation(unit.getNation()))?.Single(kind));
     }
 
     private void AddUnit(ObjectBase unit, CallsignKind kind, string callsign)
     {
         if (Find(unit) != null) return;
-        VoicePack pack = PackForNation(NationOf(unit));
+        VoicePack pack = PackForNation(unit.getNation());
         NameAlias alias = AliasOf(unit);
         if (AliasCallsign(alias, pack) is string word)
         {
@@ -318,7 +325,7 @@ internal sealed class Roster
             Unit = unit,
             ClassName = unit.ClassName,
             Kind = kind,
-            Nation = NationOf(unit),
+            Nation = unit.getNation(),
             Pack = pack,
             Callsign = pack != null ? callsign : null,
             BoundName = NameOf(unit, pack),
@@ -332,7 +339,7 @@ internal sealed class Roster
     private void AddAirWing(ObjectBase deckOwner)
     {
         FlightDeck deck = deckOwner._obp._flightDeck;
-        VoicePack pack = PackForNation(NationOf(deckOwner));
+        VoicePack pack = PackForNation(deckOwner.getNation());
         foreach (VehicleTypeOnBoard type in deck._vehiclesOnBoard.OrderBy(t => t._fileName))
         {
             CallsignKind kind = KindOf(type);
@@ -351,7 +358,7 @@ internal sealed class Roster
                         ClassName = type.DisplayName,
                         Kind = kind,
                         Callsign = names?[slot],
-                        Nation = NationOf(deckOwner),
+                        Nation = deckOwner.getNation(),
                         Pack = pack,
                         Carrier = deckOwner,
                         AircraftIni = type._fileName,
@@ -396,7 +403,7 @@ internal sealed class Roster
         {
             if (!ApplyMemory(slot))
                 Remember(slot);
-            memory.SaveIfDirty();
+            memory?.SaveIfDirty();
         }
         return slot;
     }
@@ -406,11 +413,10 @@ internal sealed class Roster
     {
         RosterElement existing = Find(unit);
         if (existing != null) return existing;
-        CallsignKind kind = KindOf(unit);
         if (IsAir(unit))
             AddFlight(new List<ObjectBase> { unit });
         else
-            AddUnit(unit, kind, CallsignsFor(PackForNation(NationOf(unit)))?.Single(kind));
+            AddSingle(unit);
         RosterElement added = Find(unit);
         if (added != null)
             AssignVoice(added);

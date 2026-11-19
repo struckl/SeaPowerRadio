@@ -24,7 +24,7 @@ internal static class RadioApi
     {
         try
         {
-            if (Player == null || phrases == null || phrases.Length == 0 || !Settings.Enabled.Value)
+            if (Player == null || phrases == null || phrases.Length == 0)
                 return false;
             Roster.Roster roster = RosterService.Current;
             if (roster == null)

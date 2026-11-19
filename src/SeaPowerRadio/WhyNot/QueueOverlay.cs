@@ -4,6 +4,8 @@ using System.Linq;
 using SeaPower;
 using SeaPowerRadio.Core;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 
 namespace SeaPowerRadio.WhyNot;
 
@@ -34,15 +36,35 @@ internal sealed class QueueOverlay : MonoBehaviour
     private List<WeaponSystem> buttonsSystems;
     private int deletedFrame = -1;
 
+    // A left press seen in the Input System's event stream since the last Update, in screen pixels (bottom-left origin).
+    // wasPressedThisFrame compares the state of two frames, so a short click (press and release inside one frame,
+    // as from a quick tap or a slow frame) never shows up there; the event stream sees every press.
+    private bool pressPending;
+    private Vector2 pressAt;
+
+    private void OnEnable() => InputSystem.onEvent += OnInputEvent;
+
+    private void OnDisable() => InputSystem.onEvent -= OnInputEvent;
+
+    private void OnInputEvent(InputEventPtr ev, InputDevice device)
+    {
+        if (device is not Mouse mouse || !(ev.IsA<StateEvent>() || ev.IsA<DeltaStateEvent>()))
+            return;
+        // The event runs before its state is applied, so isPressed is still the state before this event.
+        if (mouse.leftButton.ReadValueFromEvent(ev, out float down) && down > 0.5f && !mouse.leftButton.isPressed)
+        {
+            pressPending = true;
+            pressAt = mouse.position.ReadValueFromEvent(ev, out Vector2 at) ? at : mouse.position.ReadValue();
+        }
+    }
+
     private void Update()
     {
-        if (buttons.Count == 0 || buttonsFor == null)
+        bool pressed = pressPending;
+        pressPending = false;
+        if (!pressed || buttons.Count == 0 || buttonsFor == null)
             return;
-        var mouse = UnityEngine.InputSystem.Mouse.current;
-        if (mouse == null || !mouse.leftButton.wasPressedThisFrame)
-            return;
-        Vector2 p = mouse.position.ReadValue();
-        p.y = Screen.height - p.y;
+        Vector2 p = new Vector2(pressAt.x, Screen.height - pressAt.y);
         foreach ((Rect screen, EngageTask task) in buttons)
         {
             if (!screen.Contains(p))
@@ -52,6 +74,10 @@ internal sealed class QueueOverlay : MonoBehaviour
             buttons.Clear();                        // the rows move up: wait for the next draw
             return;
         }
+        Rect shown = new Rect(window.x * scale, window.y * scale, window.width * scale, window.height * scale);
+        if (shown.Contains(p))
+            ModLog.Info($"[queue] click at {p.x:0},{p.y:0} inside the window hit no delete button" +
+                        $" (first at {buttons[0].screen.x:0},{buttons[0].screen.y:0})");
     }
 
     private void OnGUI()

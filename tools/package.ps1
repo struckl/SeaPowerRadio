@@ -16,6 +16,8 @@
     -Install mirrors the staged folder into <GameDir>\Sea Power_Data\StreamingAssets\SeaPowerRadio\, the folder to
     pick in the game's Create Mod screen (Sea Power must be closed). -Zip also writes dist\SeaPowerRadio-<version>.zip
     for a GitHub release.
+    The steps of the base are the shared ones of every R.A.T.S. mod (SeaPowerKeel\shared\tools\RatsPackage.psm1); the workspace
+    is found above this repo, -Workspace names it for a clone elsewhere, -RatsShared another copy of the shared folder.
     -Pack <id> stages a voice pack instead of the base: the folder with that voicepack.ini Id (looked up in mod\voices and
     in packs\*, e.g. a pack under work) goes to dist\pack-<id>\ as it is (voicepack.ini, personas.txt, catalog.txt, names.txt, clips;
     plus the pack's own _info.ini and CREDITS if it has them) - the folder to upload to that pack's Workshop item. No
@@ -23,7 +25,9 @@
 #>
 param(
     [string]$GameDir = $(if ($env:GameDir) { $env:GameDir } else { 'E:\Games\steamapps\common\Sea Power' }),
-    [string]$FlatManagedDir = $(if ($env:FlatManagedDir) { $env:FlatManagedDir } else { [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\_gamerefs\SeaPower-0.8.7-public\Managed')) }),
+    [string]$Workspace = $env:RatsWorkspace,
+    [string]$RatsShared = $env:RatsShared,
+    [string]$FlatManagedDir = $env:FlatManagedDir,
     # The globe build's game assemblies when the installed game isn't the globe version (a saved copy of its Managed).
     [string]$GlobeManagedDir = $env:GlobeManagedDir,
     [switch]$NoFlat,
@@ -34,8 +38,18 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
-$project = Join-Path $root 'src\SeaPowerRadio\SeaPowerRadio.csproj'
-$dist = Join-Path $root 'dist\SeaPowerRadio'
+if (-not $Workspace) {
+    $Workspace = $root
+    while ($Workspace -and -not (Test-Path (Join-Path $Workspace 'mods.json'))) { $Workspace = Split-Path -Parent $Workspace }
+    if (-not $Workspace) { throw 'No workspace (a folder with mods.json) above this repo - pass -Workspace.' }
+}
+if (-not $RatsShared) { $RatsShared = Join-Path $Workspace 'SeaPowerKeel\shared' }
+Import-Module (Join-Path $RatsShared 'tools\RatsPackage.psm1') -Force
+if (-not $FlatManagedDir) { $FlatManagedDir = Join-Path $Workspace '_gamerefs\SeaPower-0.8.7-public\Managed' }
+
+$name = 'SeaPowerRadio'
+$project = Join-Path $root "src\$name\$name.csproj"
+$dist = Join-Path $root "dist\$name"
 $voices = Join-Path $root 'mod\voices'
 
 # -Pack <id>: stage one voice pack and stop (no build: a pack has no DLL).
@@ -73,67 +87,21 @@ if (-not (Test-Path (Join-Path $voices 'voicepack.ini'))) { throw 'mod\voices\vo
 
 $globeManaged = if ($GlobeManagedDir) { $GlobeManagedDir } else { Join-Path $GameDir 'Sea Power_Data\Managed' }
 
-# The two builds differ only in the assemblies they compile against and one define: --no-incremental, or the second
-# build may reuse the first one's output.
-$out = Join-Path $root 'src\SeaPowerRadio\bin\Release\netstandard2.1'
-dotnet build $project -c Release --no-incremental -p:Deploy=false -p:GameDir="$GameDir" -p:ManagedDir="$globeManaged"
-if ($LASTEXITCODE -ne 0) { throw 'Globe build failed (with the game on 0.8.7, pass -GlobeManagedDir with the globe version''s assemblies).' }
-if (Test-Path $dist) { Remove-Item -Recurse -Force $dist }
-New-Item -ItemType Directory -Force $dist | Out-Null
-Copy-Item (Join-Path $out 'SeaPowerRadio.dll') $dist
-if (-not $NoFlat) {
-    if (-not (Test-Path (Join-Path $FlatManagedDir 'Seapower-Scripts.dll'))) { throw "No 0.8.7 assemblies in $FlatManagedDir (a copy of its Sea Power_Data\Managed, or pass -NoFlat)." }
-    dotnet build $project -c Release --no-incremental -p:Deploy=false -p:GameDir="$GameDir" -p:GameBuild=Flat -p:FlatManagedDir="$FlatManagedDir"
-    if ($LASTEXITCODE -ne 0) { throw 'Flat-map build failed.' }
-    Copy-Item (Join-Path $out 'SeaPowerRadioFlat.dll') $dist
-}
-
-# Each DLL against both games' assemblies (the workspace's compat-check): nothing missing on its own game, and its
-# entry point (which runs on both) nothing missing on either.
-$tool = Join-Path $root '..\tools\compat-check'
-if (Test-Path $tool) {
-    dotnet build $tool -c Release -v q | Out-Null
-    $gates = @('--gate', 'SeaPowerRadio.Plugin::TriggerEntryPoint', '--gate', 'SeaPowerRadio.Plugin::.ctor')
-    foreach ($b in @(@('SeaPowerRadio.dll', $globeManaged, $FlatManagedDir), @('SeaPowerRadioFlat.dll', $FlatManagedDir, $globeManaged))) {
-        $dll = Join-Path $dist $b[0]
-        if (-not (Test-Path $dll)) { continue }
-        dotnet run --project $tool -c Release --no-build -- $dll --against $b[1] --quiet
-        if ($LASTEXITCODE -ne 0) { throw "$($b[0]) references things its own game does not have." }
-        # --classload: Unity's ECS start-up loads EVERY type of every loaded assembly, so a field of a type the other game lacks
-        # (not just the entry point) stops all missions from loading there, although the DLL stays off (found 2026-10-28).
-        dotnet run --project $tool -c Release --no-build -- $dll --against $b[2] --quiet --classload @gates
-        if ($LASTEXITCODE -ne 0) { throw "$($b[0]): the entry point or a type's fields would fail on the other game." }
-    }
-}
-else { Write-Warning 'tools\compat-check not found (the workspace next to this repo) - the DLLs were not checked against both games.' }
-Copy-Item (Join-Path $root 'mod\_info.ini') $dist
+$env:RatsShared = $RatsShared.TrimEnd('\') + '\'      # the csproj's -p:RatsShared, also for the flat build
+Build-RatsMod -Project $project -Dist $dist -GameDir $GameDir -GlobeManagedDir $globeManaged -FlatManagedDir $FlatManagedDir -Workspace $Workspace -NoFlat:$NoFlat | Out-Null
+Test-RatsCompat -Workspace $Workspace -Dist $dist -RootNamespace $name -GlobeManagedDir $globeManaged -FlatManagedDir $FlatManagedDir
+Copy-RatsCommon -Root $root -Dist $dist -InfoIni (Join-Path $root 'mod\_info.ini')
 Copy-Item (Join-Path $root 'mod\rats-radio-aliases.txt') $dist
-Copy-Item (Join-Path $root 'LICENSE') (Join-Path $dist 'LICENSE.txt')
-Copy-Item (Join-Path $root 'CHANGELOG.md') $dist   # Keel's What's new shows its newest lines when there are no Workshop notes (local copies, GitHub zips)
 Copy-Item (Join-Path $root 'VOICES-LICENSE.md') (Join-Path $dist 'CREDITS.txt')
-$preview = Join-Path $root 'workshop\preview.jpg'
-if (Test-Path $preview) { Copy-Item $preview $dist } else { Write-Warning 'workshop\preview.jpg missing - nothing to pick as the Workshop preview.' }
 
 # robocopy is far faster than Copy-Item for ~57,000 small clips; half-written takes (*.part.mp3) stay behind.
 # The mood takes (<persona>\stressed|happy|sad, docs/moods.md) travel with their voices.
 robocopy $voices (Join-Path $dist 'voices') /E /XF *.part.mp3 /NFL /NDL /NJH /NJS /NP | Out-Null
 if ($LASTEXITCODE -ge 8) { throw "Copying the voice library failed (robocopy $LASTEXITCODE)." }
 
-$version = (Select-String -Path (Join-Path $root 'src\SeaPowerRadio\Plugin.cs') -Pattern 'Version = "([^"]+)"').Matches[0].Groups[1].Value
+$version = Get-RatsModVersion -PluginFile (Join-Path $root "src\$name\Plugin.cs")
 $clips = (Get-ChildItem -Recurse -File -Filter *.mp3 (Join-Path $dist 'voices')).Count
 Write-Host "Staged Sea Power Radio $version in $dist ($($personas.Count) voices, $clips clips)"
-
-if ($Zip) {
-    $archive = Join-Path $root "dist\SeaPowerRadio-$version.zip"
-    if (Test-Path $archive) { Remove-Item -Force $archive }
-    Compress-Archive -Path $dist -DestinationPath $archive -CompressionLevel Fastest
-    Write-Host "Release zip: $archive"
-}
-
-if ($Install) {
-    if (Get-Process -Name 'Sea Power' -ErrorAction SilentlyContinue) { throw 'Sea Power is running - close it first.' }
-    $target = Join-Path $GameDir 'Sea Power_Data\StreamingAssets\SeaPowerRadio'
-    robocopy $dist $target /MIR /NFL /NDL /NJH /NJS /NP | Out-Null
-    if ($LASTEXITCODE -ge 8) { throw "Installing failed (robocopy $LASTEXITCODE)." }
-    Write-Host "Installed to $target - pick this folder in Mods > Create Mod."
-}
+Show-RatsStage -Dist $dist
+if ($Zip) { New-RatsZip -Dist $dist -Version $version }
+if ($Install) { Install-RatsMod -Dist $dist -GameDir $GameDir }

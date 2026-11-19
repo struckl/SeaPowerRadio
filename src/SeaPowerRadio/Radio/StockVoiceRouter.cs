@@ -52,11 +52,13 @@ internal static class CallOrder
 internal static class StockVoiceRouter
 {
     // The CIWS appends its kill report to the sequence it is in (WeaponSystemCIWS): a line of its own, not a piece.
+    public static RadioPlayer Player;
+
     private const string AppendedOwnLine = "SplashedTrack";
 
     public static bool Handle(StockVoiceRequest request)
     {
-        if (!Settings.ReplaceStockVoices.Value || RadioHost.Player == null)
+        if (!Settings.ReplaceStockVoices.Value || Player == null)
             return false;
         Roster.Roster roster = RosterService.Current;
         if (roster == null)
@@ -94,7 +96,7 @@ internal static class StockVoiceRouter
             return StockPlays(request); // the pack has no clip for this line: the game's own line plays
         CallOrder.PassAppended = false;
         t.Alerts.AddRange(AlertLink.TakeFor(request.Speaker));
-        RadioHost.Player.Submit(t);
+        Player.Submit(t);
         return true;
     }
 
@@ -112,7 +114,7 @@ internal static class StockVoiceRouter
     /// </summary>
     public static void SpeedInKnots(ObjectBase unit, float knots)
     {
-        if (!Settings.ReplaceStockVoices.Value || RadioHost.Player == null || unit == null || knots < 0f)
+        if (!Settings.ReplaceStockVoices.Value || Player == null || unit == null || knots < 0f)
             return;
         RosterElement speaker = RosterService.Current?.Resolve(unit);
         if (speaker == null || speaker.Voice == null)
@@ -124,7 +126,7 @@ internal static class StockVoiceRouter
         if (t == null)
             return;
         t.Alerts.AddRange(AlertLink.TakeFor(unit));
-        RadioHost.Player.Submit(t);
+        Player.Submit(t);
     }
 
     private const float FeetPerUnit = 220.47266f; // the game's own conversion (ObjectAltitude)

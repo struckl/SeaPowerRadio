@@ -51,6 +51,7 @@ internal sealed class Roster
     private readonly Dictionary<string, VoicePack> packByNation = new Dictionary<string, VoicePack>(System.StringComparer.OrdinalIgnoreCase);
 
     public string MissionSeed { get; }
+    public IReadOnlyList<RosterElement> Elements => elements;
 
     private readonly CampaignMemory memory;   // null outside a linear campaign
 

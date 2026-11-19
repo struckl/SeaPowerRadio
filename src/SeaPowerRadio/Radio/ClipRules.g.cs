@@ -50,7 +50,6 @@ internal static class ClipRules
     public static readonly string[] OtherWarnings = { "BeingJammed", "DeckDamaged" };
     public static readonly string[] Happy = { "SplashOne", "SplashTrack", "TargetDestroyed", "Shack", "HitTrack", "MissionComplete", "ObjectiveComplete", "SarPickup", "SarPickupCount", "SarPickupMany", "SarDelivered", "HeloRecovered", "AllAircraftRecovered", "ContactRegained" };
     public static readonly string[] Sad = { "MissionFailed", "ObjectiveFailed", "SarFull", "SarSurvivors", "Winchester", "BatteryLow", "NeedToCharge", "DeckDamaged", "ContactFaded", "ContactsFaded" };
-    public static readonly string[] ContactStockKeys = { "ActiveContact", "ClassifiedContactMultiple", "ClassifiedHostileAir", "ClassifiedHostileAirMultiple", "ClassifiedHostileMultiple", "Contact", "ContactAir", "ContactAirF", "ContactAirM", "ContactAirMultiple", "ContactFaded", "ContactLand", "ContactLandF", "ContactLandM", "ContactLandMultiple", "ContactSubmerged", "ContactSubmergedF", "ContactSubmergedM", "ContactSubmergedMultiple", "ContactSurface", "ContactSurfaceF", "ContactSurfaceM", "ContactSurfaceMultiple", "Contacts" };
 
     public sealed class Profile
     {

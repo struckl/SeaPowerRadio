@@ -221,7 +221,7 @@ PHRASES: list[Phrase] = [
 
     # === Fuel / RTB / air ops =====================================================================================
     P("BingoFuel", "bingo, bingo. Returning to base.", "bingo fuel, RTB.", priority=2, sample=True),
-    # The fuel calls of R.A.T.S. Command Tools (its fuel monitor), against the nearest deck or field that can take the aircraft:
+    # The fuel calls (the plugin's fuel monitor), against the nearest deck or field that can take the aircraft:
     # joker = at cruise speed only just enough left to get there, bingo = only just enough even at the most
     # economical speed, emergency = not enough at all.
     P("FuelJoker", "joker fuel.", "joker, joker.", "we're at joker.", priority=4,
@@ -232,7 +232,7 @@ PHRASES: list[Phrase] = [
       "emergency fuel. We need a tanker or we're going in the water.", priority=1,
       note="mod: not enough fuel to reach any deck"),
 
-    # Search and rescue (R.A.T.S. Command Tools): survivors in the water -> rescuer on the way -> pickup -> full ->
+    # Search and rescue (the plugin's SAR reporter): survivors in the water -> rescuer on the way -> pickup -> full ->
     # delivered on deck.
     P("SarSurvivors", "survivors in the water, bearing {brg}.", "raft in the water, bearing {brg}.", priority=4,
       note="mod: own life rafts appeared (ship sunk, aircrew down)"),
@@ -577,11 +577,6 @@ STOCK_MAP: dict[str, str | None] = {
 _phrase_keys = {p.key for p in PHRASES}
 _bad = {k: v for k, v in STOCK_MAP.items() if v is not None and v not in _phrase_keys}
 assert not _bad, f"STOCK_MAP points at unknown phrases: {_bad}"
-
-# The game's contact report lines (new, classified, faded): swallowed while R.A.T.S. Command Tools reports contacts
-# in our voices, played by the game otherwise (the plugin's ClipRules.ContactStockKeys).
-CONTACT_STOCK_KEYS = sorted(k for k, v in STOCK_MAP.items()
-                            if v is None and (k.startswith(("Contact", "Classified")) or k == "ActiveContact"))
 
 # What the number a stock voice call passes means, so the plugin can speak it in the right form.
 STOCK_NUMBER: dict[str, str] = {

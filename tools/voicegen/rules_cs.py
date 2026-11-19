@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import rules  # noqa: E402
 from paths import REPO  # noqa: E402
-from phrases import CONTACT_STOCK_KEYS, NAMED_VARIANTS, PHRASES, queued_max  # noqa: E402
+from phrases import NAMED_VARIANTS, PHRASES, queued_max  # noqa: E402
 
 TARGET = REPO / "src" / "SeaPowerRadio" / "Radio" / "ClipRules.g.cs"
 
@@ -75,7 +75,6 @@ def variants() -> list[str]:
 def groups() -> list[str]:
     out = [f"    public static readonly string[] {name} = {cs_strings(keys)};"
            for name, keys in rules.PHRASE_GROUPS.items()]
-    out.append(f"    public static readonly string[] ContactStockKeys = {cs_strings(CONTACT_STOCK_KEYS)};")
     return out
 
 

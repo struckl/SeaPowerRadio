@@ -44,61 +44,20 @@ internal static class VoicePacks
         All.Clear();
         var folders = new List<string> { VoiceLibrary.ModDirectory };
         folders.AddRange(ModFolders());
-
-        var found = new Dictionary<string, VoicePack>(StringComparer.OrdinalIgnoreCase);
-        var seenDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var packDirs = new List<string>();
         var moodDirs = new List<string>();
         var lineDirs = new List<string>();
         foreach (string folder in folders)
-        {
             foreach (string dir in new[] { folder, Path.Combine(folder, "voices"), Path.Combine(folder, "radio") })
             {
                 string full;
                 try { full = Path.GetFullPath(dir); } catch (Exception) { continue; }
-                if (File.Exists(Path.Combine(full, "moodpack.ini")) && !moodDirs.Contains(full, StringComparer.OrdinalIgnoreCase))
-                    moodDirs.Add(full);
-                if (File.Exists(Path.Combine(full, "linepack.ini")) && !lineDirs.Contains(full, StringComparer.OrdinalIgnoreCase))
-                    lineDirs.Add(full);
-                if (!File.Exists(Path.Combine(full, "voicepack.ini")) || !seenDirs.Add(full))
-                    continue;
-                try
-                {
-                    VoicePack pack = VoicePack.ReadIni(full, baseVersion);
-                    if (pack == null) continue;
-                    if (found.TryGetValue(pack.Id, out VoicePack other))
-                    {
-                        bool newer = pack.Version > other.Version;
-                        ModLog.Info($"Voice pack '{pack.Id}' found twice ({other.Directory} {other.Version}, {pack.Directory} {pack.Version}): keeping {(newer ? pack.Directory : other.Directory)}.");
-                        if (!newer) continue;
-                    }
-                    found[pack.Id] = pack;
-                }
-                catch (Exception ex)
-                {
-                    ModLog.Warn($"Voice pack in {full} could not be read: {ex.Message}");
-                }
+                AddIfHas(moodDirs, full, "moodpack.ini");
+                AddIfHas(lineDirs, full, "linepack.ini");
+                AddIfHas(packDirs, full, "voicepack.ini");
             }
-        }
 
-        // The base's own pack loads first: its stock map is the default for packs without a stockmap.txt.
-        Catalog baseCatalog = null;
-        string baseDir = Path.GetFullPath(VoiceLibrary.VoicesDirectory);
-        foreach (VoicePack pack in found.Values.OrderBy(p => p.Id == NatoId ? 0 : 1).ThenBy(p => p.Name, StringComparer.OrdinalIgnoreCase))
-        {
-            try
-            {
-                if (!pack.LoadContent(baseCatalog))
-                    continue;
-                if (baseCatalog == null && (pack.Id == NatoId
-                                            || string.Equals(Path.GetFullPath(pack.Directory), baseDir, StringComparison.OrdinalIgnoreCase)))
-                    baseCatalog = pack.Catalog;     // English (an item of its own since 2.0) lends its stock map to packs without one
-                All.Add(pack);
-            }
-            catch (Exception ex)
-            {
-                ModLog.Warn($"Voice pack '{pack.Id}' could not be loaded: {ex.Message}");
-            }
-        }
+        LoadPacks(NewestById(packDirs, baseVersion));
         foreach (VoicePack pack in All)
             AddMoodRoot(pack, pack.Directory, null);
         foreach (string dir in lineDirs)
@@ -112,6 +71,64 @@ internal static class VoicePacks
             catch (Exception ex) { ModLog.Warn($"Mood pack in {dir} could not be read: {ex.Message}"); }
         }
         ModLog.Info($"Voice packs installed: {(All.Count == 0 ? "none" : string.Join(", ", All.Select(p => $"{p.Id} {p.Version}")))}");
+    }
+
+    private static void AddIfHas(List<string> dirs, string dir, string ini)
+    {
+        if (File.Exists(Path.Combine(dir, ini)) && !dirs.Contains(dir, StringComparer.OrdinalIgnoreCase))
+            dirs.Add(dir);
+    }
+
+    /// <summary>The voicepack.ini of every folder; a pack found twice keeps its newest version.</summary>
+    private static Dictionary<string, VoicePack> NewestById(List<string> packDirs, Version baseVersion)
+    {
+        var found = new Dictionary<string, VoicePack>(StringComparer.OrdinalIgnoreCase);
+        foreach (string dir in packDirs)
+        {
+            try
+            {
+                VoicePack pack = VoicePack.ReadIni(dir, baseVersion);
+                if (pack == null) continue;
+                if (found.TryGetValue(pack.Id, out VoicePack other))
+                {
+                    bool newer = pack.Version > other.Version;
+                    ModLog.Info($"Voice pack '{pack.Id}' found twice ({other.Directory} {other.Version}, {pack.Directory} {pack.Version}): keeping {(newer ? pack.Directory : other.Directory)}.");
+                    if (!newer) continue;
+                }
+                found[pack.Id] = pack;
+            }
+            catch (Exception ex)
+            {
+                ModLog.Warn($"Voice pack in {dir} could not be read: {ex.Message}");
+            }
+        }
+        return found;
+    }
+
+    /// <summary>
+    /// Loads every pack's content. The base's own pack loads first: its stock map is the default for packs without a
+    /// stockmap.txt (English is an item of its own since 2.0 and lends its map to the others).
+    /// </summary>
+    private static void LoadPacks(Dictionary<string, VoicePack> found)
+    {
+        Catalog baseCatalog = null;
+        string baseDir = Path.GetFullPath(VoiceLibrary.VoicesDirectory);
+        foreach (VoicePack pack in found.Values.OrderBy(p => p.Id == NatoId ? 0 : 1).ThenBy(p => p.Name, StringComparer.OrdinalIgnoreCase))
+        {
+            try
+            {
+                if (!pack.LoadContent(baseCatalog))
+                    continue;
+                if (baseCatalog == null && (pack.Id == NatoId
+                                            || string.Equals(Path.GetFullPath(pack.Directory), baseDir, StringComparison.OrdinalIgnoreCase)))
+                    baseCatalog = pack.Catalog;
+                All.Add(pack);
+            }
+            catch (Exception ex)
+            {
+                ModLog.Warn($"Voice pack '{pack.Id}' could not be loaded: {ex.Message}");
+            }
+        }
     }
 
     /// <summary>
@@ -169,17 +186,7 @@ internal static class VoicePacks
     /// </summary>
     private static void AttachMoodPack(string dir, Version baseVersion)
     {
-        var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (string raw in File.ReadAllLines(Path.Combine(dir, "moodpack.ini")))
-        {
-            string line = raw;
-            int comment = line.IndexOf(';');
-            if (comment >= 0) line = line.Substring(0, comment);
-            line = line.Trim();
-            int eq = line.IndexOf('=');
-            if (eq > 0 && !line.StartsWith("#"))
-                values[line.Substring(0, eq).Trim()] = line.Substring(eq + 1).Trim();
-        }
+        var values = ReadSection(Path.Combine(dir, "moodpack.ini"));
         values.TryGetValue("Pack", out string packId);
         values.TryGetValue("Moods", out string moods);
         values.TryGetValue("MinBaseVersion", out string min);
@@ -219,6 +226,9 @@ internal static class VoicePacks
         ModLog.Info($"Voice pack '{pack.Id}': moods {string.Join(",", moods)} from {dir}");
     }
 
+    // StreamingAssets folders of the game itself, not mods.
+    private static readonly HashSet<string> NotModFolders = new HashSet<string> { "original", "user", "EntityScenes" };
+
     public static IEnumerable<string> ModFolders()
     {
         var roots = new List<string>();
@@ -239,7 +249,7 @@ internal static class VoicePacks
             foreach (string sub in subs)
             {
                 string name = Path.GetFileName(sub);
-                if (name == "original" || name == "user" || name == "EntityScenes") continue;
+                if (NotModFolders.Contains(name)) continue;
                 yield return sub;
             }
         }

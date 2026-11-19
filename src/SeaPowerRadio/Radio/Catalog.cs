@@ -59,33 +59,27 @@ internal sealed class Catalog
         }
         AddRows(catalog);
         if (File.Exists(stockmap))
-        {
-            foreach (string line in ReadRows(stockmap))
-            {
-                string[] f = line.Split('|');
-                if (f.Length < 3) continue;
-                stock[f[0]] = (f[1] == "-" ? null : f[1], f[2] == "-" ? null : f[2]);
-            }
-        }
+            AddStockRows(stockmap);
         else if (fallback != null)
-        {
             stock = fallback.stock;
-        }
-        else if (File.Exists(Voices.VoiceLibrary.DataFile("stockmap.txt")))
-        {
-            foreach (string line in ReadRows(Voices.VoiceLibrary.DataFile("stockmap.txt")))   // Radio's own (2.0)
-            {
-                string[] f = line.Split('|');
-                if (f.Length < 3) continue;
-                stock[f[0]] = (f[1] == "-" ? null : f[1], f[2] == "-" ? null : f[2]);
-            }
-        }
+        else if (File.Exists(VoiceLibrary.DataFile("stockmap.txt")))
+            AddStockRows(VoiceLibrary.DataFile("stockmap.txt"));   // Radio's own (2.0)
         else
         {
             ModLog.Warn($"Stock map missing in {directory}, and Radio has none of its own.");
             return;
         }
         Loaded = true;
+    }
+
+    private void AddStockRows(string file)
+    {
+        foreach (string line in ReadRows(file))
+        {
+            string[] f = line.Split('|');
+            if (f.Length < 3) continue;
+            stock[f[0]] = (f[1] == "-" ? null : f[1], f[2] == "-" ? null : f[2]);
+        }
     }
 
     /// <summary>
@@ -171,7 +165,7 @@ internal sealed class Catalog
     {
         if (!phrases.TryGetValue(phrase, out List<PhraseVariant> all))
             return null;
-        var usable = all.FindAll(v => (only == 0 || v.N == only) && (haveNumber || v.Slot == null) && Rendered(v, voice));
+        var usable = all.FindAll(v => Usable(v, voice, haveNumber, only));
         if (usable.Count == 0)
             return null;
         string memo = voice + "|" + phrase;
@@ -183,7 +177,7 @@ internal sealed class Catalog
         return pick;
     }
 
-    public static bool Rendered(PhraseVariant v, string voice)
+    private static bool Rendered(PhraseVariant v, string voice)
     {
         if (voice == null) return false;
         if (v.Slot == null)
@@ -213,5 +207,9 @@ internal sealed class Catalog
     /// <summary>Can this voice say the phrase at all (any variant rendered, or variant <paramref name="only"/>)?</summary>
     public bool CanSay(string phrase, string voice, bool haveNumber = false, int only = 0) =>
         phrases.TryGetValue(phrase, out List<PhraseVariant> all)
-        && all.Exists(v => (only == 0 || v.N == only) && (haveNumber || v.Slot == null) && Rendered(v, voice));
+        && all.Exists(v => Usable(v, voice, haveNumber, only));
+
+    /// <summary>Variant <paramref name="only"/> (0 = any), with a number slot only when there is a number, rendered in this voice.</summary>
+    private static bool Usable(PhraseVariant v, string voice, bool haveNumber, int only) =>
+        (only == 0 || v.N == only) && (haveNumber || v.Slot == null) && Rendered(v, voice);
 }

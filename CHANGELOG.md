@@ -7,6 +7,14 @@
 - Changed (internal): one rules table (`tools/voicegen/rules.py`, read by the plugin as `ClipRules.g.cs`) for callsign
   words, clip number ranges, the variants the plugin picks by name, call-volume and mood groups and the radio sound;
   `check_sync.py` checks it all. The shipped clips and their names are unchanged.
+- Changed (internal): Radio now uses the workspace's shared mod skeleton (`SeaPowerKeel\shared`) for the start, the hook
+  registry, mission start and end, the config file, the log, the host object, the map-palette lookup, the project file
+  and the package steps; its own copies are gone. Config sections, keys and defaults, the GUIDs and every text are
+  unchanged; each report feature's hooks stay optional and switch off alone. What the shared code brings along: Radio
+  stays off when it is unticked in the game's Mod Manager (Anchor Chain loads unticked folders too); a host error is
+  logged only the first five times; the radio net, reporters and RTB marks are cleared when the game closes, not in the
+  middle of the shutdown; patch priorities are set explicitly; the aircraft-launch hook is a feature of its own and,
+  like the mission hooks, switches the mod off when the game no longer has the method.
 - Changed (internal): listening samples (`reel.py`) mix like the game again: the same joins, crossfade, loudness gain
   and soft limiter; low altitudes use the rendered clips.
 - Changed (internal): the order the game calls in (appended pieces, launch line, messages in the same frame) is

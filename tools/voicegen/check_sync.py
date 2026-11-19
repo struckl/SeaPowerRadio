@@ -52,7 +52,7 @@ for phrase, named in NAMED_VARIANTS.items():
 
 inventory = (REPO / "docs" / "stock-voice-events.md").read_text(encoding="utf-8")
 stock_keys = set(re.findall(r"^\| [^|]+ \| `([^`]+)` \|", inventory, flags=re.M))
-stock_keys |= set(re.findall(r"^- `([^`]+)` [-–]", inventory, flags=re.M))
+stock_keys |= set(re.findall(r"^- `([^`]+)` [-\N{EN DASH}]", inventory, flags=re.M))
 missing = sorted(stock_keys - set(STOCK_MAP))
 if missing:
     problems.append(f"stock keys without STOCK_MAP entry: {missing}")

@@ -16,7 +16,7 @@ internal static class VoiceSalts
 {
     private const int MaxEntries = 400;
 
-    private static string FilePath => Path.Combine(Paths.ConfigPath, "SeaPowerRadio", "voice-salts.txt");
+    private static string FilePath => UserFiles.PathOf("voice-salts.txt");
 
     /// <summary>The salt for this mission start, or null for the plain per-mission seed.</summary>
     public static string ForStart(string missionSeed, bool freshStart)

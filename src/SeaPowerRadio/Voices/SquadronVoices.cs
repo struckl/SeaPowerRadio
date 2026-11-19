@@ -23,7 +23,7 @@ internal static class SquadronVoices
 
     private static readonly List<Rule> rules = new List<Rule>();
 
-    public static string UserFile => Path.Combine(Paths.ConfigPath, "SeaPowerRadio", "squadrons.txt");
+    public static string UserFile => UserFiles.PathOf("squadrons.txt");
 
     public static void Reload()
     {
@@ -135,13 +135,9 @@ internal static class SquadronVoices
         return true;
     }
 
-    private static void EnsureUserFile()
-    {
-        try
-        {
-            if (File.Exists(UserFile)) return;
-            Directory.CreateDirectory(Path.GetDirectoryName(UserFile));
-            File.WriteAllText(UserFile,
+    private static void EnsureUserFile() => UserFiles.Ensure(UserFile, Template, "squadrons");
+
+    private const string Template =
 @"# Rats Radio: the voice gender of a whole squadron. Read at every mission start. Workshop updates never touch this file.
 #
 #   squadron name = male | female
@@ -157,11 +153,5 @@ internal static class SquadronVoices
 # Examples:
 # Bear Aces = female
 # Ghostriders = male
-");
-        }
-        catch (Exception ex)
-        {
-            ModLog.Warn($"[squadrons] could not create {UserFile}: {ex.Message}");
-        }
-    }
+";
 }

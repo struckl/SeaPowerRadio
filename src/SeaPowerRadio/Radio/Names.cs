@@ -22,7 +22,7 @@ internal sealed class GameName
 internal sealed class Names
 {
     private readonly Dictionary<string, GameName> byKey = new Dictionary<string, GameName>();
-    private static readonly Regex NotSlug = new Regex("[^a-z0-9]+", RegexOptions.Compiled);
+    private static readonly Regex NotSlug = new Regex(ClipRules.SlugNot, RegexOptions.Compiled);
     private static readonly Regex AircraftName = new Regex(@"^(.*?)\s+(\d+)(?:-(\d+))?$", RegexOptions.Compiled);
 
     public int Count => byKey.Count;
@@ -51,11 +51,11 @@ internal sealed class Names
         }
     }
 
-    /// <summary>Must match slug() in tools/voicegen/names.py.</summary>
+    /// <summary>The clip key part of a game name; slug() in tools/voicegen/names.py applies the same rule (ClipRules).</summary>
     public static string Slug(string text)
     {
         string s = NotSlug.Replace((text ?? "").ToLowerInvariant(), "_").Trim('_');
-        return s.Length == 0 ? "x" : s;
+        return s.Length == 0 ? ClipRules.SlugEmpty : s;
     }
 
     public GameName Unit(string shortName) =>

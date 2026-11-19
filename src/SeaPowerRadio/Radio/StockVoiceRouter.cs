@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using SeaPower;
 using SeapowerUI.ViewModels;
@@ -6,8 +7,39 @@ using SeaPowerRadio.Core;
 using SeaPowerRadio.Roster;
 using SeaPowerRadio.Voices;
 using UnityEngine;
+using Variant = SeaPowerRadio.Radio.ClipRules.Variant;
 
 namespace SeaPowerRadio.Radio;
+
+/// <summary>
+/// What the router carries from one game call to the next. The game hands a voice line over with no id that ties it
+/// to the call it belongs to, so the order in which the game calls stands in for one. Each rule below holds in the
+/// game today and nothing enforces it; this is the one place that relies on them:
+/// - The pieces the game appends to a call (VoiceMessage.AppendMessage) follow that call at once, with no other call
+///   in between: whether the call was left to the game decides for its pieces (<see cref="PassAppended"/>).
+/// - WeaponBase.LaunchVoiceover asks for its launch line right after our prefix saw the weapon, in the same frame: a
+///   weapon noted in another frame belongs to another line (<see cref="LaunchIn"/>).
+/// - A message bottom right and the call that speaks it are raised in the same frame, by the game and by
+///   the why-not feature alike (<see cref="AlertLink.TakeFor"/>).
+/// - The why-not checks of the Air and WhyNot folders run in the same game call, before the line reaches the router.
+/// </summary>
+internal static class CallOrder
+{
+    /// <summary>True while the pieces the game appends belong to a line that was left to the game: they play too.</summary>
+    public static bool PassAppended;
+
+    private static WeaponBase launching;
+    private static int launchingFrame = -1;
+
+    public static void NoteLaunch(WeaponBase weapon)
+    {
+        launching = weapon;
+        launchingFrame = Time.frameCount;
+    }
+
+    /// <summary>The weapon whose launch the game announces in <paramref name="frame"/>, if our prefix saw it.</summary>
+    public static WeaponBase LaunchIn(int frame) => frame == launchingFrame ? launching : null;
+}
 
 /// <summary>
 /// Decides, for every voice line the game asks for, whether the mod speaks it instead. Called synchronously from
@@ -20,6 +52,9 @@ namespace SeaPowerRadio.Radio;
 internal static class StockVoiceRouter
 {
     public static RadioPlayer Player;
+
+    // The CIWS appends its kill report to the sequence it is in (WeaponSystemCIWS): a line of its own, not a piece.
+    private const string AppendedOwnLine = "SplashedTrack";
 
     public static bool Handle(StockVoiceRequest request)
     {
@@ -34,18 +69,20 @@ internal static class StockVoiceRouter
         if (speaker != null && speaker.Voice == null)
             return StockPlays(request);
         Catalog catalog = speaker != null ? speaker.Voice.Pack.Catalog : VoicePacks.StockCatalog;
-        if (catalog == null)
-            return false;
+        return catalog != null && Route(request, speaker, catalog);
+    }
 
+    private static bool Route(StockVoiceRequest request, RosterElement speaker, Catalog catalog)
+    {
         if (!catalog.TryStock(request.Key, out string phrase, out string numberKind))
             // Unknown key. A piece appended to a task force report is one of the game's contact building blocks
             // built at runtime - swallow it with the rest of that report. Anything else (other mods' lines) plays.
-            return request.Appended && request.Speaker == null && !passAppended;
-        if (request.Appended && request.Key != "SplashedTrack")
-            return !passAppended;
+            return request.Appended && request.Speaker == null && !CallOrder.PassAppended;
+        if (request.Appended && request.Key != AppendedOwnLine)
+            return !CallOrder.PassAppended;
         if (phrase == null)
         {
-            passAppended = false;
+            CallOrder.PassAppended = false;
             return true;
         }
         if (speaker == null)
@@ -57,20 +94,17 @@ internal static class StockVoiceRouter
         Transmission t = TransmissionBuilder.Build(speaker, phrase, number, variant);
         if (t == null)
             return StockPlays(request); // the pack has no clip for this line: the game's own line plays
-        passAppended = false;
+        CallOrder.PassAppended = false;
         t.Alerts.AddRange(AlertLink.TakeFor(request.Speaker));
         Player.Submit(t);
         return true;
     }
 
-    // True while the pieces the game appends to a call belong to a line that was left to the game: they play too.
-    private static bool passAppended;
-
     /// <summary>The game's own line plays (Game voice, or a line the pack lacks), together with what the game appends to it.</summary>
     private static bool StockPlays(StockVoiceRequest request)
     {
         if (!request.Appended)
-            passAppended = true;
+            CallOrder.PassAppended = true;
         return false;
     }
 
@@ -95,62 +129,58 @@ internal static class StockVoiceRouter
         Player.Submit(t);
     }
 
-    // Variants of tools/voicegen/phrases.py that are only said where they fit.
-    private const int AheadFull = 1;        // SetSpeedFull: "ahead full."
-    private const int IncreasingSpeed = 2;  // SetSpeedFull: "increasing speed."
-    private const int AntiShip = 2;         // AshmAway: "anti-ship away!" (1 = "harpoon away!")
-    private const int Climbing = 1;         // SetAltitude: "climbing, {alt}."
-    private const int LevelingOff = 2;      // SetAltitude: "leveling off, {alt}."
-    private const int Descending = 3;       // SetAltitude: "descending, {alt}."
-
     private const float FeetPerUnit = 220.47266f; // the game's own conversion (ObjectAltitude)
-
-    private static WeaponBase launching;
-    private static int launchingFrame = -1;
-
-    /// <summary>The weapon whose launch the game is about to announce (Patches/LaunchVoicePatches).</summary>
-    public static void NoteLaunch(WeaponBase weapon)
-    {
-        launching = weapon;
-        launchingFrame = UnityEngine.Time.frameCount;
-    }
+    private const float LevelFeet = 100f;         // closer than this to the new altitude: "leveling off"
 
     /// <summary>
     /// Say what is actually going to happen instead of the stock acknowledgement:
     /// - A speed or altitude order: which way it goes (<see cref="SpeedPhrase"/>, <see cref="AltitudePhrase"/>).
     /// - A launch: the line that fits the weapon (<see cref="LaunchPhrase"/>).
-    /// - An attack order stacked behind earlier ones: "copy, queued, number three in line" (the stock line is
-    /// played before the order joins the queue, so the queue holds the earlier ones).
-    /// - A VID order to a wingman flying in formation: "unable, holding formation on lead". The aircraft state
-    /// machine only starts a visual ID from its default state, never from formation flight, so the order would sit
-    /// there unnoticed (docs/how-it-works.md, "VID acknowledged, wingman stays in formation"). With "Detach wingman
-    /// for VID" on, the wingman is released from the formation and the VID goes ahead instead.
+    /// - The replies of the why-not feature (<see cref="WhyNotReply"/>).
     /// </summary>
     private static string Refine(string phrase, StockVoiceRequest request, string voice, ref int? number, ref int variant)
     {
         ObjectBase unit = request.Speaker;
         if (unit == null)
             return phrase;
+        switch (request.Key)
+        {
+            case "SetAltitude":
+                return AltitudePhrase(phrase, unit, voice, ref variant);
+            case "ASHMFired":
+            case "ASUMFired":
+            case "WeaponAway":
+                return LaunchPhrase(phrase, request, ref variant);
+        }
         if (request.Key.StartsWith("SetSpeed_Ahead_", StringComparison.Ordinal))
             return SpeedPhrase(phrase, request.Key, unit, voice, ref variant);
-        if (request.Key == "SetAltitude")
-            return AltitudePhrase(phrase, unit, voice, ref variant);
-        if (request.Key == "ASHMFired" || request.Key == "ASUMFired" || request.Key == "WeaponAway")
-            return LaunchPhrase(phrase, request, ref variant);
         if (!Settings.WhyNot.Value)
             return phrase;
+        string reply = WhyNotReply(phrase, unit, voice);
+        if (reply == null)
+            return phrase;
+        if (reply != phrase)
+            number = null;
+        return reply;
+    }
 
+    /// <summary>
+    /// The lines the why-not feature adds to a stock acknowledgement; null = none:
+    /// - An attack order stacked behind earlier ones: "copy, queued, number three in line" (the stock line is played
+    /// before the order joins the queue, so the queue holds the earlier ones).
+    /// - A VID order to a wingman flying in formation: "unable, holding formation on lead". The aircraft state machine
+    /// only starts a visual ID from its default state, never from formation flight, so the order would sit there
+    /// unnoticed (docs/how-it-works.md, "VID acknowledged, wingman stays in formation"). With "Detach wingman for VID" on,
+    /// the wingman is released from the formation and the VID goes ahead instead; else the "holding formation" message is raised.
+    /// </summary>
+    private static string WhyNotReply(string phrase, ObjectBase unit, string voice)
+    {
         if (phrase == "EngageTrack" && !(unit is Aircraft))
         {
             int ahead = unit._currentEngageTasks.Count(t => !t._isAutoAttack);
-            string queued = "Queued_" + Math.Min(ahead + 1, 5);
-            if (ahead >= 1 && Catalog.Of(voice).CanSay(queued, voice))
-            {
-                number = null;
-                return queued;
-            }
+            string queued = "Queued_" + Math.Min(ahead + 1, ClipRules.QueuedMax);
+            return ahead >= 1 && CanSay(voice, queued) ? queued : null;
         }
-
         if (phrase == "Identify" && unit is Aircraft aircraft && aircraft.InAirFormation())
         {
             if (Settings.DetachForVid.Value && aircraft.Formation != null)
@@ -163,11 +193,13 @@ internal static class StockVoiceRouter
             ModLog.Info("[why-not] " + text.Replace("${Name}", unit.getName()));
             try { Globals._mainGameViewModel?.RaiseAlert(unit, text); }
             catch (Exception) { /* the alert is a nice-to-have */ }
-            number = null;
             return "WhyNot_HoldingFormation";
         }
-        return phrase;
+        return null;
     }
+
+    private static bool CanSay(string voice, string phrase, int only = 0) =>
+        Catalog.Of(voice)?.CanSay(phrase, voice, haveNumber: only != 0, only: only) ?? false;
 
     /// <summary>
     /// The stock telegraph lines name the new setting ("ahead two thirds"); ours say both the way the speed goes and
@@ -191,17 +223,17 @@ internal static class StockVoiceRouter
             case ObjectSpeed.SpeedSettings.Ahead_Flank:
                 return phrase;
             case ObjectSpeed.SpeedSettings.Ahead_Full:
-                variant = AheadFull; // names the step, up or down
+                variant = Variant.SetSpeedFull_AheadFull; // names the step, up or down
                 return "SetSpeedFull";
             default: // 1/3, 2/3, standard
                 string step = setting == ObjectSpeed.SpeedSettings.Ahead_1_3 ? "OneThird"
                     : setting == ObjectSpeed.SpeedSettings.Ahead_2_3 ? "TwoThirds" : "Standard";
                 string named = (faster ? "SpeedUp" : "SpeedDown") + step;
-                if (Catalog.Of(voice).CanSay(named, voice))
+                if (CanSay(voice, named))
                     return named;
                 if (!faster)
                     return "SetSpeedSlow";
-                variant = IncreasingSpeed;
+                variant = Variant.SetSpeedFull_IncreasingSpeed;
                 return "SetSpeedFull";
         }
     }
@@ -216,9 +248,9 @@ internal static class StockVoiceRouter
     private static string AltitudePhrase(string phrase, ObjectBase unit, string voice, ref int variant)
     {
         float climbFeet = (unit.DesiredAltitude.Value - unit.transform.position.y) * FeetPerUnit;
-        variant = climbFeet > 100f ? Climbing
-            : climbFeet < -100f && Catalog.Of(voice).CanSay(phrase, voice, haveNumber: true, only: Descending) ? Descending
-            : LevelingOff;
+        variant = climbFeet > LevelFeet ? Variant.SetAltitude_Climbing
+            : climbFeet < -LevelFeet && CanSay(voice, phrase, Variant.SetAltitude_Descending) ? Variant.SetAltitude_Descending
+            : Variant.SetAltitude_LevelingOff;
         return phrase;
     }
 
@@ -230,8 +262,8 @@ internal static class StockVoiceRouter
     /// </summary>
     private static string LaunchPhrase(string phrase, StockVoiceRequest request, ref int variant)
     {
-        WeaponBase w = launching;
-        if (w == null || launchingFrame != request.Frame || w._launchPlatform != request.Speaker || request.Speaker.IsAirUnit)
+        WeaponBase w = CallOrder.LaunchIn(request.Frame);
+        if (w == null || w._launchPlatform != request.Speaker || request.Speaker.IsAirUnit)
             return phrase;
         AmmunitionParameters ap = w._ap;
         if (ap == null)
@@ -241,13 +273,17 @@ internal static class StockVoiceRouter
             return "AsumAway"; // a torpedo, or a missile carrying one (ASROC, Ikara, SS-N-14): "torpedo away"
         if (ap._type != Ammunition.Type.Missile)
             return phrase;
-        if (ap._ammunitionFileName?.IndexOf("gm-84", StringComparison.OrdinalIgnoreCase) >= 0)
-            return "AshmAway"; // RGM/UGM-84 Harpoon
+        if (IsHarpoon(ap))
+            return "AshmAway";
         if (w.CurrentIntendedTargetObject is Vessel || w.CurrentIntendedTargetObject is Submarine)
         {
-            variant = AntiShip;
+            variant = Variant.AshmAway_AntiShip;
             return "AshmAway";
         }
         return "SamAway"; // land attack, a position: "birds away", "missile away"
     }
+
+    // RGM/UGM-84: the game has no weapon family field, only the ammunition file name.
+    private static bool IsHarpoon(AmmunitionParameters ap) =>
+        ap._ammunitionFileName?.IndexOf("gm-84", StringComparison.OrdinalIgnoreCase) >= 0;
 }

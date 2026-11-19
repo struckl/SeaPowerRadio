@@ -24,17 +24,8 @@ internal static class Moods
     private const float StressAfterCombat = 20f;    // ... after its own weapons call
     private const float HappyAfterSuccess = 40f;    // ... pleased after a kill, a rescue, mission success
 
-    private static readonly HashSet<string> HappyEvents = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-    {
-        "SplashOne", "SplashTrack", "TargetDestroyed", "Shack", "HitTrack", "MissionComplete", "ObjectiveComplete",
-        "SarPickup", "SarPickupCount", "SarPickupMany", "SarDelivered", "HeloRecovered", "AllAircraftRecovered", "ContactRegained",
-    };
-
-    private static readonly HashSet<string> SadEvents = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-    {
-        "MissionFailed", "ObjectiveFailed", "SarFull", "SarSurvivors", "Winchester", "BatteryLow", "NeedToCharge",
-        "DeckDamaged", "ContactFaded", "ContactsFaded",
-    };
+    private static readonly HashSet<string> HappyEvents = CallCategories.PhraseSet(ClipRules.Happy);
+    private static readonly HashSet<string> SadEvents = CallCategories.PhraseSet(ClipRules.Sad);
 
     private sealed class State
     {

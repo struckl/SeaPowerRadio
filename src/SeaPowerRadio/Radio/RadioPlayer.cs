@@ -248,19 +248,20 @@ internal sealed class RadioPlayer
         {
             t.Clips.RemoveRange(0, t.CallsignClips);
             t.CallsignClips = 0;
-            t.Text = "(same unit)" + t.Text.Substring(t.Text.IndexOf(',') + 1);
+            t.Text = "(same unit)" + t.Text.Substring(t.CallsignTextLength);
             return;
         }
         if (unit != null && last != null
             && Names.TryParseAircraft(unit.Name.Value, out string word, out int number, out int position)
             && Names.TryParseAircraft(last.Name.Value, out string lastWord, out int lastNumber, out _)
             && position > 0 && number == lastNumber && string.Equals(word, lastWord, System.StringComparison.OrdinalIgnoreCase)
-            && ClipLibrary.Exists(t.Voice, $"cn_{position}"))
+            && TransmissionBuilder.CallsignNumberClip(position) is string positionClip
+            && ClipLibrary.Exists(t.Voice, positionClip))
         {
             t.Clips.RemoveRange(0, t.CallsignClips);
-            t.Clips.Insert(0, $"cn_{position}");
+            t.Clips.Insert(0, positionClip);
             t.CallsignClips = 1;
-            t.Text = $"({position})" + t.Text.Substring(t.Text.IndexOf(',') + 1);
+            t.Text = $"({position})" + t.Text.Substring(t.CallsignTextLength);
         }
     }
 

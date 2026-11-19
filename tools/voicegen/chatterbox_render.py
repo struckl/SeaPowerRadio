@@ -38,10 +38,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from cast import BY_ID, CAST, REPO  # noqa: E402
 from align import ForcedAligner, normalize_words  # noqa: E402
+import rules  # noqa: E402
+from paths import VOICES  # noqa: E402
 from phrases import TAKES, Take, takes_for  # noqa: E402
 from radio import voice_chain  # noqa: E402
 
-OUT_ROOT = REPO / "mod" / "voices"
+OUT_ROOT = VOICES
 REFS = Path(__file__).resolve().parent / "refs"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -51,13 +53,13 @@ S_CLUSTER = re.compile(r"\W*s[ptkc]", re.IGNORECASE)
 
 def delivery(tk: Take) -> tuple[float, float]:
     """(exaggeration, cfg_weight) from the urgency of the phrase in this take."""
-    if tk.priority <= 2:
+    if tk.priority <= rules.ALERT_MAX_PRIORITY:
         return 0.85, 0.30
     if tk.priority == 3:
         return 0.70, 0.35
     if tk.priority == 4:
         return 0.60, 0.40
-    if tk.priority == 7:
+    if tk.priority == rules.REPLY_PRIORITY:
         return 0.45, 0.50
     return 0.50, 0.50
 

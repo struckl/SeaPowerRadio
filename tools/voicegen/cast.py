@@ -15,8 +15,13 @@ Run this file to write ../../mod/voices/personas.txt, which the plugin reads at 
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from paths import REPO, VOICES  # noqa: E402,F401  (REPO: the render tools import it from here)
 
 
 @dataclass(frozen=True)
@@ -86,8 +91,7 @@ BY_ID = {p.id: p for p in CAST}
 assert len(BY_ID) == len(CAST), "duplicate persona id"
 assert len({p.vctk for p in CAST}) == len(CAST), "VCTK speaker used twice"
 
-REPO = Path(__file__).resolve().parents[2]
-PERSONAS_FILE = REPO / "mod" / "voices" / "personas.txt"
+PERSONAS_FILE = VOICES / "personas.txt"
 
 
 def write_personas_file() -> None:

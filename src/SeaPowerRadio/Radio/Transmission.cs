@@ -20,6 +20,7 @@ internal sealed class Transmission
     public string Profile;                                     // radio flavour, see RadioFx
     public float SubmittedAt;
     public string Text;                                        // human-readable, for the log
+    public int CallsignTextLength;                             // the start of Text that names the callsign
     public readonly List<Alert> Alerts = new List<Alert>();     // the bottom-right messages this call speaks
 
     public CallRole Role = CallRole.Report;                     // from the main phrase, see Catalog
@@ -41,28 +42,32 @@ internal sealed class Transmission
 /// </summary>
 internal static class TransmissionBuilder
 {
-    // Most silence left where two clips join. The takes speak a pause at every cut, so the cut falls into silence -
-    // also where nobody pauses ("bearing, | two seven three"): there the two halves added up to a quarter to half a
-    // second, which is what made the numbers sound read off a card.
-    private const float NumberPause = 0.05f;   // word <-> number, no pause in the text: "bearing two seven three"
-    private const float GroupPause = 0.08f;    // between the digit groups: "seven zero, three four"
-    private const float SpokenPause = 0.25f;   // a pause the speaker makes anyway (after the callsign, at a comma)
-
-    /// <summary>Most silence allowed where <paramref name="next"/> follows <paramref name="previous"/>.</summary>
+    /// <summary>
+    /// Most silence allowed where <paramref name="next"/> follows <paramref name="previous"/>. The takes speak a pause
+    /// at every cut, also where nobody pauses ("bearing, | two seven three"); left as cut, the numbers sounded read
+    /// off a card, so the pauses at a number are closed up (ClipRules, from tools/voicegen/rules.py).
+    /// </summary>
     public static float MaxPause(string voice, string previous, string next)
     {
         bool a = IsNumberPiece(previous), b = IsNumberPiece(next);
         if (a && b)
-            return GroupPause;
+            return ClipRules.GroupPause;
         if (a || b)
-            return (Catalog.Of(voice)?.PausesAtNumber(a ? next : previous) ?? true) ? SpokenPause : NumberPause;
-        return SpokenPause;
+            return (Catalog.Of(voice)?.PausesAtNumber(a ? next : previous) ?? true) ? ClipRules.SpokenPause : ClipRules.NumberPause;
+        return ClipRules.SpokenPause;
     }
 
     private static bool IsNumberPiece(string key) =>
-        key.StartsWith("brg_", StringComparison.Ordinal) || key.StartsWith("pm_", StringComparison.Ordinal)
-        || key.StartsWith("pe_", StringComparison.Ordinal) || key.StartsWith("dm_", StringComparison.Ordinal)
-        || key.StartsWith("alt_", StringComparison.Ordinal) || key.StartsWith("cnt_", StringComparison.Ordinal);
+        Array.Exists(ClipRules.NumberPieces, prefix => key.StartsWith(prefix, StringComparison.Ordinal));
+
+    /// <summary>The flight-position clip ("two-one") of a callsign; null when that combination was not rendered.</summary>
+    public static string FlightPositionClip(int flight, int position) =>
+        flight >= ClipRules.FlightMin && flight <= ClipRules.FlightMax
+        && position >= ClipRules.PositionMin && position <= ClipRules.PositionMax ? $"fp_{flight}{position}" : null;
+
+    /// <summary>The number after a game callsign word ("Lancer | three"); null when that number was not rendered.</summary>
+    public static string CallsignNumberClip(int number) =>
+        number >= ClipRules.CallsignNumberMin && number <= ClipRules.CallsignNumberMax ? $"cn_{number}" : null;
 
     public static Transmission Build(RosterElement speaker, string phrase, int? number, int variant = 0)
     {
@@ -82,6 +87,7 @@ internal static class TransmissionBuilder
         t.Clips.AddRange(CallsignFor(speaker, out string said));
         t.CallsignClips = t.Clips.Count;
         t.Text = said + ",";
+        t.CallsignTextLength = t.Text.Length;
         return t;
     }
 
@@ -113,10 +119,9 @@ internal static class TransmissionBuilder
                 if (Names.TryParseAircraft(unit.Name.Value, out _, out int number, out int position))
                 {
                     var clips = new List<string> { name.Key };
-                    if (position > 0 && number <= 9 && position <= 4)
-                        clips.Add($"fp_{number}{position}");
-                    else if (number >= 1 && number <= 20)
-                        clips.Add($"cn_{number}");
+                    string numberClip = (position > 0 ? FlightPositionClip(number, position) : null) ?? CallsignNumberClip(number);
+                    if (numberClip != null)
+                        clips.Add(numberClip);
                     said = unit.Name.Value;
                     return clips;
                 }
@@ -138,7 +143,7 @@ internal static class TransmissionBuilder
         if (v == null)
             return false;
         // A number the pack lacks pieces for would be spoken with holes: let the game say the line instead.
-        List<string> numberClips = v.Slot != null ? new List<string>(Number(v.Slot, number.Value, t.Voice)) : null;
+        List<string> numberClips = v.Slot != null ? new List<string>(NumberPieces(v.Slot, number.Value, t.Voice)) : null;
         if (numberClips != null && numberClips.Exists(c => !ClipLibrary.Exists(t.Voice, c)))
             return false;
 
@@ -182,15 +187,10 @@ internal static class TransmissionBuilder
 
     /// <summary>
     /// Number pieces: brg_DDD (a whole bearing), dm_D (leading digit), pm_PP (pair, more to come), pe_PP (closing
-    /// pair). Libraries rendered before whole bearings existed fall back to dm + pe.
+    /// pair), alt_ / alt_lo_ (altitude), cnt_ (count). Libraries rendered before whole bearings existed fall back to
+    /// dm + pe. The voice tools assemble numbers the same way (number_pieces in tools/voicegen/rules.py).
     /// </summary>
-    public static IEnumerable<string> Number(string kind, int value, string voice = null)
-    {
-        // Rules per language: only the English ones exist so far (LanguageRules falls back to them).
-        return NumberEnglish(kind, value, voice);
-    }
-
-    private static IEnumerable<string> NumberEnglish(string kind, int value, string voice)
+    private static IEnumerable<string> NumberPieces(string kind, int value, string voice)
     {
         switch (kind)
         {
@@ -207,12 +207,12 @@ internal static class TransmissionBuilder
                 break;
             case "alt":
                 if (value >= 1000)
-                    yield return "alt_" + Mathf.Clamp(Mathf.RoundToInt(value / 1000f), 1, 60);
+                    yield return "alt_" + Mathf.Clamp(Mathf.RoundToInt(value / 1000f), ClipRules.AngelsMin, ClipRules.AngelsMax);
                 else
                     yield return "alt_lo_" + NearestLowAltitude(value);
                 break;
             case "count":
-                yield return "cnt_" + Mathf.Clamp(value, 2, 9);
+                yield return "cnt_" + Mathf.Clamp(value, ClipRules.CountMin, ClipRules.CountMax);
                 break;
             default: // trk, num
                 value = Math.Abs(value);
@@ -238,9 +238,8 @@ internal static class TransmissionBuilder
 
     private static int NearestLowAltitude(int feet)
     {
-        int[] steps = { 1, 2, 3, 5, 8 };
-        int best = 1;
-        foreach (int h in steps)
+        int best = ClipRules.LowAltitudeHundreds[0];
+        foreach (int h in ClipRules.LowAltitudeHundreds)
             if (Math.Abs(h * 100 - feet) < Math.Abs(best * 100 - feet))
                 best = h;
         return best;
@@ -256,7 +255,7 @@ internal static class TransmissionBuilder
             case CallsignKind.Support:
                 return "station";
             default:
-                return priority <= 2 ? "cockpit_hot" : "near";
+                return priority <= ClipRules.AlertMaxPriority ? "cockpit_hot" : "near";
         }
     }
 }

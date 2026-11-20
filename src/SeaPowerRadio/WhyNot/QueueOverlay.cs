@@ -61,13 +61,21 @@ internal sealed class QueueOverlay : MonoBehaviour
     private void Update()
     {
         bool pressed = pressPending;
+        Vector2 at = pressAt;
         pressPending = false;
-        if (!pressed || buttons.Count == 0 || buttonsFor == null)
+        // The game reads its own map clicks through the old input manager (InputHandler, MouseControlState), and in
+        // the VM test of 2026-11-20 the Input System saw no press at all: the old manager is the main path.
+        if (LegacyPress())
+        {
+            pressed = true;
+            at = UnityEngine.Input.mousePosition;
+        }
+        if (!pressed || shownFor == null || !visible)
             return;
-        Vector2 p = new Vector2(pressAt.x, Screen.height - pressAt.y);
+        Vector2 p = new Vector2(at.x, Screen.height - at.y);
         foreach ((Rect screen, EngageTask task) in buttons)
         {
-            if (!screen.Contains(p))
+            if (!screen.Contains(p) || buttonsFor == null)
                 continue;
             deletedFrame = Time.frameCount;
             Delete(buttonsFor, task, buttonsSystems);
@@ -76,8 +84,15 @@ internal sealed class QueueOverlay : MonoBehaviour
         }
         Rect shown = new Rect(window.x * scale, window.y * scale, window.width * scale, window.height * scale);
         if (shown.Contains(p))
-            ModLog.Info($"[queue] click at {p.x:0},{p.y:0} inside the window hit no delete button" +
-                        $" (first at {buttons[0].screen.x:0},{buttons[0].screen.y:0})");
+            ModLog.Info($"[queue] click at {p.x:0},{p.y:0} inside the window hit no delete button ({buttons.Count} drawn" +
+                        (buttons.Count > 0 ? $", first at {buttons[0].screen.x:0},{buttons[0].screen.y:0})" : ")"));
+    }
+
+    /// <summary>A left press this frame by the old input manager; false where the game has it switched off.</summary>
+    private static bool LegacyPress()
+    {
+        try { return UnityEngine.Input.GetMouseButtonDown(0); }
+        catch (InvalidOperationException) { return false; }
     }
 
     private void OnGUI()

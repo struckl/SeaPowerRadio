@@ -25,7 +25,7 @@ the default build is for the globe game (`SeaPowerRadio.dll`), `-p:GameBuild=Fla
 folders in the workspace) into `SeaPowerRadioFlat.dll`. The package holds both; each looks at the game it runs on and
 stays off when it is not the one it was made for (the log says which runs). Anchor Chain skips a plugin whose GUID it
 has already seen, so the flat build registers as `dev.sewerlabs.seapowerradio.flatmap`. The start, the hook registry, the
-config file, the log and the host object are the workspace's shared skeleton (`SeaPowerShared`, its own repo, compiled into the DLL
+config file, the log and the host object are the workspace's shared skeleton (`SeaPowerCore`, its own repo, compiled into the DLL
 as linked source; the csproj imports its `Rats.Mod.props`). `tools/package.ps1` builds and checks both
 (`tools/compat-check` in the workspace).
 

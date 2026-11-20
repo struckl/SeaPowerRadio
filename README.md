@@ -5,12 +5,13 @@ yours talks in its own voice and callsign, and says why it is not doing what you
 
 | | |
 | --- | --- |
+| Questions | [R.A.T.S. Discord](https://discord.gg/CzuHd4f8Yf): help, ideas, talk; the first place to ask |
 | Version | `1.6.0` (2026-11-20) |
 | Game | Sea Power 0.9.3 (public and beta) tested in the game; 0.8.7 flat map build checked offline |
 | Needs | a mod loader: [R.A.T.S. Keel](https://steamcommunity.com/sharedfiles/filedetails/?id=3835527459) or [Anchor Chain](https://steamcommunity.com/sharedfiles/filedetails/?id=3380210757), either one |
 | Get it | [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579) (about 910 MB) |
 | Settings | Options > Audio > Rats Radio, or `BepInEx\config\dev.sewerlabs.seapowerradio.cfg` |
-| Feedback | [R.A.T.S. feedback board](https://hub.sewerlabs.dev/s/radio) |
+| Bug reports | [R.A.T.S. feedback board](https://hub.sewerlabs.dev/s/radio) |
 | Video | [YouTube, 1:49](https://youtu.be/pGwOIPXckpY) |
 | Source | R.A.T.S. Source License, see `LICENSE` |
 

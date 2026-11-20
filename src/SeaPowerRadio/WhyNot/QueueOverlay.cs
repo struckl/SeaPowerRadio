@@ -4,8 +4,6 @@ using System.Linq;
 using SeaPower;
 using SeaPowerRadio.Core;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.LowLevel;
 
 namespace SeaPowerRadio.WhyNot;
 
@@ -15,77 +13,46 @@ namespace SeaPowerRadio.WhyNot;
 /// the order is waiting for (the weapon's engage state, or the reload time left).
 /// Toggle with the configured key (F8).
 /// <para>Clicks: IMGUI mouse events never reach this window in the game (the game's UI, Noesis, takes them - a
-/// lower GUI depth didn't help). So the delete buttons are hit-tested against the mouse read straight from the Input
-/// System in Update; the IMGUI click stays as a second path, and a frame guard keeps one click from deleting
-/// twice.</para>
+/// lower GUI depth didn't help). So Update reads the press the way the game reads its own map clicks (the old input
+/// manager) and hit-tests it against the row layout itself; the IMGUI click stays as a second path, and a frame guard
+/// keeps one click from deleting twice. The layout is computed, not collected while drawing: in the VM test of
+/// 2026-11-20 the rows were on screen while the list filled during the repaint was empty at click time.</para>
 /// </summary>
 internal sealed class QueueOverlay : MonoBehaviour
 {
     private const int MaxRows = 8;
     private const int GuiDepth = -10000;           // before NoesisView (depth = -camera depth), which uses up clicks over its panels
     private const int WindowId = 0x5EA9;           // any id no other IMGUI window of the game uses
+    private const float FirstRowY = 22f, RowHeight = 24f;
+    private static readonly Rect DeleteInRow = new Rect(392, 0, 36, 20);   // the delete button, x and size within a row
     private bool visible = true;
     private Rect window = new Rect(0, 0, 440, 60);
     private GUIStyle row;
     private ObjectBase shownFor;
+    private int shownFrame = -1;                   // last frame the window was drawn
     private float scale = 1f;
-
-    // The delete buttons as drawn last, in screen pixels (top-left origin), for the Input System hit test.
-    private readonly List<(Rect screen, EngageTask task)> buttons = new List<(Rect, EngageTask)>();
-    private ObjectBase buttonsFor;
-    private List<WeaponSystem> buttonsSystems;
     private int deletedFrame = -1;
-
-    // A left press seen in the Input System's event stream since the last Update, in screen pixels (bottom-left origin).
-    // wasPressedThisFrame compares the state of two frames, so a short click (press and release inside one frame,
-    // as from a quick tap or a slow frame) never shows up there; the event stream sees every press.
-    private bool pressPending;
-    private Vector2 pressAt;
-
-    private void OnEnable() => InputSystem.onEvent += OnInputEvent;
-
-    private void OnDisable() => InputSystem.onEvent -= OnInputEvent;
-
-    private void OnInputEvent(InputEventPtr ev, InputDevice device)
-    {
-        if (device is not Mouse mouse || !(ev.IsA<StateEvent>() || ev.IsA<DeltaStateEvent>()))
-            return;
-        // The event runs before its state is applied, so isPressed is still the state before this event.
-        if (mouse.leftButton.ReadValueFromEvent(ev, out float down) && down > 0.5f && !mouse.leftButton.isPressed)
-        {
-            pressPending = true;
-            pressAt = mouse.position.ReadValueFromEvent(ev, out Vector2 at) ? at : mouse.position.ReadValue();
-        }
-    }
 
     private void Update()
     {
-        bool pressed = pressPending;
-        Vector2 at = pressAt;
-        pressPending = false;
-        // The game reads its own map clicks through the old input manager (InputHandler, MouseControlState), and in
-        // the VM test of 2026-11-20 the Input System saw no press at all: the old manager is the main path.
-        if (LegacyPress())
-        {
-            pressed = true;
-            at = UnityEngine.Input.mousePosition;
-        }
-        if (!pressed || shownFor == null || !visible)
+        // only a window drawn just now counts: after a selection change shownFor still names the old unit
+        if (!LegacyPress() || shownFor == null || Time.frameCount - shownFrame > 2 || deletedFrame == Time.frameCount)
             return;
-        Vector2 p = new Vector2(at.x, Screen.height - at.y);
-        foreach ((Rect screen, EngageTask task) in buttons)
+        Vector2 at = UnityEngine.Input.mousePosition;
+        Vector2 p = new Vector2(at.x, Screen.height - at.y) / scale;   // window coordinates are unscaled
+        if (!window.Contains(p))
+            return;
+        List<EngageTask> tasks = Orders(shownFor);
+        for (int i = 0; i < tasks.Count && i < MaxRows; i++)
         {
-            if (!screen.Contains(p) || buttonsFor == null)
+            if (!DeleteRect(i).Contains(p - window.position))
                 continue;
             deletedFrame = Time.frameCount;
-            Delete(buttonsFor, task, buttonsSystems);
-            buttons.Clear();                        // the rows move up: wait for the next draw
+            Delete(shownFor, tasks[i], shownFor._obp?._weaponSystems ?? new List<WeaponSystem>());
             return;
         }
-        Rect shown = new Rect(window.x * scale, window.y * scale, window.width * scale, window.height * scale);
-        if (shown.Contains(p))
-            ModLog.Info($"[queue] click at {p.x:0},{p.y:0} inside the window hit no delete button ({buttons.Count} drawn" +
-                        (buttons.Count > 0 ? $", first at {buttons[0].screen.x:0},{buttons[0].screen.y:0})" : ")"));
+        ModLog.Info($"[queue] click at {p.x:0},{p.y:0} inside the window hit no delete button ({tasks.Count} rows," +
+                    $" window at {window.x:0},{window.y:0}, scale {scale:0.##})");
     }
 
     /// <summary>A left press this frame by the old input manager; false where the game has it switched off.</summary>
@@ -94,6 +61,12 @@ internal sealed class QueueOverlay : MonoBehaviour
         try { return UnityEngine.Input.GetMouseButtonDown(0); }
         catch (InvalidOperationException) { return false; }
     }
+
+    private static Rect DeleteRect(int row) =>
+        new Rect(DeleteInRow.x, FirstRowY + row * RowHeight, DeleteInRow.width, DeleteInRow.height);
+
+    private static List<EngageTask> Orders(ObjectBase unit) =>
+        unit._currentEngageTasks?.Where(t => !t._isAutoAttack).ToList() ?? new List<EngageTask>();
 
     private void OnGUI()
     {
@@ -106,12 +79,10 @@ internal sealed class QueueOverlay : MonoBehaviour
             visible = !visible;
             ev.Use();
         }
-        if (ev.type == EventType.Repaint)
-            buttons.Clear();                        // re-filled below if the window is drawn
         ObjectBase unit = SelectedUnit();
         if (unit == null)
             return;
-        List<EngageTask> tasks = unit._currentEngageTasks.Where(t => !t._isAutoAttack).ToList();
+        List<EngageTask> tasks = Orders(unit);
         if (tasks.Count > 0)
             DrawWindow(unit, tasks);
     }
@@ -138,21 +109,18 @@ internal sealed class QueueOverlay : MonoBehaviour
             window.x = Screen.width / scale - window.width - 20f;
             window.y = 120f;
         }
+        shownFrame = Time.frameCount;
         row ??= new GUIStyle(GUI.skin.label) { fontSize = 13, wordWrap = false };
-        window.height = 34f + Math.Min(tasks.Count, MaxRows) * 24f;
+        window.height = FirstRowY + 12f + Math.Min(tasks.Count, MaxRows) * RowHeight;
         window = GUI.Window(WindowId, window, id => DrawQueue(unit, tasks), $"Orders – {unit.getName()}  ({Settings.QueueOverlayKey.Value} hides)");
         GUI.matrix = old;
     }
 
     private void DrawQueue(ObjectBase unit, List<EngageTask> tasks)
     {
-        float y = 22f;
         List<WeaponSystem> systems = unit._obp?._weaponSystems ?? new List<WeaponSystem>();
         for (int i = 0; i < tasks.Count && i < MaxRows; i++)
-        {
-            DrawRow(unit, tasks[i], i, y, systems);
-            y += 24f;
-        }
+            DrawRow(unit, tasks[i], i, systems);
         GUI.DragWindow(new Rect(0, 0, 10000, 20));
         // Whatever is left of a click inside the window is ours - not a click on the game's UI or the map below.
         Event rest = Event.current;
@@ -161,20 +129,14 @@ internal sealed class QueueOverlay : MonoBehaviour
             rest.Use();
     }
 
-    private void DrawRow(ObjectBase unit, EngageTask t, int i, float y, List<WeaponSystem> systems)
+    private void DrawRow(ObjectBase unit, EngageTask t, int i, List<WeaponSystem> systems)
     {
+        Rect delete = DeleteRect(i);
+        float y = delete.y;
         string ammo = OrderText.Weapon(unit, t);
         string target = OrderText.Target(t);
         GUI.Label(new Rect(8, y, 330, 22), $"{i + 1}. {ammo} → {target} · {Status(unit, t, systems)}", row);
-        var delete = new Rect(392, y, 36, 20);
         Event ev = Event.current;
-        if (ev.type == EventType.Repaint)
-        {
-            buttons.Add((new Rect((window.x + delete.x) * scale, (window.y + delete.y) * scale,
-                                  delete.width * scale, delete.height * scale), t));
-            buttonsFor = unit;
-            buttonsSystems = systems;
-        }
         if (ev.type == EventType.MouseDown && ev.button == 0 && delete.Contains(ev.mousePosition))
         {
             // On the press, not the release: a click can change the game's selection before the release arrives.

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.6.0 - 2026-11-20 - static 0 % is clean, order queue delete works, shared skeleton
 
 - **Static at 0 % is really clean now** (player report): the mic click and the squelch pop at the end of every line follow the static setting too; at 100 % they sound as before, above it only hiss and crackle grow
 - **Order queue (F8): the delete button reacts to clicks**: presses are read the way the game reads its own map clicks (old input manager), with the Input System as a second path

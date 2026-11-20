@@ -5,7 +5,7 @@ yours talks in its own voice and callsign, and says why it is not doing what you
 
 | | |
 | --- | --- |
-| Version | `1.5.2` (2026-11-18) |
+| Version | `1.6.0` (2026-11-20) |
 | Game | Sea Power 0.9.3 (public and beta) tested in the game; 0.8.7 flat map build checked offline |
 | Needs | a mod loader: [R.A.T.S. Keel](https://steamcommunity.com/sharedfiles/filedetails/?id=3835527459) or [Anchor Chain](https://steamcommunity.com/sharedfiles/filedetails/?id=3380210757), either one |
 | Get it | [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579) (about 910 MB) |

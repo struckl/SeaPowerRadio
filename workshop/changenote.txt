@@ -1,1 +1,6 @@
-1.5.2: no more 'Mission seed fallback' warning at mission start (43 player reports); runs on Sea Power 0.9.3.
+1.6.0: static at 0 % is clean, order queue delete works.
+- Static at 0 %: no mic click and no squelch pop at the end of a line any more; at 100 % it sounds as before (player report)
+- Fixed: the delete buttons of the order queue window (F8) did nothing; one click now removes that order, the map below gets no click
+- Fixed: a call that filled the voice cache could break clips of another call being put together
+- Radio stays off when it is unticked in the game's Mod Manager
+- Inside: Radio runs on the shared R.A.T.S. mod skeleton; every spoken line, message and setting is unchanged

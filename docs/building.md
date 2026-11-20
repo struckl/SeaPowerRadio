@@ -29,8 +29,7 @@ config file, the log and the host object are the workspace's shared skeleton (`S
 as linked source; the csproj imports its `Rats.Mod.props`). `tools/package.ps1` builds and checks both
 (`tools/compat-check` in the workspace).
 
-Releases: [docs/workshop.md](docs/workshop.md) (`tools/package.ps1`); in-game test checklists:
-[docs/testing.md](docs/testing.md); the game systems the mod hooks into (stock voices, why a unit doesn't fire,
+Releases: [docs/workshop.md](docs/workshop.md) (`tools/package.ps1`); the game systems the mod hooks into (stock voices, why a unit doesn't fire,
 mission lifecycle, contacts) and how to decompile the game: [docs/how-it-works.md](docs/how-it-works.md); the stock
 voice lines and where the game raises them: [docs/stock-voice-events.md](docs/stock-voice-events.md).
 Voice packs (format, discovery, per-country choice): [docs/voice-packs.md](docs/voice-packs.md); the languages planned

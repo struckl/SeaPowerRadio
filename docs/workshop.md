@@ -11,7 +11,7 @@ owns the item. No SteamCMD needed.
    version tested against; it accepts later patch versions of that minor version).
 3. New phrases since the last release? Render them (`tools/voicegen`, see the README), then
    `.venv-chatterbox/Scripts/python tools/voicegen/check_library.py` - nothing may be missing.
-4. Run the checklists in [testing.md](testing.md) on the current game version.
+4. Run the in-game checklist (kept privately with the test plans) on the current game version.
 5. Close Sea Power, then stage and install the release folder:
 
    ```powershell

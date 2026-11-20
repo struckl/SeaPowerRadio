@@ -68,7 +68,8 @@ dotnet build src/SeaPowerRadio/SeaPowerRadio.csproj -c Release -p:GameDir="C:\Pr
 ```
 
 Details, voice pipeline and continuing on another PC: [docs/building.md](docs/building.md). Releases:
-[docs/workshop.md](docs/workshop.md); tests: [docs/testing.md](docs/testing.md); game internals: [docs/how-it-works.md](docs/how-it-works.md).
+[docs/workshop.md](docs/workshop.md);
+game internals: [docs/how-it-works.md](docs/how-it-works.md).
 
 ## Credits and license
 

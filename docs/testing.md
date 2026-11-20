@@ -103,6 +103,8 @@ queue position) need the voice render that is running - until it is deployed tho
    it. The window now gets clicks first (GUI.depth) and deletes on mouse-down; `LogOutput.log` shows `[queue] … deleted order`.
    *Still nothing 2026-10-19* (no `[queue]` line at all - IMGUI mouse events never reach the window). Now the ✕ buttons
    are hit-tested against the mouse read from the Input System in Update; IMGUI stays as a second path.
+   *Fixed 2026-11-20 (VM, round 7 GREEN):* the game reads clicks through the old input manager, and the hit test now uses
+   the computed row layout; one click deletes a row, the map below gets nothing.
 5. **Mirage case (T1):** R550 at a head-on target -> "Unable, target not in rear aspect"; Super 530F without a
    radar track -> "Negative, no lock" / "radar can't hold the target".
 6. **Wingman VID (T2):** order a wingman in a formation to VID -> "Unable, holding formation on lead". With config

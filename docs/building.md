@@ -23,7 +23,7 @@ hook, the night-colour switch and a field the game turned into a property differ
 the default build is for the globe game (`SeaPowerRadio.dll`), `-p:GameBuild=Flat` compiles against a copy of 0.8.7's
 `Sea Power_Data\Managed` (`-p:FlatManagedDir=...`, default `..\_gamerefs\SeaPower-0.8.7-public\Managed` next to the mod
 folders in the workspace) into `SeaPowerRadioFlat.dll`. The package holds both; each looks at the game it runs on and
-stays off when it is not the one it was made for (the log says which runs). Anchor Chain skips a plugin whose GUID it
+stays off when it is not the one it was made for (the log says which runs). The loader skips a plugin whose GUID it
 has already seen, so the flat build registers as `dev.sewerlabs.seapowerradio.flatmap`. The start, the hook registry, the
 config file, the log and the host object are the workspace's shared skeleton (`SeaPowerKeel\shared`, compiled into the DLL
 as linked source; the csproj imports its `Rats.Mod.props`). `tools/package.ps1` builds and checks both
@@ -90,7 +90,7 @@ python -m venv .venv && .venv/Scripts/python -m pip install -r tools/voicegen/re
 
 ```
 src/SeaPowerRadio/        C# plugin (netstandard2.1, BepInEx 5 / HarmonyX)
-  Plugin.cs, ModInfo.cs   entry point ([ACPlugin], runs under Keel and Anchor Chain); what the shared skeleton reads (GUID, name, version, log source)
+  Plugin.cs, ModInfo.cs   entry point ([ACPlugin], started by Keel); what the shared skeleton reads (GUID, name, version, log source)
   Hooks.cs                every game hook, grouped by feature (shared HookRegistry); a missing target disables only that
                           feature, except the mission and launch hooks the roster needs (then the mod stays off)
   RadioHost.cs, Settings.cs  the host object (shared ModHost) and the config entries (shared ModSettings)

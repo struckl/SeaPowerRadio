@@ -9,12 +9,12 @@ feature.
 
 ## Mod loading
 
-- **Anchor Chain** (Workshop 3380210757, https://github.com/SeaPower-Modders/AnchorChain) is the community
-  chainloader. Its preloader (`ACPreloader.zip` = BepInEx 5.4 + Doorstop) goes into the game folder once; the
-  Workshop plugin then scans every mod directory (`FileManager.Directories`: Workshop items and
-  `StreamingAssets/<folder>`) for DLLs and calls `IAnchorChainMod.TriggerEntryPoint()` on classes tagged
+- **R.A.T.S. Keel** (Workshop 3835527459, https://github.com/struckl/SeaPowerKeel) is the mod loader. It carries on
+  Anchor Chain, the community chainloader (https://github.com/SeaPower-Modders/AnchorChain). Its starter file goes
+  into `BepInEx\plugins` once; the loader from the Workshop then reads the DLLs of every switched-on mod folder
+  (Workshop items and `StreamingAssets/<folder>`) and calls `IAnchorChainMod.TriggerEntryPoint()` on classes tagged
   `[ACPlugin(guid, name, version)]`. Harmony comes from BepInEx's HarmonyX.
-- The game knows about it (`ModMenuViewModel` checks for loaded `AnchorChain` / `BepInEx` assemblies); Workshop
+- The game knows about Anchor Chain (`ModMenuViewModel` checks for loaded `AnchorChain` / `BepInEx` assemblies); Workshop
   items that depend on Anchor Chain are flagged as DLL mods.
 - **voice.ini is a merged virtual file** (`Utils.openVirtualIniFile("audio/voiceover", "voice", "voice")`): `user/`
   and mod folders add or override keys. Identify Expanded, for one, ships its own keys and plays them through

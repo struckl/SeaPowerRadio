@@ -16,8 +16,8 @@
     -Install mirrors the staged folder into <GameDir>\Sea Power_Data\StreamingAssets\SeaPowerRadio\, the folder to
     pick in the game's Create Mod screen (Sea Power must be closed). -Zip also writes dist\SeaPowerRadio-<version>.zip
     for a GitHub release.
-    The steps of the base are the shared ones of every R.A.T.S. mod (SeaPowerShared\tools\RatsPackage.psm1); the workspace
-    is found above this repo, -Workspace names it for a clone elsewhere, -RatsShared another copy of the shared repo.
+    The steps of the base are the shared ones of every R.A.T.S. mod (SeaPowerKeel\shared\tools\RatsPackage.psm1); the workspace
+    is found above this repo, -Workspace names it for a clone elsewhere, -RatsShared another copy of the shared folder.
     -Pack <id> stages a voice pack instead of the base: the folder with that voicepack.ini Id (looked up in mod\voices and
     in packs\*, e.g. a pack under work) goes to dist\pack-<id>\ as it is (voicepack.ini, personas.txt, catalog.txt, names.txt, clips;
     plus the pack's own _info.ini and CREDITS if it has them) - the folder to upload to that pack's Workshop item. No
@@ -43,7 +43,7 @@ if (-not $Workspace) {
     while ($Workspace -and -not (Test-Path (Join-Path $Workspace 'mods.json'))) { $Workspace = Split-Path -Parent $Workspace }
     if (-not $Workspace) { throw 'No workspace (a folder with mods.json) above this repo - pass -Workspace.' }
 }
-if (-not $RatsShared) { $RatsShared = Join-Path $Workspace 'SeaPowerShared' }
+if (-not $RatsShared) { $RatsShared = Join-Path $Workspace 'SeaPowerKeel\shared' }
 Import-Module (Join-Path $RatsShared 'tools\RatsPackage.psm1') -Force
 if (-not $FlatManagedDir) { $FlatManagedDir = Join-Path $Workspace '_gamerefs\SeaPower-0.8.7-public\Managed' }
 

@@ -63,9 +63,9 @@ internal static class VoicePacks
         foreach (string dir in moodDirs)
         {
             try { AttachMoodPack(dir, baseVersion); }
-            catch (Exception ex) { ModLog.Warn($"Mood pack in {dir} could not be read: {ex.Message}"); }
+            catch (Exception ex) { Rig.Log.Warn($"Mood pack in {dir} could not be read: {ex.Message}"); }
         }
-        ModLog.Info($"Voice packs installed: {(All.Count == 0 ? "none" : string.Join(", ", All.Select(p => $"{p.Id} {p.Version}")))}");
+        Rig.Log.Info($"Voice packs installed: {(All.Count == 0 ? "none" : string.Join(", ", All.Select(p => $"{p.Id} {p.Version}")))}");
     }
 
     private static void AddIfHas(List<string> dirs, string dir, string ini)
@@ -87,14 +87,14 @@ internal static class VoicePacks
                 if (found.TryGetValue(pack.Id, out VoicePack other))
                 {
                     bool newer = pack.Version > other.Version;
-                    ModLog.Info($"Voice pack '{pack.Id}' found twice ({other.Directory} {other.Version}, {pack.Directory} {pack.Version}): keeping {(newer ? pack.Directory : other.Directory)}.");
+                    Rig.Log.Info($"Voice pack '{pack.Id}' found twice ({other.Directory} {other.Version}, {pack.Directory} {pack.Version}): keeping {(newer ? pack.Directory : other.Directory)}.");
                     if (!newer) continue;
                 }
                 found[pack.Id] = pack;
             }
             catch (Exception ex)
             {
-                ModLog.Warn($"Voice pack in {dir} could not be read: {ex.Message}");
+                Rig.Log.Warn($"Voice pack in {dir} could not be read: {ex.Message}");
             }
         }
         return found;
@@ -117,7 +117,7 @@ internal static class VoicePacks
             }
             catch (Exception ex)
             {
-                ModLog.Warn($"Voice pack '{pack.Id}' could not be loaded: {ex.Message}");
+                Rig.Log.Warn($"Voice pack '{pack.Id}' could not be loaded: {ex.Message}");
             }
         }
     }
@@ -144,13 +144,13 @@ internal static class VoicePacks
         values.TryGetValue("MinBaseVersion", out string min);
         if (VoicePack.ParseVersion(min, new Version(0, 0)) > baseVersion)
         {
-            ModLog.Warn($"Mood pack {dir} needs Rats Radio {min} or newer (this is {baseVersion}), skipped.");
+            Rig.Log.Warn($"Mood pack {dir} needs Rats Radio {min} or newer (this is {baseVersion}), skipped.");
             return;
         }
         VoicePack pack = ById(packId ?? NatoId);
         if (pack == null)
         {
-            ModLog.Warn($"Mood pack {dir}: voice pack '{packId}' is not installed, skipped.");
+            Rig.Log.Warn($"Mood pack {dir}: voice pack '{packId}' is not installed, skipped.");
             return;
         }
         AddMoodRoot(pack, dir, moods);
@@ -175,7 +175,7 @@ internal static class VoicePacks
         pack.MoodRoots.Add(dir);
         foreach (string m in moods)
             pack.Moods.Add(m);
-        ModLog.Info($"Voice pack '{pack.Id}': moods {string.Join(",", moods)} from {dir}");
+        Rig.Log.Info($"Voice pack '{pack.Id}': moods {string.Join(",", moods)} from {dir}");
     }
 
     public static IEnumerable<string> ModFolders()
@@ -214,7 +214,7 @@ internal static class VoicePacks
         }
         catch (Exception ex)
         {
-            ModLog.Warn($"Could not work out a mod folder root: {ex.Message}");
+            Rig.Log.Warn($"Could not work out a mod folder root: {ex.Message}");
         }
     }
 
@@ -233,7 +233,7 @@ internal static class VoicePacks
             if (chosen != null)
                 return chosen;
             if (Warned.Add(nation + "|" + choice))
-                ModLog.Warn($"{nation}: voice pack '{choice}' is not installed, using Auto.");
+                Rig.Log.Warn($"{nation}: voice pack '{choice}' is not installed, using Auto.");
         }
         return AutoPack(nation);
     }

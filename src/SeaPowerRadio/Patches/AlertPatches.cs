@@ -11,7 +11,7 @@ namespace SeaPowerRadio.Patches;
 /// </summary>
 internal static class AlertPatches
 {
-    public static void Declare() => HookRegistry.Add("AlertLink", HookStage.Load,
+    public static void Declare() => Rig.Hooks.Add("AlertLink", HookStage.Load,
             "messages are not kept until their call is spoken", optional: true)
         .Hook("SeapowerUI.ViewModels.MainGameViewModel", "set_AlertyMcAlertFace", new[] { typeof(Alert) },
             typeof(AlertPatches), prefix: nameof(SetPrefix));
@@ -30,7 +30,7 @@ internal static class AlertPatches
         }
         catch (System.Exception ex)
         {
-            ModLog.Error($"[alerts] {ex.Message}");
+            Rig.Log.Error($"[alerts] {ex.Message}");
             return true;
         }
     }

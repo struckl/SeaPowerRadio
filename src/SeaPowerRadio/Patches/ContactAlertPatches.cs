@@ -11,7 +11,7 @@ internal static class ContactAlertPatches
 {
     [System.ThreadStatic] private static int inStockContactReport;
 
-    public static void Declare() => HookRegistry.Add("ContactAlerts", HookStage.Load,
+    public static void Declare() => Rig.Hooks.Add("ContactAlerts", HookStage.Load,
             "the game's own contact messages are not filtered", optional: true)
         .Hook("SeaPower.Taskforce", "CheckNewContactMessage", System.Type.EmptyTypes, typeof(ContactAlertPatches),
             prefix: nameof(Enter), postfix: nameof(Leave))

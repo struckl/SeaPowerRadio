@@ -58,12 +58,12 @@ internal static class NameAliases
             }
             catch (Exception ex)
             {
-                ModLog.Warn($"[aliases] {full} could not be read: {ex.Message}");
+                Rig.Log.Warn($"[aliases] {full} could not be read: {ex.Message}");
             }
         }
         starts.Sort((a, b) => b.Match.Length.CompareTo(a.Match.Length));
         prefixes.Sort((a, b) => b.Length.CompareTo(a.Length));
-        ModLog.Info($"[aliases] {exact.Count + starts.Count} aliases, {prefixes.Count} prefixes from {read} file(s)");
+        Rig.Log.Info($"[aliases] {exact.Count + starts.Count} aliases, {prefixes.Count} prefixes from {read} file(s)");
     }
 
     /// <summary>The alias for a game name: an exact line, else the longest "starts with" line; tried again without a prefix.</summary>
@@ -122,7 +122,7 @@ internal static class NameAliases
         int eq = line.IndexOf('=');
         if (eq <= 0)
         {
-            ModLog.Warn($"[aliases] {where}: no '=' in \"{line}\", skipped");
+            Rig.Log.Warn($"[aliases] {where}: no '=' in \"{line}\", skipped");
             return;
         }
         string left = line.Substring(0, eq).Trim();
@@ -135,7 +135,7 @@ internal static class NameAliases
         if (startsWith) left = left.TrimEnd('*').Trim();
         if (Names.Slug(left) == ClipRules.SlugEmpty || (say.Length == 0 && voice.Length == 0))   // nothing but punctuation
         {
-            ModLog.Warn($"[aliases] {where}: \"{line}\" needs a game name and a name or voice, skipped");
+            Rig.Log.Warn($"[aliases] {where}: \"{line}\" needs a game name and a name or voice, skipped");
             return;
         }
 
@@ -164,9 +164,9 @@ internal static class NameAliases
         IReadOnlyList<VoicePack> packs = VoicePacks.Installed;
         if (packs.Count == 0) return;
         if (a.Say != null && Callsigns.SingleWord(a.Say) == null && !packs.Any(p => p.Names?.Unit(a.Say) != null))
-            ModLog.Warn($"[aliases] {a.Source}: no voice pack has the name \"{a.Say}\" and it is no callsign word, this ship keeps a generated callsign");
+            Rig.Log.Warn($"[aliases] {a.Source}: no voice pack has the name \"{a.Say}\" and it is no callsign word, this ship keeps a generated callsign");
         if (a.Voice != null && FindVoice(a.Voice, null) == null)
-            ModLog.Warn($"[aliases] {a.Source}: no voice \"{a.Voice}\" installed, the ship gets a voice as usual");
+            Rig.Log.Warn($"[aliases] {a.Source}: no voice \"{a.Voice}\" installed, the ship gets a voice as usual");
     }
 
     /// <summary>
@@ -192,7 +192,7 @@ internal static class NameAliases
     public static void WarnVoiceNotInPack(NameAlias a, VoicePack pack, string unitName)
     {
         if (warned.Add(a.Source + "|" + pack.Id))
-            ModLog.Warn($"[aliases] {a.Source}: {unitName} speaks with the '{pack.Id}' pack, which has no voice \"{a.Voice}\"; voice chosen as usual");
+            Rig.Log.Warn($"[aliases] {a.Source}: {unitName} speaks with the '{pack.Id}' pack, which has no voice \"{a.Voice}\"; voice chosen as usual");
     }
 
     private static void EnsureUserFile() => UserFiles.Ensure(UserFile, Template, "aliases");

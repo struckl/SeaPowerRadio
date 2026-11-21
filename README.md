@@ -6,9 +6,9 @@ yours talks in its own voice and callsign, and says why it is not doing what you
 | | |
 | --- | --- |
 | Questions | [R.A.T.S. Discord](https://discord.gg/CzuHd4f8Yf): help, ideas, talk; the first place to ask |
-| Version | `1.6.0` (2026-11-20) |
-| Game | Sea Power 0.9.3 (public and beta) tested in the game; 0.8.7 flat map build checked offline |
-| Needs | [R.A.T.S. Keel](https://steamcommunity.com/sharedfiles/filedetails/?id=3835527459), the mod loader |
+| Version | `1.7.0` (unreleased) |
+| Game | Sea Power 0.9.3 (build 261116), the current main version; run in the test VM |
+| Needs | [R.A.T.S. Keel](https://steamcommunity.com/sharedfiles/filedetails/?id=3835527459), the mod loader, and R.A.T.S. Rigging, the part the R.A.T.S. mods share (a copy comes with this mod for now) |
 | Get it | [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579) (about 910 MB) |
 | Settings | Options > Audio > Rats Radio, or `BepInEx\config\dev.sewerlabs.seapowerradio.cfg` |
 | Bug reports | [R.A.T.S. feedback board](https://hub.sewerlabs.dev/s/radio) |
@@ -59,8 +59,8 @@ Manual install: unzip the release into `<Sea Power>\Sea Power_Data\StreamingAsse
 
 ## Building
 
-- Needs the .NET SDK (8+), a Sea Power install and the [SeaPowerKeel](https://github.com/struckl/SeaPowerKeel) repo next to this one.
-- Two game versions, two builds: `-p:GameBuild=Flat` builds the 0.8.7 flat map DLL.
+- Needs the .NET SDK (8+), a Sea Power install and the SeaPowerRigging repo (R.A.T.S. Rigging) next to this one.
+- One build for the game's current main version.
 
 ```bash
 dotnet build src/SeaPowerRadio/SeaPowerRadio.csproj -c Release -p:GameDir="C:\Program Files (x86)\Steam\steamapps\common\Sea Power"

@@ -85,7 +85,7 @@ internal sealed class WhyNotMonitor
             if (unit == null || unit.IsDestroyed || !unit.IsPlayerUnit)
                 continue;
             try { Scan(e, unit); }
-            catch (Exception ex) { ModLog.Debug($"[why-not] scan {unit.getName()}: {ex.Message}"); }
+            catch (Exception ex) { Rig.Log.Debug($"[why-not] scan {unit.getName()}: {ex.Message}"); }
         }
     }
 

@@ -38,7 +38,7 @@ internal static class VoiceSalts
         }
         catch (Exception ex)
         {
-            ModLog.Warn($"[voices] could not use the voice salt file, using the plain seed: {ex.Message}");
+            Rig.Log.Warn($"[voices] could not use the voice salt file, using the plain seed: {ex.Message}");
             return null;
         }
     }

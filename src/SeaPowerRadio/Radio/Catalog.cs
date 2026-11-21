@@ -54,7 +54,7 @@ internal sealed class Catalog
         string stockmap = Path.Combine(directory, "stockmap.txt");
         if (!File.Exists(catalog))
         {
-            ModLog.Warn($"Voice catalog missing in {directory}.");
+            Rig.Log.Warn($"Voice catalog missing in {directory}.");
             return;
         }
         foreach (string line in ReadRows(catalog))
@@ -83,7 +83,7 @@ internal sealed class Catalog
             stock = fallback.stock;
         else
         {
-            ModLog.Warn($"Stock map missing in {directory} and no base pack to take it from.");
+            Rig.Log.Warn($"Stock map missing in {directory} and no base pack to take it from.");
             return;
         }
         Loaded = true;

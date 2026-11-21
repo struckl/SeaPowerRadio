@@ -143,7 +143,7 @@ internal static class AlertLink
         }
         catch (Exception ex)
         {
-            ModLog.Debug($"[alerts] highlight failed: {ex.Message}");
+            Rig.Log.Debug($"[alerts] highlight failed: {ex.Message}");
         }
     }
 }

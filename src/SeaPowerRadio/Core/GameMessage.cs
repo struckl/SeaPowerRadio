@@ -27,14 +27,14 @@ internal static class GameMessage
         }
         catch (Exception ex)
         {
-            ModLog.Debug($"[{tag}] alert failed: {ex.Message}");
+            Rig.Log.Debug($"[{tag}] alert failed: {ex.Message}");
         }
     }
 
     /// <summary>Log the message as the player reads it (track number unknown here: "?"), then raise it.</summary>
     public static void RaiseLogged(string tag, ObjectBase unit, ObjectBase about, string text, string detail = "")
     {
-        ModLog.Info($"[{tag}] {Plain(text, unit, about)}{detail}");
+        Rig.Log.Info($"[{tag}] {Plain(text, unit, about)}{detail}");
         Raise(tag, unit, about, text);
     }
 

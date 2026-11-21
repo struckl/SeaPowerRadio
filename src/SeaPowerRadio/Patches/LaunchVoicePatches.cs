@@ -10,7 +10,7 @@ namespace SeaPowerRadio.Patches;
 /// </summary>
 internal static class LaunchVoicePatches
 {
-    public static void Declare() => HookRegistry.Add("LaunchLine", HookStage.Load,
+    public static void Declare() => Rig.Hooks.Add("LaunchLine", HookStage.Load,
             "the launch line may come before the launch message", optional: true)
         .Hook("SeaPower.WeaponBase", "LaunchVoiceover", System.Type.EmptyTypes, typeof(LaunchVoicePatches),
             prefix: nameof(LaunchVoiceoverPrefix));

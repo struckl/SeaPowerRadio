@@ -9,7 +9,7 @@ namespace SeaPowerRadio.Patches;
 /// </summary>
 internal static class SpeedOrderPatches
 {
-    public static void Declare() => HookRegistry.Add("SpeedKnots", HookStage.Load,
+    public static void Declare() => Rig.Hooks.Add("SpeedKnots", HookStage.Load,
             "speed orders are not spoken in knots", optional: true)
         .Hook("SeapowerUI.ViewModels.ObjectSpeed", "RaiseSpeedAlert", new[] { typeof(ObjectBase), typeof(float) },
             typeof(SpeedOrderPatches), postfix: nameof(RaiseSpeedAlertPostfix));

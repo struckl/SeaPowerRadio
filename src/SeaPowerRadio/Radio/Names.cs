@@ -32,7 +32,7 @@ internal sealed class Names
         string file = Path.Combine(packDirectory, "names.txt");
         if (!File.Exists(file))
         {
-            ModLog.Warn($"{packDirectory}: names.txt missing, units use generated callsigns.");
+            Rig.Log.Warn($"{packDirectory}: names.txt missing, units use generated callsigns.");
             return;
         }
         foreach (string raw in File.ReadAllLines(file))

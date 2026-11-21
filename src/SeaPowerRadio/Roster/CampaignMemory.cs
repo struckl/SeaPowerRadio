@@ -52,7 +52,7 @@ internal sealed class CampaignMemory
         }
         catch (Exception ex)
         {
-            ModLog.Warn($"[campaign] no voice memory: {ex.Message}");
+            Rig.Log.Warn($"[campaign] no voice memory: {ex.Message}");
             return null;
         }
     }
@@ -97,7 +97,7 @@ internal sealed class CampaignMemory
         }
         catch (Exception ex)
         {
-            ModLog.Warn($"[campaign] could not save {file}: {ex.Message}");
+            Rig.Log.Warn($"[campaign] could not save {file}: {ex.Message}");
         }
     }
 
@@ -119,7 +119,7 @@ internal sealed class CampaignMemory
         }
         catch (Exception ex)
         {
-            ModLog.Warn($"[campaign] could not read {file}: {ex.Message}");
+            Rig.Log.Warn($"[campaign] could not read {file}: {ex.Message}");
         }
     }
 }

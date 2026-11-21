@@ -72,11 +72,10 @@ Next to it go the existing files, unchanged in format: `personas.txt`, `catalog.
   lives and which nation strings player units and `VoiceMessage` carry. Confirm in the game (with his OK) that they
   match. The roadmap lists this as a risk.
 
-## Both game versions
+## The game version
 
-The new code touches the options page (Noesis) and the voice routing only. Build both variants
-(`-p:GameBuild=Flat`), and `python tools/modtool.py compat` must pass. The dropdown/expander controls must exist
-in both builds' Noesis.
+The new code touches the options page (Noesis) and the voice routing only. `python tools/modtool.py compat` must pass.
+The dropdown/expander controls must exist in the game's Noesis.
 
 ## Testing
 

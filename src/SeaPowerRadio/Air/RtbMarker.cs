@@ -55,11 +55,6 @@ internal static class RtbMarker
         }
     }
 
-#if FLATMAP
-    /// <summary>Yellow for the map's night or day colours (Sea Power 0.8.7: one theme for every map).</summary>
-    public static Noesis.SolidColorBrush Brush() =>
-        Brush(!Singleton<ThemeTracker>.InstanceExists() || Singleton<ThemeTracker>.Instance.CurrentTheme != ThemeMode.Light);
-#else
     /// <summary>
     /// Yellow for the map's night or day colours. In the 3D-globe build every map has its own palette (Auto follows
     /// the sun at the centre of its view): the symbol being drawn passes its map's, the formation manager has none
@@ -70,7 +65,6 @@ internal static class RtbMarker
         palette ??= Globals._mainGameViewModel?.Map?.DisplayMap?.Palette;
         return Brush(palette == null || GameReflection.IsDark(palette));
     }
-#endif
 
     /// <summary>Yellow for night (dark) or day; a map symbol knows which one it is drawn in (day/night per position).</summary>
     public static Noesis.SolidColorBrush Brush(bool dark)
@@ -114,7 +108,7 @@ internal static class RtbMarker
         }
         catch (Exception ex)
         {
-            ModLog.Debug($"[rtb] {ex.Message}");
+            Rig.Log.Debug($"[rtb] {ex.Message}");
         }
     }
 

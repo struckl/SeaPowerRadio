@@ -63,7 +63,7 @@ internal sealed class RadioPlayer
                    + channels.Count(c => c.Current != null && c.Current.Phrase == t.Phrase && now - c.Current.SubmittedAt < SamePhraseWindow);
         if (same >= 2)
         {
-            ModLog.Debug($"[radio] drop duplicate {t.Text}");
+            Rig.Log.Debug($"[radio] drop duplicate {t.Text}");
             AlertLink.Release(t);
             return;
         }
@@ -76,7 +76,7 @@ internal sealed class RadioPlayer
             AlertLink.Release(dropped);
         }
         if (Settings.LogRadio.Value)
-            ModLog.Info($"[radio] queued p{t.Priority} {t.Voice}: {t.Text}");
+            Rig.Log.Info($"[radio] queued p{t.Priority} {t.Voice}: {t.Text}");
     }
 
     public void Clear()
@@ -243,7 +243,7 @@ internal sealed class RadioPlayer
         AlertLink.StartSpeaking(t);
         ch.Preparing = false;
         if (Settings.LogRadio.Value)
-            ModLog.Info($"[radio] >> {t.Voice}: {t.Text} [{ch.Category}, channel {ch.Index + 1}{(mood != null ? ", " + mood : "")}]");
+            Rig.Log.Info($"[radio] >> {t.Voice}: {t.Text} [{ch.Category}, channel {ch.Index + 1}{(mood != null ? ", " + mood : "")}]");
     }
 
     /// <summary>
@@ -330,7 +330,7 @@ internal sealed class RadioPlayer
             if (groups != null && groups.Length > 0)
                 source.outputAudioMixerGroup = groups[0];
             else if (channels.Count == 0)
-                ModLog.Warn("Voice mixer group not found; radio plays on the master bus.");
+                Rig.Log.Warn("Voice mixer group not found; radio plays on the master bus.");
             channels.Add(new Channel { Index = channels.Count, Source = source });
         }
     }

@@ -102,7 +102,7 @@ internal sealed class ContactReporter
     private void OnNewVehicle(object sender, Vehicle vehicle)
     {
         try { Track(vehicle, announce: true); }
-        catch (Exception ex) { ModLog.Error($"[contact] new vehicle: {ex.Message}"); }
+        catch (Exception ex) { Rig.Log.Error($"[contact] new vehicle: {ex.Message}"); }
     }
 
     private static bool Relevant(Vehicle v) =>
@@ -162,7 +162,7 @@ internal sealed class ContactReporter
         Vehicle v = c.Vehicle;
         RelationsState relation = Globals._playerTaskforce.RelationshipTo(side);
         (ObjectBase unit, SensorSystem.SensorType sensor, string sensorName) = Detector(v);
-        ModLog.Info($"[contact] track {c.Id} classified {relation} - by {(unit != null ? unit.getUIDAndName() : "?")}" +
+        Rig.Log.Info($"[contact] track {c.Id} classified {relation} - by {(unit != null ? unit.getUIDAndName() : "?")}" +
                     $" via {sensorName ?? sensor.ToString()} (best track: {v.Type.Value})");
         if (!Settings.ContactReports.Value)
             return;
@@ -226,7 +226,7 @@ internal sealed class ContactReporter
         List<Alert> alerts = AlertLink.TakeFor(RaiserFor(speaker));   // taken whether it is spoken or not
         if (speak)
             SpokenReport.Say(player, speaker, phrase, bearing, alerts);
-        ModLog.Info($"[contact] new: {string.Join(", ", batch.Select(v => v.Id))} reported by {speaker.Callsign}" +
+        Rig.Log.Info($"[contact] new: {string.Join(", ", batch.Select(v => v.Id))} reported by {speaker.Callsign}" +
                     (speak ? "" : " (same group as an earlier call, not spoken)"));
     }
 
@@ -348,7 +348,7 @@ internal sealed class ContactReporter
         }
         catch (Exception ex)
         {
-            ModLog.Debug($"[contact] track read failed: {ex.Message}");
+            Rig.Log.Debug($"[contact] track read failed: {ex.Message}");
         }
         return (unit, sensor, name);
     }

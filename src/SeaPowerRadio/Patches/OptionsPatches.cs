@@ -10,7 +10,7 @@ namespace SeaPowerRadio.Patches;
 /// </summary>
 internal static class OptionsPatches
 {
-    public static void Declare() => HookRegistry.Add("OptionsPage", HookStage.Load,
+    public static void Declare() => Rig.Hooks.Add("OptionsPage", HookStage.Load,
             "the radio settings are only in the config file", optional: true)
         .Hook("SeapowerUI.OptionsMenuView", ".ctor", System.Type.EmptyTypes, typeof(OptionsPatches),
             postfix: nameof(ViewPostfix));

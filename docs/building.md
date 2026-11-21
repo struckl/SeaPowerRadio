@@ -4,9 +4,9 @@ Build notes, the two game versions, the voice pipeline and how to carry on from 
 
 ## Building
 
-Requires the .NET SDK (8+), a local Sea Power install and the [SeaPowerKeel](https://github.com/struckl/SeaPowerKeel)
-repo next to this one: the game's assemblies and Keel's copy of Anchor Chain's library are referenced directly
-(`-p:AnchorChainDir=...` points at another copy).
+Requires the .NET SDK (8+), a local Sea Power install and the SeaPowerRigging repo (R.A.T.S. Rigging) next to this one:
+the game's assemblies are referenced directly, Rigging is built on demand as a project reference and its `ref\` folder holds
+Anchor Chain's library (`-p:AnchorChainDir=...` points at another copy).
 
 ```bash
 dotnet build src/SeaPowerRadio/SeaPowerRadio.csproj -c Release -p:GameDir="C:\Program Files (x86)\Steam\steamapps\common\Sea Power"
@@ -17,17 +17,12 @@ A successful build copies the DLL and `mod/` (voice library, `_info.ini`) into
 Pass `-p:Deploy=false` to build without touching the game folder - and do, while the game is running (it locks the
 DLLs).
 
-**Two game versions, two builds.** Sea Power exists in two versions with different map code: 0.8.7's flat map and the
-3D-globe build (0.9.x), and a mod compiled against one fails on the other (the map-symbol
-hook, the night-colour switch and a field the game turned into a property differ). So the same sources are built twice:
-the default build is for the globe game (`SeaPowerRadio.dll`), `-p:GameBuild=Flat` compiles against a copy of 0.8.7's
-`Sea Power_Data\Managed` (`-p:FlatManagedDir=...`, default `..\_gamerefs\SeaPower-0.8.7-public\Managed` next to the mod
-folders in the workspace) into `SeaPowerRadioFlat.dll`. The package holds both; each looks at the game it runs on and
-stays off when it is not the one it was made for (the log says which runs). The loader skips a plugin whose GUID it
-has already seen, so the flat build registers as `dev.sewerlabs.seapowerradio.flatmap`. The start, the hook registry, the
-config file, the log and the host object are the workspace's shared skeleton (`SeaPowerKeel\shared`, compiled into the DLL
-as linked source; the csproj imports its `Rats.Mod.props`). `tools/package.ps1` builds and checks both
-(`tools/compat-check` in the workspace).
+**One build, for the game's current main version.** Sea Power's 0.8.7 flat map is not built any more; the DLL is
+`SeaPowerRadio.dll` and the Workshop metadata says 0.9.0 or newer. The start, the hook registry, the config file, the log
+and the host object are R.A.T.S. Rigging's (`SeaPowerRigging.dll`): the plugin names it with `[ACDependency]`, the csproj
+imports Rigging's `build\Rats.Mod.props` and the mod keeps one object of it (`Rig.cs`). The package carries a built-in
+copy of `SeaPowerRigging.dll` for a while. `tools/package.ps1` builds, checks the DLL against the game and against Rigging
+(`tools/compat-check` in the workspace) and stages.
 
 Releases: [docs/workshop.md](docs/workshop.md) (`tools/package.ps1`); the game systems the mod hooks into (stock voices, why a unit doesn't fire,
 mission lifecycle, contacts) and how to decompile the game: [docs/how-it-works.md](docs/how-it-works.md); the stock
@@ -90,11 +85,11 @@ python -m venv .venv && .venv/Scripts/python -m pip install -r tools/voicegen/re
 
 ```
 src/SeaPowerRadio/        C# plugin (netstandard2.1, BepInEx 5 / HarmonyX)
-  Plugin.cs, ModInfo.cs   entry point ([ACPlugin], started by Keel); what the shared skeleton reads (GUID, name, version, log source)
-  Hooks.cs                every game hook, grouped by feature (shared HookRegistry); a missing target disables only that
+  Plugin.cs, Rig.cs       entry point ([ACPlugin], started by Keel); the mod's R.A.T.S. Rigging object and its start
+  Hooks.cs                every game hook, grouped by feature (Rig.Hooks); a missing target disables only that
                           feature, except the mission and launch hooks the roster needs (then the mod stays off)
-  RadioHost.cs, Settings.cs  the host object (shared ModHost) and the config entries (shared ModSettings)
-  Core/EventBus.cs        the aircraft-launched event (mission start/end come from the shared MissionHooks)
+  RadioHost.cs, Settings.cs  the host object (RigHost) and the config entries (Rig.Settings)
+  Core/EventBus.cs        the aircraft-launched event (mission start/end come from Rig.Mission)
   Core/                   GameMessage (the one way a report raises its message bottom right), Distance (map units, km, nm,
                           bearing), OrderText (weapon and track names of an order)
   Patches/                Harmony patches (stock voice capture, launching weapon, aircraft launch, reports, options)

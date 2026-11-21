@@ -21,7 +21,7 @@ internal static class UserFiles
         }
         catch (Exception ex)
         {
-            ModLog.Warn($"[{tag}] could not create {file}: {ex.Message}");
+            Rig.Log.Warn($"[{tag}] could not create {file}: {ex.Message}");
         }
     }
 }

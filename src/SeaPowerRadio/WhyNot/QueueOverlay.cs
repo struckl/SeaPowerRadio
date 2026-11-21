@@ -51,7 +51,7 @@ internal sealed class QueueOverlay : MonoBehaviour
             Delete(shownFor, tasks[i], shownFor._obp?._weaponSystems ?? new List<WeaponSystem>());
             return;
         }
-        ModLog.Info($"[queue] click at {p.x:0},{p.y:0} inside the window hit no delete button ({tasks.Count} rows," +
+        Rig.Log.Info($"[queue] click at {p.x:0},{p.y:0} inside the window hit no delete button ({tasks.Count} rows," +
                     $" window at {window.x:0},{window.y:0}, scale {scale:0.##})");
     }
 
@@ -173,12 +173,12 @@ internal sealed class QueueOverlay : MonoBehaviour
             foreach (WeaponSystem w in systems.Where(w => w._takenEngageTask == t))
                 w.EndEngageTask();
             unit.RemoveEngageTask(t);
-            ModLog.Info($"[queue] {unit.getName()}: deleted order {t._ammoId} -> {t._targetObject?.GetMapContactID()}" +
+            Rig.Log.Info($"[queue] {unit.getName()}: deleted order {t._ammoId} -> {t._targetObject?.GetMapContactID()}" +
                         $" ({unit._currentEngageTasks?.Count ?? 0} left)");
         }
         catch (Exception ex)
         {
-            ModLog.Error($"[queue] delete failed: {ex.Message}");
+            Rig.Log.Error($"[queue] delete failed: {ex.Message}");
         }
     }
 }

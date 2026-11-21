@@ -41,14 +41,14 @@ internal static class SquadronVoices
             int eq = line.IndexOf('=');
             if (eq <= 0)
             {
-                ModLog.Warn($"[squadrons] {where}: no '=' in \"{line}\", skipped");
+                Rig.Log.Warn($"[squadrons] {where}: no '=' in \"{line}\", skipped");
                 continue;
             }
             string left = line.Substring(0, eq).Trim();
             string gender = ParseGender(line.Substring(eq + 1).Trim());
             if (gender == null)
             {
-                ModLog.Warn($"[squadrons] {where}: \"{line}\" needs 'male' or 'female' after the '=', skipped");
+                Rig.Log.Warn($"[squadrons] {where}: \"{line}\" needs 'male' or 'female' after the '=', skipped");
                 continue;
             }
             // Slug each piece between wildcards, so "VF-11 *" and "vf_11*" are the same rule.
@@ -58,13 +58,13 @@ internal static class SquadronVoices
             string pattern = string.Join("*", parts);
             if (pattern.Replace("*", "").Length == 0)
             {
-                ModLog.Warn($"[squadrons] {where}: \"{line}\" needs a squadron name, skipped");
+                Rig.Log.Warn($"[squadrons] {where}: \"{line}\" needs a squadron name, skipped");
                 continue;
             }
             rules.RemoveAll(r => r.Pattern == pattern);   // the later line wins
             rules.Add(new Rule { Pattern = pattern, Gender = gender, Source = where });
         }
-        ModLog.Info($"[squadrons] {rules.Count} squadron voice rule(s)");
+        Rig.Log.Info($"[squadrons] {rules.Count} squadron voice rule(s)");
     }
 
     private static string ParseGender(string text)

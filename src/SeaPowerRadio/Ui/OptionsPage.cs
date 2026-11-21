@@ -30,7 +30,7 @@ internal static class OptionsPage
             if (panel == null)
             {
                 if (!reported)
-                    ModLog.Warn("[options] the Audio tab of the Options menu was not found (game update?) - the radio settings are only in the config file.");
+                    Rig.Log.Warn("[options] the Audio tab of the Options menu was not found (game update?) - the radio settings are only in the config file.");
                 reported = true;
                 return;
             }
@@ -39,12 +39,12 @@ internal static class OptionsPage
                     return;                                       // this view has the group already
             Build(view, panel);
             if (!reported)
-                ModLog.Info("[options] radio settings added to the Audio tab of the Options menu");
+                Rig.Log.Info("[options] radio settings added to the Audio tab of the Options menu");
             reported = true;
         }
         catch (Exception ex)
         {
-            ModLog.Warn($"[options] radio settings not added to the Options menu: {ex}");
+            Rig.Log.Warn($"[options] radio settings not added to the Options menu: {ex}");
         }
     }
 

@@ -86,7 +86,7 @@ internal sealed class FuelMonitor
             catch (Exception ex)
             {
                 if (failed.Add(id))
-                    ModLog.Warn($"[fuel] {unit.getName()}: no fuel calls, scan failed: {ex}");
+                    Rig.Log.Warn($"[fuel] {unit.getName()}: no fuel calls, scan failed: {ex}");
             }
         }
     }
@@ -116,7 +116,7 @@ internal sealed class FuelMonitor
         if (r == null)
         {
             if (failed.Add(id))
-                ModLog.Warn($"[fuel] {unit.getName()}: no fuel calls, its fuel model can't be read");
+                Rig.Log.Warn($"[fuel] {unit.getName()}: no fuel calls, its fuel model can't be read");
             return;
         }
         Level level = LevelOf(r);
@@ -182,7 +182,7 @@ internal sealed class FuelMonitor
         if (unit._homeBase == null)
         {
             try { LandingCheck.Log(unit); }
-            catch (Exception ex) { ModLog.Warn($"[fuel] {unit.getName()}: landing check failed: {ex.Message}"); }
+            catch (Exception ex) { Rig.Log.Warn($"[fuel] {unit.getName()}: landing check failed: {ex.Message}"); }
         }
         return s;
     }
@@ -207,10 +207,10 @@ internal sealed class FuelMonitor
 
     private static void Trace(ObjectBase unit, State s, Reading r, Level level)
     {
-        if (!ModSettings.Verbose || Time.unscaledTime < s.NextTrace)
+        if (!Rig.Settings.Verbose || Time.unscaledTime < s.NextTrace)
             return;
         s.NextTrace = Time.unscaledTime + TraceInterval;
-        ModLog.Debug($"[fuel] {unit.getName()}: {r.Fuel:0} km fuel, {(r.Deck != null ? $"{r.Deck.getName()} {r.Km:0} km" : "no deck")}, " +
+        Rig.Log.Debug($"[fuel] {unit.getName()}: {r.Fuel:0} km fuel, {(r.Deck != null ? $"{r.Deck.getName()} {r.Km:0} km" : "no deck")}, " +
                      $"level {level}, said {s.Said}, state {unit.StateMachine?.CurrentStateName}");
     }
 
@@ -220,12 +220,12 @@ internal sealed class FuelMonitor
         string name = unit.getName();
         if (r.Deck == null)
         {
-            ModLog.Info($"[fuel] watching {name}: {r.Fuel:0} km of fuel ({r.Fuel / r.Full:P0}), nothing in the mission can take it " +
+            Rig.Log.Info($"[fuel] watching {name}: {r.Fuel:0} km of fuel ({r.Fuel / r.Full:P0}), nothing in the mission can take it " +
                         $"- joker / bingo / emergency at {NoDeckJoker:P0} / {NoDeckBingo:P0} / {NoDeckEmergency:P0} of a full tank");
             return;
         }
         string where = r.CanLand ? "" : " (can't land there - nothing in the mission takes it, the game won't send it home)";
-        ModLog.Info($"[fuel] watching {name}: {r.Fuel:0} km of fuel, {r.Deck.getName()} {r.Km:0} km away{where} " +
+        Rig.Log.Info($"[fuel] watching {name}: {r.Fuel:0} km of fuel, {r.Deck.getName()} {r.Km:0} km away{where} " +
                     $"- joker below {JokerKm(r):0} km, bingo below {BingoKm(r):0} km (moves with the distance)");
     }
 
@@ -294,7 +294,7 @@ internal sealed class FuelMonitor
             if (!burnErrorLogged)
             {
                 burnErrorLogged = true;
-                ModLog.Warn($"[fuel] fuel rate unreadable, no fuel calls: {ex.Message}");
+                Rig.Log.Warn($"[fuel] fuel rate unreadable, no fuel calls: {ex.Message}");
             }
         }
         cruise = economy = 0f;

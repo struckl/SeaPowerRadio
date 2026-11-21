@@ -186,7 +186,7 @@ internal static class StockVoiceRouter
             if (Settings.DetachForVid.Value && aircraft.Formation != null)
             {
                 aircraft.Formation.MakeUnitActIndependently(aircraft);
-                ModLog.Info($"[why-not] {unit.getName()}: detached from formation for VID");
+                Rig.Log.Info($"[why-not] {unit.getName()}: detached from formation for VID");
                 return phrase;
             }
             WhyNot.WhyNotMonitor.HoldingFormation(unit);

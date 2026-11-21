@@ -11,8 +11,8 @@ internal static class RosterService
 
     public static void Init()
     {
-        MissionHooks.Started += OnMissionStarted;
-        MissionHooks.Ended += () => Current = null;
+        Rig.Mission.Started += OnMissionStarted;
+        Rig.Mission.Ended += () => Current = null;
         EventBus.AircraftLaunched += OnAircraftLaunched;
     }
 
@@ -25,7 +25,7 @@ internal static class RosterService
         }
         catch (Exception ex)
         {
-            ModLog.Warn($"[aliases] not loaded, ships use their own names: {ex.Message}");
+            Rig.Log.Warn($"[aliases] not loaded, ships use their own names: {ex.Message}");
         }
         try
         {
@@ -33,7 +33,7 @@ internal static class RosterService
         }
         catch (Exception ex)
         {
-            ModLog.Warn($"[squadrons] not loaded, squadrons use the general voice settings: {ex.Message}");
+            Rig.Log.Warn($"[squadrons] not loaded, squadrons use the general voice settings: {ex.Message}");
         }
         CampaignMemory campaign = CampaignMemory.ForMission(seed);
         string salt = RandomVoiceSalt(seed, campaign);
@@ -41,7 +41,7 @@ internal static class RosterService
         roster.Build();
         Current = roster;
         if (Settings.LogRoster.Value)
-            ModLog.Info(roster.Describe());
+            Rig.Log.Info(roster.Describe());
     }
 
     /// <summary>
@@ -54,7 +54,7 @@ internal static class RosterService
             return null;
         bool fresh = !SaveLoadManager.IsASaveFile;
         string salt = VoiceSalts.ForStart(seed, fresh);
-        ModLog.Info(salt != null
+        Rig.Log.Info(salt != null
             ? $"[voices] random voices: salt {salt} for '{seed}' ({(fresh ? "new start" : "save, salt of its latest start")})"
             : $"[voices] random voices: no salt on record for the save of '{seed}', plain seed");
         return salt;
@@ -74,7 +74,7 @@ internal static class RosterService
         }
         catch (Exception ex)
         {
-            ModLog.Warn($"[voices] dynamic campaign check failed: {ex.Message}");
+            Rig.Log.Warn($"[voices] dynamic campaign check failed: {ex.Message}");
         }
         return (seed ?? "").EndsWith("campaign mission.ini", StringComparison.OrdinalIgnoreCase);
     }
@@ -89,7 +89,7 @@ internal static class RosterService
         string squadron = type.Squadrons[launch.SquadronIndex]._name;
         RosterElement element = roster.BindLaunch(launch.Deck._baseObject, type._fileName, squadron, launch.Aircraft);
         if (Settings.LogRoster.Value && element != null)
-            ModLog.Info($"[roster] launch {launch.Aircraft.getUIDAndName()} -> {element.Callsign} ({element.Voice?.FullId ?? "-"})");
+            Rig.Log.Info($"[roster] launch {launch.Aircraft.getUIDAndName()} -> {element.Callsign} ({element.Voice?.FullId ?? "-"})");
     }
 
     /// <summary>
@@ -114,21 +114,21 @@ internal static class RosterService
             }
             if (string.IsNullOrEmpty(raw))
             {
-                ModLog.Info("[roster] mission seed: no mission file path, voices use a fixed seed");
+                Rig.Log.Info("[roster] mission seed: no mission file path, voices use a fixed seed");
                 return "unknown";
             }
             step = "relative path";
             string relative = Singleton<FileManager>.InstanceExists() ? Singleton<FileManager>.Instance?.GetRelativePath(raw) : null;
             if (string.IsNullOrEmpty(relative))
             {
-                ModLog.Info("[roster] mission seed: the mission lies outside a mod folder, the full path is used");
+                Rig.Log.Info("[roster] mission seed: the mission lies outside a mod folder, the full path is used");
                 return Normal(raw);
             }
             return Normal(relative);
         }
         catch (Exception ex)
         {
-            ModLog.Warn($"Mission seed fallback at the {step} step: {ex.GetType().Name}: {ex.Message}");
+            Rig.Log.Warn($"Mission seed fallback at the {step} step: {ex.GetType().Name}: {ex.Message}");
             return Normal(raw ?? "unknown");
         }
     }

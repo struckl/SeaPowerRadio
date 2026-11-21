@@ -14,7 +14,7 @@ internal static class SarPatches
 {
     [System.ThreadStatic] private static int inPickup;
 
-    public static void Declare() => HookRegistry.Add("SarCalls", HookStage.Load,
+    public static void Declare() => Rig.Hooks.Add("SarCalls", HookStage.Load,
             "search and rescue calls are not made", optional: true)
         .Hook("SeaPower.ObjectsManager", "AddObjectToItsTaskforce", null, typeof(SarPatches), postfix: nameof(Registered))
         .Hook("SeaPower.PatrolZone", "AssignSARRescueRoute", null, typeof(SarPatches), postfix: nameof(Assigned))
@@ -31,14 +31,14 @@ internal static class SarPatches
         if (!Active || obj?._obp?._unitRoles == null || !obj._obp._unitRoles.Contains(ObjectBaseParameters.UnitRoles.LifeRaft))
             return;
         try { SarReporter.Instance.RaftAppeared(obj); }
-        catch (System.Exception ex) { ModLog.Debug($"[sar] raft: {ex.Message}"); }
+        catch (System.Exception ex) { Rig.Log.Debug($"[sar] raft: {ex.Message}"); }
     }
 
     private static void Assigned(ObjectBase rescuer, ObjectBase raft)
     {
         if (!Active) return;
         try { SarReporter.Instance.EnRoute(rescuer, raft); }
-        catch (System.Exception ex) { ModLog.Debug($"[sar] en route: {ex.Message}"); }
+        catch (System.Exception ex) { Rig.Log.Debug($"[sar] en route: {ex.Message}"); }
     }
 
     private static void PickupBefore(ObjectBase __instance, out int __state)
@@ -56,7 +56,7 @@ internal static class SarPatches
         if (picked <= 0)
             return;
         try { SarReporter.Instance.PickedUp(__instance, picked); }
-        catch (System.Exception ex) { ModLog.Debug($"[sar] pickup: {ex.Message}"); }
+        catch (System.Exception ex) { Rig.Log.Debug($"[sar] pickup: {ex.Message}"); }
     }
 
     // The game's "Picked up survivors." - raised inside CheckForRaftPickUp - gives way to the mod's message.
@@ -66,6 +66,6 @@ internal static class SarPatches
     {
         if (!Active) return;
         try { SarReporter.Instance.Landed(objectToRecover, __instance._baseObject); }
-        catch (System.Exception ex) { ModLog.Debug($"[sar] landed: {ex.Message}"); }
+        catch (System.Exception ex) { Rig.Log.Debug($"[sar] landed: {ex.Message}"); }
     }
 }

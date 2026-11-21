@@ -54,11 +54,11 @@ internal static class LandingCheck
 
         string intended = missionHome != null ? $"the mission names {missionHome.getName()}" : "the mission names none";
         string skipped = helicopterDecks > 0 ? $", {helicopterDecks} helicopter-only decks left out" : "";
-        ModLog.Info($"[fuel] {name} ({unit._obp._objectIniName}) has no home base, {intended}. Why each field won't take it{skipped}:");
+        Rig.Log.Info($"[fuel] {name} ({unit._obp._objectIniName}) has no home base, {intended}. Why each field won't take it{skipped}:");
         if (lines.Count == 0)
-            ModLog.Info("[fuel]   no friendly deck or field at all");
+            Rig.Log.Info("[fuel]   no friendly deck or field at all");
         foreach (string line in lines)
-            ModLog.Info(line);
+            Rig.Log.Info(line);
     }
 
     private static string Why(ObjectBase site, FlightDeck deck, ObjectBase unit)

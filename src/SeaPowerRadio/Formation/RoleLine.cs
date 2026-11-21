@@ -44,14 +44,14 @@ internal static class RoleLine
                 return;
             reported = true;
             if (missing.Count == 0)
-                ModLog.Info("[roles] formation manager: role line added to group, unit and member rows");
+                Rig.Log.Info("[roles] formation manager: role line added to group, unit and member rows");
             else
-                ModLog.Warn($"[roles] formation manager: no row template with a second line for {string.Join(", ", missing)} " +
+                Rig.Log.Warn($"[roles] formation manager: no row template with a second line for {string.Join(", ", missing)} " +
                             "(game update?) - those rows stay without a role");
         }
         catch (Exception ex)
         {
-            ModLog.Warn($"[roles] formation manager left without roles: {ex.Message}");
+            Rig.Log.Warn($"[roles] formation manager left without roles: {ex.Message}");
         }
     }
 
@@ -147,7 +147,7 @@ internal static class RoleLine
             }
             catch (Exception ex)
             {
-                ModLog.Debug($"[roles] {ex.Message}");
+                Rig.Log.Debug($"[roles] {ex.Message}");
                 return "";
             }
         }

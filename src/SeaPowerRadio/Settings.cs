@@ -8,7 +8,7 @@ using UnityEngine;
 namespace SeaPowerRadio;
 
 /// <summary>
-/// BepInEx config at <c>BepInEx/config/dev.sewerlabs.seapowerradio.cfg</c> (opened by ModSettings, shared skeleton, which
+/// BepInEx config at <c>BepInEx/config/dev.sewerlabs.seapowerradio.cfg</c> (opened by Rig.Settings, R.A.T.S. Rigging, which
 /// binds "1. General" Enable mod and Verbose log). Sections are numbered so they sort in the order a player would look for them.
 /// </summary>
 internal static class Settings
@@ -68,7 +68,7 @@ internal static class Settings
     {
         if (NationEntries.TryGetValue(nation, out ConfigEntry<string> entry))
             return entry;
-        entry = ModSettings.File.Bind(VoicePackSection, nation, Voices.VoicePacks.Auto,
+        entry = Rig.Settings.File.Bind(VoicePackSection, nation, Voices.VoicePacks.Auto,
             $"Voice pack for the units of {nation}: Auto (the pack that lists the country, else the game's own voice), " +
             "Game voice (the mod stays silent and the game's own voice lines play) or the Id of an installed voice pack. " +
             "Takes effect at the next mission start. Also on the Audio page of the Options.");
@@ -78,7 +78,7 @@ internal static class Settings
 
     public static string NationChoice(string nation)
     {
-        if (string.IsNullOrEmpty(nation) || ModSettings.File == null)
+        if (string.IsNullOrEmpty(nation) || Rig.Settings.File == null)
             return Voices.VoicePacks.Auto;
         string value = NationEntry(nation).Value;
         return string.IsNullOrWhiteSpace(value) ? Voices.VoicePacks.Auto : value.Trim();
@@ -100,7 +100,7 @@ internal static class Settings
         try
         {
             bool inSection = false;
-            foreach (string raw in File.ReadAllLines(ModSettings.File.ConfigFilePath))
+            foreach (string raw in File.ReadAllLines(Rig.Settings.File.ConfigFilePath))
             {
                 string line = raw.Trim();
                 if (line.StartsWith("["))
@@ -111,12 +111,12 @@ internal static class Settings
         }
         catch (Exception ex)
         {
-            ModLog.Warn($"Could not read the saved voice pack settings: {ex.Message}");
+            Rig.Log.Warn($"Could not read the saved voice pack settings: {ex.Message}");
         }
         return found;
     }
 
-    /// <summary>The mod's own entries, after ModSettings has opened the file and bound "1. General".</summary>
+    /// <summary>The mod's own entries, after Rig.Settings has opened the file and bound "1. General".</summary>
     public static void Bind(ConfigFile file)
     {
         ConfigMigration = file.Bind("1. General", "Config migration", 0,
@@ -129,7 +129,7 @@ internal static class Settings
         BindCallVolumes(file);
         BindDiagnostics(file);
         BindNations();
-        ModSettings.Migrate(ConfigMigration, (1, ResetFemaleVoices));
+        RigSettings.Migrate(ConfigMigration, (1, ResetFemaleVoices));
     }
 
     private static void BindRadio(ConfigFile file)
@@ -259,6 +259,6 @@ internal static class Settings
         if (!FemaleVoices.Value)
             return;
         FemaleVoices.Value = false;
-        ModLog.Info("Config: 'Female voices' was on (the old default); switched to off once, as in 1.4.0.");
+        Rig.Log.Info("Config: 'Female voices' was on (the old default); switched to off once, as in 1.4.0.");
     }
 }

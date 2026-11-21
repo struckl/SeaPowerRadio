@@ -13,7 +13,7 @@ namespace SeaPowerRadio.Patches;
 /// </summary>
 internal static class StockVoicePatches
 {
-    public static void Declare() => HookRegistry.Add("StockVoice", HookStage.Load,
+    public static void Declare() => Rig.Hooks.Add("StockVoice", HookStage.Load,
             "the game's own voice lines play", optional: true)
         .Hook("SeaPower.VoiceMessage", "SubmitMessage",
             new[] { typeof(string), typeof(ObjectBase), typeof(string), typeof(int), typeof(string), typeof(bool), typeof(bool) },
@@ -47,14 +47,14 @@ internal static class StockVoicePatches
             {
                 string who = speaker != null ? speaker.getUIDAndName() : "(taskforce " + nation + ")";
                 string num = number >= 0 ? " #" + number : "";
-                ModLog.Info($"[stock-voice] {(appended ? "+" : "")}{clip}{num} <- {who}");
+                Rig.Log.Info($"[stock-voice] {(appended ? "+" : "")}{clip}{num} <- {who}");
             }
 
             return !Radio.StockVoiceRouter.Handle(request);
         }
         catch (Exception ex)
         {
-            ModLog.Error($"Stock voice capture failed for '{clip}': {ex.Message}");
+            Rig.Log.Error($"Stock voice capture failed for '{clip}': {ex.Message}");
             return true;
         }
     }

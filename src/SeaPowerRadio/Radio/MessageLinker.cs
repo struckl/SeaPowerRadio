@@ -41,7 +41,7 @@ internal static class MessageLinker
         }
         catch (Exception ex)
         {
-            ModLog.Debug($"[links] {ex.Message}");
+            Rig.Log.Debug($"[links] {ex.Message}");
         }
     }
 
@@ -184,7 +184,7 @@ internal static class MessageLinker
         }
         catch (Exception ex)
         {
-            ModLog.Debug($"[links] jump failed: {ex.Message}");
+            Rig.Log.Debug($"[links] jump failed: {ex.Message}");
         }
     }
 }

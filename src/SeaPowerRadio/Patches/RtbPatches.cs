@@ -1,6 +1,4 @@
-#if !FLATMAP
 using System.Runtime.CompilerServices;
-#endif
 using SeaPower;
 using SeapowerUI;
 using SeaPowerRadio.Air;
@@ -18,12 +16,8 @@ internal static class RtbPatches
 {
     public static void Declare()
     {
-        var feature = HookRegistry.Add("RtbHighlight", HookStage.Load,
+        var feature = Rig.Hooks.Add("RtbHighlight", HookStage.Load,
             "returning aircraft are not marked yellow", optional: true);
-#if FLATMAP
-        feature.Hook("SeapowerUI.MapContactVisuals", "Resolve", new[] { typeof(IUnit) }, typeof(RtbPatches),
-            postfix: nameof(ResolvePostfix));
-#else
         feature.Hook("SeapowerUI.MapContactVisuals", "Resolve", new[] { typeof(IUnit), typeof(MapViewModel) }, typeof(RtbPatches),
                 postfix: nameof(ResolvePostfix))
             .Hook("SeapowerUI.MapUnitViewModel", "UpdateContactDisplay", new[] { typeof(IUnit) }, typeof(RtbPatches),
@@ -33,7 +27,6 @@ internal static class RtbPatches
             .Hook("SeapowerUI.UnitPostureBrushConverter", "Convert",
                 new[] { typeof(object[]), typeof(System.Type), typeof(object), typeof(System.Globalization.CultureInfo) },
                 typeof(RtbPatches), postfix: nameof(SymbolBrushPostfix));
-#endif
         feature.Hook("SeapowerUI.FormationManagerView", ".ctor", System.Type.EmptyTypes, typeof(RtbPatches),
             postfix: nameof(ViewPostfix));
     }
@@ -46,13 +39,8 @@ internal static class RtbPatches
         return o != null && o._taskforce == Globals._playerTaskforce && !unit.IsDormant.Value && RtbMarker.IsRtb(o);
     }
 
-#if FLATMAP
-    private static void ResolvePostfix(IUnit unit, ref (MapVisualPosture Posture, Noesis.SolidColorBrush Brush) __result) =>
-        Recolour(unit, ref __result, RtbMarker.Brush);
-#else
     private static void ResolvePostfix(IUnit unit, MapViewModel map, ref (MapVisualPosture Posture, Noesis.SolidColorBrush Brush) __result) =>
         Recolour(unit, ref __result, () => RtbMarker.Brush(map?.PaletteOrDay));
-#endif
 
     private static void Recolour(IUnit unit, ref (MapVisualPosture Posture, Noesis.SolidColorBrush Brush) result,
         System.Func<Noesis.SolidColorBrush> brush)
@@ -64,11 +52,10 @@ internal static class RtbPatches
         }
         catch (System.Exception ex)
         {
-            ModLog.Debug($"[rtb] map colour: {ex.Message}");
+            Rig.Log.Debug($"[rtb] map colour: {ex.Message}");
         }
     }
 
-#if !FLATMAP
     /// <summary>Last state each map symbol was drawn with (true = yellow), to mark it dirty when that changes.</summary>
     private static readonly ConditionalWeakTable<MapUnitViewModel, StrongBox<bool>> Drawn =
         new ConditionalWeakTable<MapUnitViewModel, StrongBox<bool>>();
@@ -91,7 +78,7 @@ internal static class RtbPatches
         }
         catch (System.Exception ex)
         {
-            ModLog.Debug($"[rtb] symbol colour: {ex.Message}");
+            Rig.Log.Debug($"[rtb] symbol colour: {ex.Message}");
         }
     }
 
@@ -106,7 +93,7 @@ internal static class RtbPatches
         }
         catch (System.Exception ex)
         {
-            ModLog.Debug($"[rtb] no OnPropertyChanged: {ex.Message}");
+            Rig.Log.Debug($"[rtb] no OnPropertyChanged: {ex.Message}");
             return null;
         }
     }
@@ -122,7 +109,7 @@ internal static class RtbPatches
         }
         catch (System.Exception ex)
         {
-            ModLog.Debug($"[rtb] symbol brush: {ex.Message}");
+            Rig.Log.Debug($"[rtb] symbol brush: {ex.Message}");
         }
     }
 
@@ -135,10 +122,9 @@ internal static class RtbPatches
         }
         catch (System.Exception ex)
         {
-            ModLog.Debug($"[rtb] symbol update: {ex.Message}");
+            Rig.Log.Debug($"[rtb] symbol update: {ex.Message}");
         }
     }
-#endif
 
     private static void ViewPostfix(FormationManagerView __instance) => RtbMarker.ViewCreated(__instance);
 }

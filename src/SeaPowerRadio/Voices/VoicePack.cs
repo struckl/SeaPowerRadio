@@ -101,18 +101,18 @@ internal sealed class VoicePack
         values.TryGetValue("Id", out string id);
         if (string.IsNullOrWhiteSpace(id))
         {
-            ModLog.Warn($"Voice pack {directory}: voicepack.ini has no Id, skipped.");
+            Rig.Log.Warn($"Voice pack {directory}: voicepack.ini has no Id, skipped.");
             return null;
         }
         if (id.Equals(VoicePacks.Auto, StringComparison.OrdinalIgnoreCase) || id.Equals(VoicePacks.GameVoice, StringComparison.OrdinalIgnoreCase))
         {
-            ModLog.Warn($"Voice pack {directory}: the Id '{id}' is reserved, skipped.");
+            Rig.Log.Warn($"Voice pack {directory}: the Id '{id}' is reserved, skipped.");
             return null;
         }
         Version min = ParseVersion(Get(values, "MinBaseVersion"), new Version(0, 0));
         if (min > baseVersion)
         {
-            ModLog.Warn($"Voice pack '{id}' ({directory}) needs Rats Radio {min} or newer (this is {baseVersion}), skipped.");
+            Rig.Log.Warn($"Voice pack '{id}' ({directory}) needs Rats Radio {min} or newer (this is {baseVersion}), skipped.");
             return null;
         }
         WarnIfNotEnglish(Get(values, "Language"));
@@ -133,7 +133,7 @@ internal sealed class VoicePack
     {
         string code = (language ?? "en").ToLowerInvariant();
         if (code != "en" && WarnedLanguages.Add(code))
-            ModLog.Warn($"No number/callsign rules for language '{code}' in this version: using the English rules.");
+            Rig.Log.Warn($"No number/callsign rules for language '{code}' in this version: using the English rules.");
     }
 
     private static string Get(Dictionary<string, string> values, string key) =>
@@ -151,7 +151,7 @@ internal sealed class VoicePack
         string personas = System.IO.Path.Combine(Directory, "personas.txt");
         if (!File.Exists(personas))
         {
-            ModLog.Warn($"Voice pack '{Id}': no personas.txt in {Directory}, skipped.");
+            Rig.Log.Warn($"Voice pack '{Id}': no personas.txt in {Directory}, skipped.");
             return false;
         }
         foreach (string raw in File.ReadAllLines(personas))
@@ -161,7 +161,7 @@ internal sealed class VoicePack
             string[] f = line.Split('|');
             if (f.Length < 4)
             {
-                ModLog.Warn($"{Id}/personas.txt: bad line '{line}'");
+                Rig.Log.Warn($"{Id}/personas.txt: bad line '{line}'");
                 continue;
             }
             Personas.Add(new VoicePersona { Pack = this, Id = f[0].Trim(), Gender = f[2].Trim(), Accent = f[3].Trim() });
@@ -169,7 +169,7 @@ internal sealed class VoicePack
         LoadAccents();
         Catalog = new Catalog(Directory, baseCatalog);
         Names = new Names(Directory);
-        ModLog.Info($"Voice pack '{Id}' ({Name}) {Version}: {Personas.Count} personas, {Catalog.PhraseCount} phrases, {Names.Count} names, nations: {string.Join(",", Nations)}");
+        Rig.Log.Info($"Voice pack '{Id}' ({Name}) {Version}: {Personas.Count} personas, {Catalog.PhraseCount} phrases, {Names.Count} names, nations: {string.Join(",", Nations)}");
         return Catalog.Loaded && Personas.Count > 0;
     }
 
@@ -189,7 +189,7 @@ internal sealed class VoicePack
                 : new string[0];
             if (f[0].Trim().Length == 0 || accents.Length == 0)
             {
-                ModLog.Warn($"{Id}/accents.txt: no usable accent in '{line}', the nation uses the whole pack.");
+                Rig.Log.Warn($"{Id}/accents.txt: no usable accent in '{line}', the nation uses the whole pack.");
                 continue;
             }
             nationAccents[f[0].Trim()] = accents;

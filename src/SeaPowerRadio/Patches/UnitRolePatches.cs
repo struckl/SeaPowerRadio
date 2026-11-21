@@ -9,7 +9,7 @@ namespace SeaPowerRadio.Patches;
 /// </summary>
 internal static class UnitRolePatches
 {
-    public static void Declare() => HookRegistry.Add("UnitRoles", HookStage.Load,
+    public static void Declare() => Rig.Hooks.Add("UnitRoles", HookStage.Load,
             "the formation manager shows no role lines", optional: true)
         .Hook("SeapowerUI.FormationManagerView", ".ctor", System.Type.EmptyTypes, typeof(UnitRolePatches),
             postfix: nameof(ViewPostfix));

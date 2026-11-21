@@ -37,7 +37,7 @@ internal static class Nations
         string file = Path.Combine(VoiceLibrary.VoicesDirectory, "nations.txt");
         if (!File.Exists(file))
         {
-            ModLog.Warn("nations.txt missing: every country goes in the group 'Other'.");
+            Rig.Log.Warn("nations.txt missing: every country goes in the group 'Other'.");
             return groups;
         }
         foreach (string raw in File.ReadAllLines(file))
@@ -78,7 +78,7 @@ internal static class Nations
         }
         catch (Exception ex)
         {
-            ModLog.Warn($"The game's nation list could not be read: {ex.Message}");
+            Rig.Log.Warn($"The game's nation list could not be read: {ex.Message}");
         }
         foreach (string id in Groups().Keys.Concat(VoicePacks.Installed.SelectMany(p => p.Nations)))
             if (!names.ContainsKey(id))

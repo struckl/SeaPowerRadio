@@ -9,7 +9,7 @@ namespace SeaPowerRadio.Patches;
 /// </summary>
 internal static class WhyNotPatches
 {
-    public static void Declare() => HookRegistry.Add("WhyNot", HookStage.Load,
+    public static void Declare() => Rig.Hooks.Add("WhyNot", HookStage.Load,
             "refusal reasons may repeat after a cease fire", optional: true)
         .Hook("SeaPower.ObjectBase", "CeaseFire", null, typeof(WhyNotPatches), prefix: nameof(CeaseFirePrefix));
 

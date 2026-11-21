@@ -23,7 +23,7 @@ internal sealed class AircraftLaunch
 }
 
 /// <summary>
-/// Game events the shared hooks do not carry (mission start and end are MissionHooks). A Harmony patch publishes, the roster
+/// Game events the shared hooks do not carry (mission start and end are Rig.Mission). A Harmony patch publishes, the roster
 /// subscribes. Handlers run inside game code, so every invoke is guarded: a broken subscriber must never break the game method it was called from.
 /// </summary>
 internal static class EventBus
@@ -38,7 +38,7 @@ internal static class EventBus
         foreach (Action<T> handler in handlers.GetInvocationList())
         {
             try { handler(arg); }
-            catch (Exception ex) { ModLog.Error($"{name} handler failed: {ex}"); }
+            catch (Exception ex) { Rig.Log.Error($"{name} handler failed: {ex}"); }
         }
     }
 }

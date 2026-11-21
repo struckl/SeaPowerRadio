@@ -4,20 +4,19 @@
 
 .DESCRIPTION
     Release builds without the automatic deploy, then dist\SeaPowerRadio\ with exactly what players get:
-    SeaPowerRadio.dll (the 3D-globe game) and SeaPowerRadioFlat.dll (Sea Power 0.8.7's flat map), the same sources
-    built against each game's assemblies, each staying off on the other game; _info.ini, rats-radio-aliases.txt (default hull prefixes), LICENSE.txt, CHANGELOG.md, CREDITS.txt (the voices' CC BY 4.0 attribution), voices\ - the
+    SeaPowerRadio.dll (one build for the game's current main version), SeaPowerRigging.dll (the built-in copy of R.A.T.S. Rigging,
+    which the mod needs; the loader runs the newest copy of it), _info.ini, rats-radio-aliases.txt (default hull prefixes), LICENSE.txt, CHANGELOG.md, CREDITS.txt (the voices' CC BY 4.0 attribution), voices\ - the
     catalog files and the rendered library from mod\voices\ (not in git; rendered with tools\voicegen) - and
     preview.jpg, the Workshop preview (workshop\preview.jpg, if present): the game's upload screen only browses
     StreamingAssets for it. Refuses to stage a library with personas missing.
-    The flat build needs a copy of 0.8.7's Sea Power_Data\Managed (-FlatManagedDir; default: _gamerefs next to the mod
-    folders in the workspace), the globe build the globe game's (-GlobeManagedDir when the installed game is 0.8.7).
-    When the workspace's tools\compat-check is there, every DLL is checked against both games' assemblies: it must
-    have nothing missing on its own game, and its entry point nothing missing on either. -NoFlat leaves the flat build out.
+    The game's assemblies are the installed game's (-ManagedDir: a saved copy of its Managed folder when the installed game is
+    not the current main version). When the workspace's tools\compat-check is there, the DLL is checked against them and
+    against R.A.T.S. Rigging: nothing it uses may be missing.
     -Install mirrors the staged folder into <GameDir>\Sea Power_Data\StreamingAssets\SeaPowerRadio\, the folder to
     pick in the game's Create Mod screen (Sea Power must be closed). -Zip also writes dist\SeaPowerRadio-<version>.zip
     for a GitHub release.
-    The steps of the base are the shared ones of every R.A.T.S. mod (SeaPowerKeel\shared\tools\RatsPackage.psm1); the workspace
-    is found above this repo, -Workspace names it for a clone elsewhere, -RatsShared another copy of the shared folder.
+    The steps of the base are the shared ones of every R.A.T.S. mod (SeaPowerRigging\build\RatsPackage.psm1); the workspace
+    is found above this repo, -Workspace names it for a clone elsewhere, -RatsRigging another copy of the Rigging repo.
     -Pack <id> stages a voice pack instead of the base: the folder with that voicepack.ini Id (looked up in mod\voices and
     in packs\*, e.g. a pack under work) goes to dist\pack-<id>\ as it is (voicepack.ini, personas.txt, catalog.txt, names.txt, clips;
     plus the pack's own _info.ini and CREDITS if it has them) - the folder to upload to that pack's Workshop item. No
@@ -26,11 +25,9 @@
 param(
     [string]$GameDir = $(if ($env:GameDir) { $env:GameDir } else { 'E:\Games\steamapps\common\Sea Power' }),
     [string]$Workspace = $env:RatsWorkspace,
-    [string]$RatsShared = $env:RatsShared,
-    [string]$FlatManagedDir = $env:FlatManagedDir,
-    # The globe build's game assemblies when the installed game isn't the globe version (a saved copy of its Managed).
-    [string]$GlobeManagedDir = $env:GlobeManagedDir,
-    [switch]$NoFlat,
+    [string]$RatsRigging = $env:RatsRigging,
+    # The game's assemblies when the installed game isn't the current main version (a saved copy of its Managed).
+    [string]$ManagedDir = $env:ManagedDir,
     [switch]$Install,
     [switch]$Zip,
     [string]$Pack
@@ -43,9 +40,8 @@ if (-not $Workspace) {
     while ($Workspace -and -not (Test-Path (Join-Path $Workspace 'mods.json'))) { $Workspace = Split-Path -Parent $Workspace }
     if (-not $Workspace) { throw 'No workspace (a folder with mods.json) above this repo - pass -Workspace.' }
 }
-if (-not $RatsShared) { $RatsShared = Join-Path $Workspace 'SeaPowerKeel\shared' }
-Import-Module (Join-Path $RatsShared 'tools\RatsPackage.psm1') -Force
-if (-not $FlatManagedDir) { $FlatManagedDir = Join-Path $Workspace '_gamerefs\SeaPower-0.8.7-public\Managed' }
+if (-not $RatsRigging) { $RatsRigging = Join-Path $Workspace 'SeaPowerRigging' }
+Import-Module (Join-Path $RatsRigging 'build\RatsPackage.psm1') -Force
 
 $name = 'SeaPowerRadio'
 $project = Join-Path $root "src\$name\$name.csproj"
@@ -85,12 +81,12 @@ $missing = $personas | Where-Object { -not (Test-Path (Join-Path $voices $_)) }
 if ($missing) { throw "Rendered voices missing for: $($missing -join ', ') - render them (tools\voicegen) first." }
 if (-not (Test-Path (Join-Path $voices 'voicepack.ini'))) { throw 'mod\voices\voicepack.ini is missing: the base''s voices are the NATO pack.' }
 
-$globeManaged = if ($GlobeManagedDir) { $GlobeManagedDir } else { Join-Path $GameDir 'Sea Power_Data\Managed' }
+if (-not $ManagedDir) { $ManagedDir = Join-Path $GameDir 'Sea Power_Data\Managed' }
 
-$env:RatsShared = $RatsShared.TrimEnd('\') + '\'      # the csproj's -p:RatsShared, also for the flat build
-Build-RatsMod -Project $project -Dist $dist -GameDir $GameDir -GlobeManagedDir $globeManaged -FlatManagedDir $FlatManagedDir -Workspace $Workspace -NoFlat:$NoFlat | Out-Null
-Test-RatsCompat -Workspace $Workspace -Dist $dist -RootNamespace $name -GlobeManagedDir $globeManaged -FlatManagedDir $FlatManagedDir
+Build-RatsMod -Project $project -Dist $dist -GameDir $GameDir -ManagedDir $ManagedDir -Workspace $Workspace -RiggingDir $RatsRigging | Out-Null
+Test-RatsCompat -Workspace $Workspace -Dist $dist -RootNamespace $name -ManagedDir $ManagedDir -RiggingDir $RatsRigging
 Copy-RatsCommon -Root $root -Dist $dist -InfoIni (Join-Path $root 'mod\_info.ini')
+Copy-RatsRiggingCopy -Workspace $Workspace -Dist $dist -RiggingDir $RatsRigging
 Copy-Item (Join-Path $root 'mod\rats-radio-aliases.txt') $dist
 Copy-Item (Join-Path $root 'VOICES-LICENSE.md') (Join-Path $dist 'CREDITS.txt')
 

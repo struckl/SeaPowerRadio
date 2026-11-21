@@ -77,7 +77,7 @@ internal static class ClipLibrary
         string path = PathOf(voice, key);
         if (path == null || !File.Exists(path))
         {
-            ModLog.Warn($"Missing voice clip {id}");
+            Rig.Log.Warn($"Missing voice clip {id}");
             done(null);
             yield break;
         }
@@ -87,7 +87,7 @@ internal static class ClipLibrary
         yield return request.SendWebRequest();
         if (request.result != UnityWebRequest.Result.Success)
         {
-            ModLog.Warn($"Could not load {id}: {request.error}");
+            Rig.Log.Warn($"Could not load {id}: {request.error}");
             done(null);
             yield break;
         }

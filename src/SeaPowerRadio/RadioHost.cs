@@ -7,10 +7,10 @@ using SeaPowerRadio.WhyNot;
 namespace SeaPowerRadio;
 
 /// <summary>
-/// The persistent object the radio net's and the reporters' per-frame work hangs on (ModHost, in the shared skeleton), on a
+/// The persistent object the radio net's and the reporters' per-frame work hangs on (RigHost, R.A.T.S. Rigging), on a
 /// DontDestroyOnLoad object created at load, so it survives scene changes between menu and missions.
 /// </summary>
-internal sealed class RadioHost : ModHost
+internal sealed class RadioHost : RigHost
 {
     private RadioPlayer player;
     private ContactReporter contacts;
@@ -46,7 +46,7 @@ internal sealed class RadioHost : ModHost
         if (Settings.FemaleVoices.Value)
             return;                                   // back on: voices already chosen stay, new missions use the whole pool
         int changed = Roster.RosterService.Current?.Revoice() ?? 0;
-        ModLog.Info($"Female voices off: {changed} speaker(s) moved to a male voice.");
+        Rig.Log.Info($"Female voices off: {changed} speaker(s) moved to a male voice.");
     }
 
     protected override void OnMissionEnded()

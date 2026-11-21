@@ -59,7 +59,7 @@ internal sealed class SarReporter
             return;
         batchDue = -1;
         try { ReportRafts(); }
-        catch (Exception ex) { ModLog.Debug($"[sar] rafts: {ex.Message}"); }
+        catch (Exception ex) { Rig.Log.Debug($"[sar] rafts: {ex.Message}"); }
     }
 
     public void RaftAppeared(ObjectBase raft)
@@ -138,7 +138,7 @@ internal sealed class SarReporter
         if (known >= 0)
         {
             reported[known] = (first._geoPosition, Now);
-            ModLog.Info($"[sar] {rafts.Count} more raft(s) where survivors were already reported - not called again");
+            Rig.Log.Info($"[sar] {rafts.Count} more raft(s) where survivors were already reported - not called again");
             return;
         }
         reported.Add((first._geoPosition, Now));

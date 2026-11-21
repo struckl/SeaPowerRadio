@@ -230,7 +230,7 @@ internal sealed class Roster
             foreach (RosterElement e in elements)
                 Remember(e);
             memory.SaveIfDirty();
-            ModLog.Info($"[campaign] '{memory.Id}': {memory.Count} units remembered");
+            Rig.Log.Info($"[campaign] '{memory.Id}': {memory.Count} units remembered");
         }
     }
 

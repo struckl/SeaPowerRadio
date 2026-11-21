@@ -7,7 +7,7 @@ yours talks in its own voice and callsign, and says why it is not doing what you
 | --- | --- |
 | Questions | [R.A.T.S. Discord](https://discord.gg/CzuHd4f8Yf): help, ideas, talk; the first place to ask |
 | Version | `1.7.0` (unreleased) |
-| Game | Sea Power 0.9.3 (build 261116), the current main version; run in the test VM |
+| Game | Sea Power 0.9.3 (build 261116), the current main version |
 | Needs | [R.A.T.S. Keel](https://steamcommunity.com/sharedfiles/filedetails/?id=3835527459), the mod loader, and [R.A.T.S. Rigging](https://steamcommunity.com/sharedfiles/filedetails/?id=3843688859), the part the R.A.T.S. mods share (a copy comes with this mod for now) |
 | Get it | [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579) (about 910 MB) |
 | Settings | Options > Audio > Rats Radio, or `BepInEx\config\dev.sewerlabs.seapowerradio.cfg` |

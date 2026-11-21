@@ -16,8 +16,8 @@
     -Install mirrors the staged folder into <GameDir>\Sea Power_Data\StreamingAssets\SeaPowerRadio\, the folder to
     pick in the game's Create Mod screen (Sea Power must be closed). -Zip also writes dist\SeaPowerRadio-<version>.zip
     for a GitHub release.
-    The steps of the base are the shared ones of every R.A.T.S. mod (SeaPowerCore\tools\RatsPackage.psm1); the workspace
-    is found above this repo, -Workspace names it for a clone elsewhere, -RatsCore another copy of the Core repo.
+    The steps of the base are the shared ones of every R.A.T.S. mod (SeaPowerShared\tools\RatsPackage.psm1); the workspace
+    is found above this repo, -Workspace names it for a clone elsewhere, -RatsShared another copy of the shared repo.
     -Pack <id> stages a voice pack instead of the base: the folder with that voicepack.ini Id (looked up in mod\voices and
     in packs\*, e.g. a pack under work) goes to dist\pack-<id>\ as it is (voicepack.ini, personas.txt, catalog.txt, names.txt, clips;
     plus the pack's own _info.ini and CREDITS if it has them) - the folder to upload to that pack's Workshop item. No
@@ -26,7 +26,7 @@
 param(
     [string]$GameDir = $(if ($env:GameDir) { $env:GameDir } else { 'E:\Games\steamapps\common\Sea Power' }),
     [string]$Workspace = $env:RatsWorkspace,
-    [string]$RatsCore = $env:RatsCore,
+    [string]$RatsShared = $env:RatsShared,
     [string]$FlatManagedDir = $env:FlatManagedDir,
     # The globe build's game assemblies when the installed game isn't the globe version (a saved copy of its Managed).
     [string]$GlobeManagedDir = $env:GlobeManagedDir,
@@ -43,8 +43,8 @@ if (-not $Workspace) {
     while ($Workspace -and -not (Test-Path (Join-Path $Workspace 'mods.json'))) { $Workspace = Split-Path -Parent $Workspace }
     if (-not $Workspace) { throw 'No workspace (a folder with mods.json) above this repo - pass -Workspace.' }
 }
-if (-not $RatsCore) { $RatsCore = Join-Path $Workspace 'SeaPowerCore' }
-Import-Module (Join-Path $RatsCore 'tools\RatsPackage.psm1') -Force
+if (-not $RatsShared) { $RatsShared = Join-Path $Workspace 'SeaPowerShared' }
+Import-Module (Join-Path $RatsShared 'tools\RatsPackage.psm1') -Force
 if (-not $FlatManagedDir) { $FlatManagedDir = Join-Path $Workspace '_gamerefs\SeaPower-0.8.7-public\Managed' }
 
 $name = 'SeaPowerRadio'
@@ -87,7 +87,7 @@ if (-not (Test-Path (Join-Path $voices 'voicepack.ini'))) { throw 'mod\voices\vo
 
 $globeManaged = if ($GlobeManagedDir) { $GlobeManagedDir } else { Join-Path $GameDir 'Sea Power_Data\Managed' }
 
-$env:RatsCore = $RatsCore.TrimEnd('\') + '\'      # the csproj's -p:RatsCore, also for the flat build
+$env:RatsShared = $RatsShared.TrimEnd('\') + '\'      # the csproj's -p:RatsShared, also for the flat build
 Build-RatsMod -Project $project -Dist $dist -GameDir $GameDir -GlobeManagedDir $globeManaged -FlatManagedDir $FlatManagedDir -Workspace $Workspace -NoFlat:$NoFlat | Out-Null
 Test-RatsCompat -Workspace $Workspace -Dist $dist -RootNamespace $name -GlobeManagedDir $globeManaged -FlatManagedDir $FlatManagedDir
 Copy-RatsCommon -Root $root -Dist $dist -InfoIni (Join-Path $root 'mod\_info.ini')

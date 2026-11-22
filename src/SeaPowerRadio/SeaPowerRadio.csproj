@@ -7,7 +7,7 @@
     <AssemblyName>SeaPowerRadio</AssemblyName>
     <RootNamespace>SeaPowerRadio</RootNamespace>
     <Product>Per-unit radio voices and why-not callouts for Sea Power.</Product>
-    <Version>1.7.0</Version>
+    <Version>1.7.1</Version>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <!--The mod files (_info.ini, voices) sit at the repo root, not next to the project.-->
     <ModFilesRoot>..\..\mod\</ModFilesRoot>

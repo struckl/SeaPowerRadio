@@ -12,7 +12,7 @@ namespace SeaPowerRadio;
 public class Plugin : IAnchorChainMod
 {
     public const string Guid = "dev.sewerlabs.seapowerradio";
-    public const string Version = "1.7.0";
+    public const string Version = "1.7.1";
     public const string Name = "R.A.T.S. Radio";
 
     public void TriggerEntryPoint() => Start();

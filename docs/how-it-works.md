@@ -9,7 +9,7 @@ feature.
 
 ## Mod loading
 
-- **R.A.T.S. Keel** (Workshop 3835527459, https://github.com/struckl/SeaPowerKeel) is the mod loader. It carries on
+- **R.A.T.S. Keel** (Workshop 3835527459, https://github.com/SEARATS/RatsSeaPowerKeel) is the mod loader. It carries on
   Anchor Chain, the community chainloader (https://github.com/SeaPower-Modders/AnchorChain). Its starter file goes
   into `BepInEx\plugins` once; the loader from the Workshop then reads the DLLs of every switched-on mod folder
   (Workshop items and `StreamingAssets/<folder>`) and calls `IAnchorChainMod.TriggerEntryPoint()` on classes tagged

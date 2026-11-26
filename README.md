@@ -80,5 +80,5 @@ game internals: [docs/how-it-works.md](docs/how-it-works.md).
 - Corpus: Yamagishi, Veaux, MacDonald (2019). *CSTR VCTK Corpus (version 0.92)*, University of Edinburgh, https://doi.org/10.7488/ds/2645.
 - Radio chain from [Ratten Chatter](https://github.com/struckl/RattenChatter); word alignment with wav2vec2-base-960h (Apache-2.0).
 - Built on [BepInEx](https://github.com/BepInEx/BepInEx), [HarmonyX](https://github.com/BepInEx/HarmonyX) and [Anchor Chain](https://github.com/SeaPower-Modders/AnchorChain).
-- Works with [R.A.T.S. Topo](https://github.com/struckl/SeaPowerTopo) and [R.A.T.S. Pop-Out](https://github.com/struckl/SeaPowerPopOut). No game files are changed.
+- Works with [R.A.T.S. Topo](https://github.com/SEARATS/SeaPowerTopo) and [R.A.T.S. Pop-Out](https://github.com/SEARATS/SeaPowerPopOut). No game files are changed.
 - Not affiliated with Triassic Games or MicroProse.

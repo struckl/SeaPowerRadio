@@ -36,7 +36,7 @@ and can be rebuilt with the voice pipeline below.
 
 **Continuing on another PC** (a fresh clone has only the text files in `mod/voices/`, so `tools/package.ps1` stops with
 "Rendered voices missing" and `check_library.py` lists everything): download the zip of the latest
-[GitHub release](https://github.com/struckl/SeaPowerRadio/releases) and copy its `SeaPowerRadio\voices\*` into
+[GitHub release](https://github.com/SEARATS/SeaPowerRadio/releases) and copy its `SeaPowerRadio\voices\*` into
 `mod\voices\`; build the reference clips (`tools/voicegen/refs/`, also not in git) with `vctk_refs.py` as below; then
 `check_library.py` shows what is really missing and `chatterbox_render.py` resumes with just those takes. Don't start a
 full render without the library: it redoes everything.

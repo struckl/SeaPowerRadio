@@ -8,7 +8,7 @@ yours talks in its own voice and callsign, and says why it is not doing what you
 | Questions | [R.A.T.S. Discord](https://discord.gg/CzuHd4f8Yf): help, ideas, talk; the first place to ask |
 | Version | `1.7.1` |
 | Game | Sea Power 0.9.3 (build 261116), the current main version |
-| Needs | [R.A.T.S. Keel](https://steamcommunity.com/sharedfiles/filedetails/?id=3835527459), the mod loader, and [R.A.T.S. Rigging](https://steamcommunity.com/sharedfiles/filedetails/?id=3843688859), the part the R.A.T.S. mods share (a copy comes with this mod for now) |
+| Needs | [Keel](https://steamcommunity.com/sharedfiles/filedetails/?id=3835527459), the mod loader, and [R.A.T.S. Rigging](https://steamcommunity.com/sharedfiles/filedetails/?id=3843688859), the part the R.A.T.S. mods share (a copy comes with this mod for now) |
 | Get it | [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579) (about 910 MB) |
 | Settings | Options > Audio > Rats Radio, or `BepInEx\config\dev.sewerlabs.seapowerradio.cfg` |
 | Bug reports | [R.A.T.S. feedback board](https://hub.sewerlabs.dev/s/radio) |
@@ -35,10 +35,10 @@ Full detail: [docs/features.md](docs/features.md).
 
 ## Install
 
-1. Install [R.A.T.S. Keel](https://steamcommunity.com/sharedfiles/filedetails/?id=3835527459), the mod loader
+1. Install [Keel](https://steamcommunity.com/sharedfiles/filedetails/?id=3835527459), the mod loader
    (subscribe, switch it on in the Mods menu, run its setup once).
 2. Subscribe to [Sea Power: R.A.T.S. Radio](https://steamcommunity.com/sharedfiles/filedetails/?id=3826433579) on the Workshop;
-   Steam offers its required items with it, [R.A.T.S. Keel](https://steamcommunity.com/sharedfiles/filedetails/?id=3835527459)
+   Steam offers its required items with it, [Keel](https://steamcommunity.com/sharedfiles/filedetails/?id=3835527459)
    and [R.A.T.S. Rigging](https://steamcommunity.com/sharedfiles/filedetails/?id=3843688859).
 3. Already have Radio? Nothing to do: a copy of Rigging comes with this update, and a notice on the main menu offers the Rigging item.
 4. Start a mission. `<Sea Power>\BepInEx\LogOutput.log` lists the voice packs and the roster (unit, callsign, voice, nation).
